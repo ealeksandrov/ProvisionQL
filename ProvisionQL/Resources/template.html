@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+            <title></title>
+            <style>
+                body {
+                    background: #f7f7f7;
+                    margin: 20px;
+                    font: 13px courier, monospaced, sans-serif;
+                    line-height: 1.3;
+                }
+            
+                .hiddenDiv {
+                    display: none;
+                }
+				
+                .app {
+                    margin-bottom: 20px;
+                }
+                
+                .app img {
+                    -webkit-filter: drop-shadow(0px 0px 3px rgba(0,0,0,0.5));
+                    max-width: 60px;
+                }
+                
+                .info {
+                    margin-left: 20px;
+                }
+                
+                .floatLeft {
+                    float: left;
+                }
+				
+				a         { color: #aaa; }
+				a:hover   { color: #000; }
+				a:visited { color: #aaa; }
+                
+                h1 {
+                    font-size: 18px;
+                }
+                
+                h2 {
+                    font-size: 14px;
+                    text-transform: uppercase;
+                }
+                
+                .expired {
+                    color: darkred;
+                }
+                .expiring {
+                    color: #996600;
+                }
+                .valid {
+                    color: darkgreen;
+                }
+                
+                .deviceType {
+                    color: #aaa;
+                    font-size: 11px;
+                }
+                
+                .clear {
+                    clear: left;
+                }
+                
+                table {
+                    width: 760px;
+                }
+                
+                tr {
+                    line-height: 1.75;
+                }
+                
+                td {
+                    padding-left: 8px;
+                    padding-right: 8px;
+                }
+                
+                tr:nth-child(odd) {
+                    background-color: #eee;
+                }
+                
+                tr:nth-child(even) {
+                    background-color: #fafafa;
+                }
+                .footer {
+                    margin-top: 20px;
+                    color: #aaa;
+                    font-size: 11px;
+                }
+                </style>
+            </head>
+    <body>
+        <div class="app __AppInfo__">
+            <h1>App info</h1>
+            <div class="floatLeft"><img alt="App icon" src="data:image/png;base64,__AppIcon__"/></div>
+            <div class="floatLeft info">
+				Name: <strong>__CFBundleDisplayName__</strong><br />
+				Version: __CFBundleShortVersionString__ (__CFBundleVersion__)<br />
+				BundleId: __CFBundleIdentifier__<br />
+				DeviceFamily: __UIDeviceFamily__</div>
+            <br class="clear" />
+        </div>
+				
+        <div class="provision __ProvisionInfo__">
+            <div class="__AppInfo__">
+                <h1>Provisioning</h1>
+                Profile name: <strong>__Name__</strong><br />
+            </div>
+            <div class="__ProvisionAsSubheader__">
+                <h1><span class="__ExpStatus__">__Name__</span></h1>
+            </div>
+            
+            Profile UUID: __UUID__<br />
+			Profile Type: __ProfilePlatform__ __ProfileType__<br />
+			Team: __TeamName__ (__TeamIds__)<br />
+			Creation date: __CreationDateFormatted__ (__CreationSummary__)<br />
+			Expiration Date: <strong><span class="__ExpStatus__">__ExpirationDateFormatted__ (__ExpirationSummary__)</span></strong><br />
+
+			<h2>Developer Certificates</h2>
+			__DeveloperCertificatesFormatted__
+						
+			<h2>Devices (__ProvisionedDevicesCount__)</h2>
+            __ProvisionedDevicesFormatted__
+
+			<h2>Entitlements</h2>
+			__EntitlementsFormatted__
+			
+		</div>
+        <div class="fileInfo">
+            <h2>File info</h2>
+            __FileName__<br />
+            __FileInfo__<br />
+        </div>
+        <div class="footer">
+            <p>ProvisionQL v__BundleVersion____DEBUG__ (<a href="https://github.com/ealeksandrov/ProvisionQL">Fork on GitHub</a>)</p>
+        </div>
+    </body>
+</html>
