@@ -19,7 +19,7 @@ License: MIT.
 
 ###Acknowledgments
 
-Check out this great alternatives:
+Check out these great alternatives:
 
 * [Provisioning by Craig Hockenberry](https://github.com/chockenberry/Provisioning)
 * [ipaql by Rico Becker](http://ipaql.com/)
