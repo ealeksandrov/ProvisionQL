@@ -24,6 +24,11 @@ Check out these great alternatives:
 * [Provisioning by Craig Hockenberry](https://github.com/chockenberry/Provisioning)
 * [ipaql by Rico Becker](http://ipaql.com/)
 
+###Tutorials based on this example:
+
+* english - [aleksandrov.ws](http://aleksandrov.ws/2014/02/25/osx-quick-look-plugin-development/)
+* russian - [habrahabr.ru](http://habrahabr.ru/post/208552/)
+
 
 ##Installation from Xcode project
 
