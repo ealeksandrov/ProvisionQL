@@ -29,6 +29,19 @@ Check out these great alternatives:
 * english - [aleksandrov.ws](http://aleksandrov.ws/2014/02/25/osx-quick-look-plugin-development/)
 * russian - [habrahabr.ru](http://habrahabr.ru/post/208552/)
 
+##Installation from Homebrew Cask
+
+[Homebrew cask](http://caskroom.io/) is the easiest way to install binary applications and quicklook plugins.
+If you have [homebrew](http://brew.sh/) - use 3 lines below and you are ready.
+
+```
+# Cask install
+brew tap caskroom/cask
+brew install brew-cask
+
+# ProvisionQL install
+brew cask install provisionql
+```
 
 ##Installation from Xcode project
 
