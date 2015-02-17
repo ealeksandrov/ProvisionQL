@@ -269,7 +269,12 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         
         if([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_app]) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
-            [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleName"] forKey:@"CFBundleName"];
+            
+            NSString *bundleName = [appPropertyList objectForKey:@"CFBundleDisplayName"];
+            if(!bundleName) {
+                bundleName = [appPropertyList objectForKey:@"CFBundleName"];
+            }
+            [synthesizedInfo setObject:bundleName forKey:@"CFBundleName"];
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleIdentifier"] forKey:@"CFBundleIdentifier"];
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleShortVersionString"] forKey:@"CFBundleShortVersionString"];
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleVersion"] forKey:@"CFBundleVersion"];
