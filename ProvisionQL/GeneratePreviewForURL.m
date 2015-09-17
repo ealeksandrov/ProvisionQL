@@ -481,7 +481,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         {
             [synthesizedInfo setObject:[URL lastPathComponent] forKey:@"FileName"];
             
-            if ([[URL pathExtension] isEqualToString:@"app"]) {
+            if ([[URL pathExtension] isEqualToString:@"app"] || [[URL pathExtension] isEqualToString:@"appex"]) {
                 // get the "file" information using the application package folder
                 NSString *folderPath = [URL path];
                 

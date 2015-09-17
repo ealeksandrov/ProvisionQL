@@ -10,6 +10,7 @@ Supporting file types:
 
 * `.ipa` - iOS packaged application
 * `.app` - iOS application bundle
+* `.appex` - iOS/OSX application extension
 * `.mobileprovision` - iOS provisioning profile
 * `.provisionprofile` - OSX provisioning profile
 

@@ -16,6 +16,7 @@
 				<string>com.apple.iphone.mobileprovision</string>
 				<string>com.apple.mobileprovision</string>
 				<string>com.apple.provisionprofile</string>
+				<string>com.apple.application-and-system-extension</string>
 			</array>
 		</dict>
 	</array>
@@ -30,7 +31,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.0</string>
+	<string>1.2.0</string>
 	<key>CFPlugInDynamicRegisterFunction</key>
 	<string></string>
 	<key>CFPlugInDynamicRegistration</key>
