@@ -27,7 +27,7 @@ Check out these great alternatives:
 
 ###Tutorials based on this example:
 
-* english - [aleksandrov.ws](http://aleksandrov.ws/2014/02/25/osx-quick-look-plugin-development/)
+* english - [aleksandrov.ws](https://aleksandrov.ws/2014/02/25/osx-quick-look-plugin-development/)
 * russian - [habrahabr.ru](http://habrahabr.ru/post/208552/)
 
 ##Installation from Homebrew Cask
