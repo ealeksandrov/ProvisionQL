@@ -279,6 +279,16 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleShortVersionString"] forKey:@"CFBundleShortVersionString"];
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleVersion"] forKey:@"CFBundleVersion"];
             
+            NSString *sdkName = [appPropertyList objectForKey:@"DTSDKName"] ?: @"";
+            [synthesizedInfo setObject:sdkName forKey:@"DTSDKName"];
+            
+            NSString *minimumOSVersion = [appPropertyList objectForKey:@"MinimumOSVersion"] ?: @"";
+            [synthesizedInfo setObject:minimumOSVersion forKey:@"MinimumOSVersion"];
+            
+            NSString *appTransportSecurity = [[appPropertyList objectForKey:@"NSAppTransportSecurity"] description] ?: @"";
+            [synthesizedInfo setObject:appTransportSecurity forKey:@"NSAppTransportSecurity"];
+            
+            
             NSString *iconName = mainIconNameForApp(appPropertyList);
             appIcon = imageFromApp(URL, dataType, iconName);
             
