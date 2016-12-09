@@ -27,7 +27,21 @@
                 .info {
                     margin-left: 20px;
                 }
-                
+            
+               .info .subsection {
+                    display: inline-block;
+                    vertical-align: top;
+               }
+            
+                .info .list {
+                    padding-left: 20px;
+                }
+            
+                .info > .list {
+                    display: inline-block;
+                    padding-left: 0px;
+                }
+            
                 .floatLeft {
                     float: left;
                 }
@@ -102,7 +116,7 @@
 				DeviceFamily: __UIDeviceFamily__<br />
                 SDK: __DTSDKName__<br />
                 Minimum OS Version: __MinimumOSVersion__<br />
-                App Transport Security: __NSAppTransportSecurity__
+                <div class="subsection">App Transport Security:</div> __AppTransportSecurityFormatted__
             </div>
             <br class="clear" />
         </div>
