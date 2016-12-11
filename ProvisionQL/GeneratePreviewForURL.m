@@ -206,6 +206,30 @@ NSDictionary *formattedDevicesData(NSArray *value) {
     return @{@"ProvisionedDevicesFormatted" : [devices copy], @"ProvisionedDevicesCount" : [NSString stringWithFormat:@"%zd Device%s", [array count], ([array count] == 1 ? "" : "s")]};
 }
 
+NSString *formattedDictionaryWithReplacements(NSDictionary *dictionary, NSDictionary *replacements) {
+    
+    NSMutableString *string = [NSMutableString string];
+    
+    for (NSString *key in dictionary) {
+        NSString *localizedKey = replacements[key] ?: key;
+        NSObject *object = dictionary[key];
+        
+        if ([object isKindOfClass:[NSDictionary class]]) {
+            object = formattedDictionaryWithReplacements((NSDictionary *)object, replacements);
+            [string appendFormat:@"%@:<div class=\"list\">%@</div>", localizedKey, object];
+        }
+        else if ([object isKindOfClass:[NSNumber class]]) {
+            object = [(NSNumber *)object boolValue] ? @"YES" : @"NO";
+            [string appendFormat:@"%@: %@<br />", localizedKey, object];
+        }
+        else {
+            [string appendFormat:@"%@: %@<br />", localizedKey, object];
+        }
+    }
+    
+    return string;
+}
+
 OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview, CFURLRef url, CFStringRef contentTypeUTI, CFDictionaryRef options) {
     @autoreleasepool {
         // create temp directory
@@ -278,6 +302,35 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleIdentifier"] forKey:@"CFBundleIdentifier"];
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleShortVersionString"] forKey:@"CFBundleShortVersionString"];
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleVersion"] forKey:@"CFBundleVersion"];
+            
+            NSString *sdkName = [appPropertyList objectForKey:@"DTSDKName"] ?: @"";
+            [synthesizedInfo setObject:sdkName forKey:@"DTSDKName"];
+            
+            NSString *minimumOSVersion = [appPropertyList objectForKey:@"MinimumOSVersion"] ?: @"";
+            [synthesizedInfo setObject:minimumOSVersion forKey:@"MinimumOSVersion"];
+            
+            NSDictionary *appTransportSecurity = [appPropertyList objectForKey:@"NSAppTransportSecurity"];
+            NSString *appTransportSecurityFormatted = @"No exceptions";
+            if ([appTransportSecurity isKindOfClass:[NSDictionary class]]) {
+                NSDictionary *localizedKeys = @{
+                                                @"NSAllowsArbitraryLoads": @"Allows Arbitrary Loads",
+                                                @"NSAllowsArbitraryLoadsInWebContent": @"Allows Arbitrary Loads in Web Content",
+                                                @"NSAllowsArbitraryLoadsInWebContent": @"Allows Arbitrary Loads in Web Content",
+                                                @"NSExceptionDomains": @"Exception Domains"
+                                                };
+                
+                NSString *formattedDictionaryString = formattedDictionaryWithReplacements(appTransportSecurity, localizedKeys);
+                appTransportSecurityFormatted = [NSString stringWithFormat:@"<div class=\"list\">%@</div>", formattedDictionaryString];
+            }
+            else {
+                double sdkNumber = [[sdkName stringByTrimmingCharactersInSet:[NSCharacterSet letterCharacterSet]] doubleValue];
+                if (sdkNumber < 9.0) {
+                    appTransportSecurityFormatted = @"Not applicable before iOS 9.0";
+                }
+            }
+            
+            [synthesizedInfo setObject:appTransportSecurityFormatted forKey:@"AppTransportSecurityFormatted"];
+            
             
             NSString *iconName = mainIconNameForApp(appPropertyList);
             appIcon = imageFromApp(URL, dataType, iconName);
