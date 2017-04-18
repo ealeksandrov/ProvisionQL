@@ -1,4 +1,4 @@
-#ProvisionQL - Quick Look for ipa & provision
+# ProvisionQL - Quick Look for ipa & provision
 
 ![Thumbnails example](https://raw.github.com/ealeksandrov/ProvisionQL/master/Screenshots/1.png)
 
@@ -18,19 +18,19 @@ Supporting file types:
 
 License: MIT.
 
-###Acknowledgments
+### Acknowledgments
 
 Check out these great alternatives:
 
 * [Provisioning by Craig Hockenberry](https://github.com/chockenberry/Provisioning)
 * [ipaql by Rico Becker](http://ipaql.com/)
 
-###Tutorials based on this example:
+### Tutorials based on this example:
 
 * english - [aleksandrov.ws](https://aleksandrov.ws/2014/02/25/osx-quick-look-plugin-development/)
 * russian - [habrahabr.ru](http://habrahabr.ru/post/208552/)
 
-##Installation from Homebrew Cask
+## Installation from Homebrew Cask
 
 [Homebrew cask](http://caskroom.io/) is the easiest way to install binary applications and quicklook plugins.
 If you have [homebrew](http://brew.sh/) - use 3 lines below and you are ready.
@@ -44,12 +44,12 @@ brew install brew-cask
 brew cask install provisionql
 ```
 
-##Installation from Xcode project
+## Installation from Xcode project
 
 Just clone the repository, open `ProvisionQL.xcodeproj` and build active target. Shell script will place generator in `~/Library/QuickLook` and call `qlmanage -r` automatically.
 
 
-##Manual installation
+## Manual installation
 
 * Download archive with latest version from the [Releases](https://github.com/ealeksandrov/ProvisionQL/releases) page.
 * Move `ProvisionQL.qlgenerator` to `~/Library/QuickLook/`(current user) or `/Library/QuickLook/`(all users).

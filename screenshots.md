@@ -1,4 +1,4 @@
-#ProvisionQL screenshots
+# ProvisionQL screenshots
 
 <p align="center">
   <img src="https://raw.github.com/ealeksandrov/ProvisionQL/master/Screenshots/1.png" alt="Thumbnails example"/>
