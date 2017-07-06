@@ -33,13 +33,9 @@ Check out these great alternatives:
 ## Installation from Homebrew Cask
 
 [Homebrew cask](http://caskroom.io/) is the easiest way to install binary applications and quicklook plugins.
-If you have [homebrew](http://brew.sh/) - use 3 lines below and you are ready.
+If you have [homebrew](http://brew.sh/) - use the line below and you are ready.
 
 ```
-# Cask install
-brew tap caskroom/cask
-brew install brew-cask
-
 # ProvisionQL install
 brew cask install provisionql
 ```
