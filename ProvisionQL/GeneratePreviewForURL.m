@@ -353,7 +353,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             
             NSData *imageData = [appIcon TIFFRepresentation];
             NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
-            imageData = [imageRep representationUsingType:NSPNGFileType properties:nil];
+            imageData = [imageRep representationUsingType:NSPNGFileType properties:@{}];
             NSString *base64 = [imageData base64EncodedStringWithOptions:0];
             [synthesizedInfo setObject:base64 forKey:@"AppIcon"];
             [synthesizedInfo setObject:@"" forKey:@"AppInfo"];
