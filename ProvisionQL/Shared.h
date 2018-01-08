@@ -8,7 +8,7 @@
 
 #import <NSBezierPath+IOS7RoundedRect.h>
 
-static NSString * const kPluginBundleId = @"com.FerretSyndicate.ProvisionQL";
+static NSString * const kPluginBundleId = @"com.ealeksandrov.ProvisionQL";
 static NSString * const kDataType_ipa               = @"com.apple.itunes.ipa";
 static NSString * const kDataType_app               = @"com.apple.application-bundle";
 static NSString * const kDataType_ios_provision     = @"com.apple.mobileprovision";

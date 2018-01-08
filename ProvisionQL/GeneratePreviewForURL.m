@@ -230,6 +230,29 @@ NSString *formattedDictionaryWithReplacements(NSDictionary *dictionary, NSDictio
     return string;
 }
 
+NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePath) {
+    // read the CFBundleExecutable and extract it
+    NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:infoPlistData options:0 format:NULL error:NULL];
+    NSString *bundleExecutable = [appPropertyList objectForKey:@"CFBundleExecutable"];
+    
+    NSString *binaryPath = [basePath stringByAppendingPathComponent:bundleExecutable];
+    // get entitlements: codesign -d <AppBinary> --entitlements :-
+    NSPipe *codesignPipe = [NSPipe pipe];
+    NSFileHandle *codesignOutputFile = [codesignPipe fileHandleForReading];
+    NSTask *codesignTask = [NSTask new];
+    [codesignTask setLaunchPath:@"/usr/bin/codesign"];
+    [codesignTask setStandardOutput:codesignPipe];
+    [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @":-"]];
+    [codesignTask launch];
+    [codesignTask waitUntilExit];
+    
+    // save output of codesign task
+    NSData *codesignEntitlementsData = [codesignOutputFile readDataToEndOfFile];
+    [codesignOutputFile closeFile];
+
+    return codesignEntitlementsData;
+}
+
 OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview, CFURLRef url, CFStringRef contentTypeUTI, CFDictionaryRef options) {
     @autoreleasepool {
         // create temp directory
@@ -242,6 +265,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         NSString *dataType = (__bridge NSString *)contentTypeUTI;
         NSData *provisionData = nil;
         NSData *appPlist = nil;
+        NSData *codesignEntitlementsData = nil;
         NSImage *appIcon = nil;
         
         if([dataType isEqualToString:kDataType_app]) {
@@ -249,6 +273,8 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 			provisionData = [NSData dataWithContentsOfURL:[URL URLByAppendingPathComponent:@"embedded.mobileprovision"]];
             appPlist = [NSData dataWithContentsOfURL:[URL URLByAppendingPathComponent:@"Info.plist"]];
 
+            codesignEntitlementsData = codesignEntitlementsDataFromApp(appPlist, URL.path);
+            
         } else if([dataType isEqualToString:kDataType_ipa]) {
             // get the embedded provisioning & plist from an app archive using: unzip -u -j -d <currentTempDirFolder> <URL> <files to unzip>
             NSTask *unzipTask = [NSTask new];
@@ -263,6 +289,19 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             NSString *plistPath = [currentTempDirFolder stringByAppendingPathComponent:@"Info.plist"];
 			appPlist = [NSData dataWithContentsOfFile:plistPath];
             
+            // read codesigning entitlements from application binary (extract it first)
+            NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
+            NSString *bundleExecutable = [appPropertyList objectForKey:@"CFBundleExecutable"];
+            
+            NSTask *unzipAppTask = [NSTask new];
+            [unzipAppTask setLaunchPath:@"/usr/bin/unzip"];
+            [unzipAppTask setStandardOutput:[NSPipe pipe]];
+            [unzipAppTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], [@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable]]];
+            [unzipAppTask launch];
+            [unzipAppTask waitUntilExit];
+            
+            codesignEntitlementsData = codesignEntitlementsDataFromApp(appPlist, currentTempDirFolder);
+
             [fileManager removeItemAtPath:tempDirFolder error:nil];
         } else {
             // use provisioning directly
@@ -428,16 +467,27 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 [synthesizedInfo setObject:synthesizedValue forKey:@"TeamIds"];
             }
             
-            value = [propertyList objectForKey:@"Entitlements"];
-            if ([value isKindOfClass:[NSDictionary class]]) {
-                NSDictionary *dictionary = (NSDictionary *)value;
+            if (codesignEntitlementsData != nil) {
+                // read the entitlements directly from the codesign output
+                NSDictionary *entitlementsPropertyList = [NSPropertyListSerialization propertyListWithData:codesignEntitlementsData options:0 format:NULL error:NULL];
                 NSMutableString *dictionaryFormatted = [NSMutableString string];
-                displayKeyAndValue(0, nil, dictionary, dictionaryFormatted);
+                displayKeyAndValue(0, nil, entitlementsPropertyList, dictionaryFormatted);
                 synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", dictionaryFormatted];
                 
                 [synthesizedInfo setObject:synthesizedValue forKey:@"EntitlementsFormatted"];
             } else {
-                [synthesizedInfo setObject:@"No Entitlements" forKey:@"EntitlementsFormatted"];
+                // read the entitlements from the provisioning profile instead
+                value = [propertyList objectForKey:@"Entitlements"];
+                if ([value isKindOfClass:[NSDictionary class]]) {
+                    NSDictionary *dictionary = (NSDictionary *)value;
+                    NSMutableString *dictionaryFormatted = [NSMutableString string];
+                    displayKeyAndValue(0, nil, dictionary, dictionaryFormatted);
+                    synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", dictionaryFormatted];
+                    
+                    [synthesizedInfo setObject:synthesizedValue forKey:@"EntitlementsFormatted"];
+                } else {
+                    [synthesizedInfo setObject:@"No Entitlements" forKey:@"EntitlementsFormatted"];
+                }
             }
             
             value = [propertyList objectForKey:@"DeveloperCertificates"];
