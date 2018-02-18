@@ -12,7 +12,6 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>com.apple.itunes.ipa</string>
-				<string>com.apple.application-bundle</string>
 				<string>com.apple.iphone.mobileprovision</string>
 				<string>com.apple.mobileprovision</string>
 				<string>com.apple.provisionprofile</string>

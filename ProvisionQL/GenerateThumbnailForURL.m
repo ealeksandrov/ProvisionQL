@@ -36,10 +36,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
         NSUInteger devicesCount = 0;
         int expStatus = 0;
         
-        if([dataType isEqualToString:kDataType_app]) {
-            // get the embedded plist for the iOS app
-            appPlist = [NSData dataWithContentsOfURL:[URL URLByAppendingPathComponent:@"Info.plist"]];
-        } else if([dataType isEqualToString:kDataType_ipa]) {
+        if([dataType isEqualToString:kDataType_ipa]) {
             // get the embedded plist from an app arcive using: unzip -p <URL> 'Payload/*.app/Info.plist' (piped to standard output)
             NSTask *unzipTask = [NSTask new];
             [unzipTask setLaunchPath:@"/usr/bin/unzip"];
@@ -58,7 +55,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             return noErr;
         }
         
-        if([dataType isEqualToString:kDataType_app] || [dataType isEqualToString:kDataType_ipa]) {
+        if([dataType isEqualToString:kDataType_ipa]) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
             NSString *iconName = mainIconNameForApp(appPropertyList);
             appIcon = imageFromApp(URL, dataType, iconName);
@@ -119,7 +116,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             NSGraphicsContext* _graphicsContext = [NSGraphicsContext graphicsContextWithGraphicsPort:(void *)_context flipped:NO];
             
             [NSGraphicsContext setCurrentContext:_graphicsContext];
-            if([dataType isEqualToString:kDataType_app] || [dataType isEqualToString:kDataType_ipa]) {
+            if([dataType isEqualToString:kDataType_ipa]) {
                 [appIcon drawInRect:renderRect];
             } else {
                 [appIcon drawInRect:renderRect];

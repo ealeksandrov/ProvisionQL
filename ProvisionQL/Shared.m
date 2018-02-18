@@ -40,10 +40,7 @@ int expirationStatus(NSDate *date, NSCalendar *calendar) {
 NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
     NSImage *appIcon = nil;
     
-    if([dataType isEqualToString:kDataType_app]) {
-        // get the embedded icon for the iOS app
-        appIcon = [[NSImage alloc] initWithContentsOfURL:[URL URLByAppendingPathComponent:fileName]];
-    } else if([dataType isEqualToString:kDataType_ipa]) {
+    if([dataType isEqualToString:kDataType_ipa]) {
         // get the embedded icon from an app arcive using: unzip -p <URL> 'Payload/*.app/<fileName>' (piped to standard output)
         NSTask *unzipTask = [NSTask new];
         [unzipTask setLaunchPath:@"/usr/bin/unzip"];
