@@ -111,7 +111,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
         NSSize canvasSize = appIcon.size;
         NSRect renderRect = NSMakeRect(0.0, 0.0, appIcon.size.width, appIcon.size.height);
         
-        CGContextRef _context = QLThumbnailRequestCreateContext(thumbnail, canvasSize, false, NULL);
+        CGContextRef _context = QLThumbnailRequestCreateContext(thumbnail, canvasSize, false, (__bridge CFDictionaryRef)(@{@"IconFlavor" : @(0)}));
         if (_context) {
             NSGraphicsContext* _graphicsContext = [NSGraphicsContext graphicsContextWithGraphicsPort:(void *)_context flipped:NO];
             
