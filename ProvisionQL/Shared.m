@@ -25,7 +25,7 @@ int expirationStatus(NSDate *date, NSCalendar *calendar) {
 	
 	if (date) {
 		NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:[NSDate date] toDate:date options:0];
-		if (dateComponents.day <= 0) {
+        if([date compare: [NSDate date]] == NSOrderedAscending) {
 			result = 0;
 		} else if (dateComponents.day < 30) {
 			result = 1;

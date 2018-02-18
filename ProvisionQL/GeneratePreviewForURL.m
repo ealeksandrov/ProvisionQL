@@ -53,7 +53,11 @@ NSString *expirationStringForDateInCalendar(NSDate *date, NSCalendar *calendar) 
 	if (date) {
 		NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:[NSDate date] toDate:date options:0];
 		if (dateComponents.day == 0) {
-			result = @"<span>Expires today</span>";
+            if([date compare: [NSDate date]] == NSOrderedAscending) {
+                result = @"<span>Expired today</span>";
+            } else {
+                result = @"<span>Expires today</span>";
+            }
 		} else if (dateComponents.day < 0) {
 			result = [NSString stringWithFormat:@"<span>Expired %zd day%s ago</span>", -dateComponents.day, (dateComponents.day == -1 ? "" : "s")];
 		} else if (dateComponents.day < 30) {
@@ -409,7 +413,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 synthesizedValue = expirationStringForDateInCalendar(date, calendar);
                 [synthesizedInfo setObject:synthesizedValue forKey:@"ExpirationSummary"];
                 
-                int expStatus = expirationStatus(value,calendar);
+                int expStatus = expirationStatus(date, calendar);
                 if(expStatus == 0) {
                     synthesizedValue = @"expired";
                 } else if(expStatus == 1) {
