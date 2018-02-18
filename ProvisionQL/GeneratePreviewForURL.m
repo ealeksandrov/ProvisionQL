@@ -148,26 +148,14 @@ NSString *formattedStringForCertificates(NSArray *value) {
 }
 
 NSDictionary *formattedDevicesData(NSArray *value) {
-    
-#if !SIGNED_CODE
-    // get the iOS devices that Xcode has seen, which only works if the plug-in is not running in a sandbox
-    NSUserDefaults *xcodeDefaults = [NSUserDefaults new];
-    [xcodeDefaults addSuiteNamed:@"com.apple.dt.XCode"];
-    NSArray *savedDevices = [xcodeDefaults objectForKey:@"DVTSavediPhoneDevices"];
-#endif
-    
+
     NSArray *array = (NSArray *)value;
     NSArray *sortedArray = [array sortedArrayUsingSelector:@selector(compare:)];
-    
+
     NSString *currentPrefix = nil;
     NSMutableString *devices = [NSMutableString string];
     [devices appendString:@"<table>\n"];
-
-#if !SIGNED_CODE
-    [devices appendString:@"<tr><th></th><th>UDID</th><th>Device</th><th>iOS</th></tr>\n"];
-#else
     [devices appendString:@"<tr><th></th><th>UDID</th></tr>\n"];
-#endif
 
     for (NSString *device in sortedArray) {
         // compute the prefix for the first column of the table
@@ -177,32 +165,11 @@ NSDictionary *formattedDevicesData(NSArray *value) {
             currentPrefix = devicePrefix;
             displayPrefix = [NSString stringWithFormat:@"%@ ➞ ", devicePrefix];
         }
-        
-#if !SIGNED_CODE
-        // check if Xcode has seen the device
-        NSString *deviceName = @"";
-        NSString *deviceType = @"Unknown";
-        NSString *deviceSoftwareVerson = @"";
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"deviceIdentifier = %@", device];
-        NSArray *matchingDevices = [savedDevices filteredArrayUsingPredicate:predicate];
-        if ([matchingDevices count] > 0) {
-            id matchingDevice = [matchingDevices objectAtIndex:0];
-            if ([matchingDevice isKindOfClass:[NSDictionary class]]) {
-                NSDictionary *matchingDeviceDictionary = (NSDictionary *)matchingDevice;
-                deviceName = [matchingDeviceDictionary objectForKey:@"deviceName"];
-                deviceType = [matchingDeviceDictionary objectForKey:@"deviceType"];
-                deviceSoftwareVerson = [matchingDeviceDictionary objectForKey:@"productVersion"];
-            }
-        }
-        
-        NSString *span = ([deviceName length]) ? @"span" : @"i";
-        [devices appendFormat:@"<tr><td>%@</td><td>%@</td><td>%@ <%@ class=\"deviceType\">%@</%@></td><td>%@</td></tr>\n", displayPrefix, device, deviceName, span, deviceType, span, deviceSoftwareVerson];
-#else
+
         [devices appendFormat:@"<tr><td>%@</td><td>%@</td></tr>\n", displayPrefix, device];
-#endif
     }
     [devices appendString:@"</table>\n"];
-    
+
     return @{@"ProvisionedDevicesFormatted" : [devices copy], @"ProvisionedDevicesCount" : [NSString stringWithFormat:@"%zd Device%s", [array count], ([array count] == 1 ? "" : "s")]};
 }
 

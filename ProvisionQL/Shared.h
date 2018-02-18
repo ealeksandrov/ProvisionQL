@@ -15,8 +15,6 @@ static NSString * const kDataType_ios_provision     = @"com.apple.mobileprovisio
 static NSString * const kDataType_ios_provision_old = @"com.apple.iphone.mobileprovision";
 static NSString * const kDataType_osx_provision     = @"com.apple.provisionprofile";
 
-#define SIGNED_CODE 0
-
 NSImage *roundCorners(NSImage *image);
 NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName);
 NSString *mainIconNameForApp(NSDictionary *appPropertyList);
