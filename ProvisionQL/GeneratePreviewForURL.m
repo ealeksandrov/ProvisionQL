@@ -53,7 +53,7 @@ NSString *expirationStringForDateInCalendar(NSDate *date, NSCalendar *calendar) 
 	if (date) {
 		NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:[NSDate date] toDate:date options:0];
 		if (dateComponents.day == 0) {
-            if([date compare: [NSDate date]] == NSOrderedAscending) {
+            if ([date compare: [NSDate date]] == NSOrderedAscending) {
                 result = @"<span>Expired today</span>";
             } else {
                 result = @"<span>Expires today</span>";
@@ -247,7 +247,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         NSData *codesignEntitlementsData = nil;
         NSImage *appIcon = nil;
 
-        if([dataType isEqualToString:kDataType_ipa]) {
+        if ([dataType isEqualToString:kDataType_ipa]) {
             // get the embedded provisioning & plist from an app archive using: unzip -u -j -d <currentTempDirFolder> <URL> <files to unzip>
             NSTask *unzipTask = [NSTask new];
 			[unzipTask setLaunchPath:@"/usr/bin/unzip"];
@@ -293,7 +293,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         if (!provisionData) {
 			NSLog(@"No provisionData for %@", URL);
 
-            if([dataType isEqualToString:kDataType_ipa]) {
+            if ([dataType isEqualToString:kDataType_ipa]) {
                 [synthesizedInfo setObject:@"hiddenDiv" forKey:@"ProvisionInfo"];
             } else {
                 return noErr;
@@ -302,11 +302,11 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             [synthesizedInfo setObject:@"" forKey:@"ProvisionInfo"];
         }
 
-        if([dataType isEqualToString:kDataType_ipa]) {
+        if ([dataType isEqualToString:kDataType_ipa]) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
 
             NSString *bundleName = [appPropertyList objectForKey:@"CFBundleDisplayName"];
-            if(!bundleName) {
+            if (!bundleName) {
                 bundleName = [appPropertyList objectForKey:@"CFBundleName"];
             }
             [synthesizedInfo setObject:bundleName forKey:@"CFBundleName"];
@@ -359,15 +359,15 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             
             NSMutableArray *platforms = [NSMutableArray array];
             for (NSNumber *number in [appPropertyList objectForKey:@"UIDeviceFamily"]) {
-                if([number intValue] == 1) {
+                if ([number intValue] == 1) {
                     [platforms addObject:@"iPhone"];
-                } else if([number intValue] == 2) {
+                } else if ([number intValue] == 2) {
                     [platforms addObject:@"iPad"];
                 }
             }
             [synthesizedInfo setObject:[platforms componentsJoinedByString:@", "] forKey:@"UIDeviceFamily"];
 
-            if(!appIcon) {
+            if (!appIcon) {
                 NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"defaultIcon" withExtension:@"png"];
                 appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
             }
@@ -398,7 +398,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             return noErr;
         }
 
-        if(data) {
+        if (data) {
             // use all keys and values in the property list to generate replacement tokens and values
             NSDictionary *propertyList = [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:NULL];
             for (NSString *key in [propertyList allKeys]) {
@@ -433,9 +433,9 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 [synthesizedInfo setObject:synthesizedValue forKey:@"ExpirationSummary"];
 
                 int expStatus = expirationStatus(date, calendar);
-                if(expStatus == 0) {
+                if (expStatus == 0) {
                     synthesizedValue = @"expired";
-                } else if(expStatus == 1) {
+                } else if (expStatus == 1) {
                     synthesizedValue = @"expiring";
                 } else {
                     synthesizedValue = @"valid";

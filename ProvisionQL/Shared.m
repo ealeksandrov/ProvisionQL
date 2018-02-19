@@ -25,7 +25,7 @@ int expirationStatus(NSDate *date, NSCalendar *calendar) {
 
 	if (date) {
 		NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:[NSDate date] toDate:date options:0];
-        if([date compare: [NSDate date]] == NSOrderedAscending) {
+        if ([date compare: [NSDate date]] == NSOrderedAscending) {
 			result = 0;
 		} else if (dateComponents.day < 30) {
 			result = 1;
@@ -40,7 +40,7 @@ int expirationStatus(NSDate *date, NSCalendar *calendar) {
 NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
     NSImage *appIcon = nil;
 
-    if([dataType isEqualToString:kDataType_ipa]) {
+    if ([dataType isEqualToString:kDataType_ipa]) {
         // get the embedded icon from an app arcive using: unzip -p <URL> 'Payload/*.app/<fileName>' (piped to standard output)
         NSTask *unzipTask = [NSTask new];
         [unzipTask setLaunchPath:@"/usr/bin/unzip"];
@@ -61,36 +61,36 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
 
     //Check for CFBundleIcons (since 5.0)
     id iconsDict = [appPropertyList objectForKey:@"CFBundleIcons"];
-    if([iconsDict isKindOfClass:[NSDictionary class]]) {
+    if ([iconsDict isKindOfClass:[NSDictionary class]]) {
         id primaryIconDict = [iconsDict objectForKey:@"CFBundlePrimaryIcon"];
-        if([primaryIconDict isKindOfClass:[NSDictionary class]]) {
+        if ([primaryIconDict isKindOfClass:[NSDictionary class]]) {
             id tempIcons = [primaryIconDict objectForKey:@"CFBundleIconFiles"];
-            if([tempIcons isKindOfClass:[NSArray class]]) {
+            if ([tempIcons isKindOfClass:[NSArray class]]) {
                 icons = tempIcons;
             }
         }
     }
 
-    if(!icons) {
+    if (!icons) {
         //Check for CFBundleIconFiles (since 3.2)
         id tempIcons = [appPropertyList objectForKey:@"CFBundleIconFiles"];
-        if([tempIcons isKindOfClass:[NSArray class]]) {
+        if ([tempIcons isKindOfClass:[NSArray class]]) {
             icons = tempIcons;
         }
     }
 
-    if(icons) {
+    if (icons) {
         //Search some patterns for primary app icon (120x120)
         NSArray *matches = @[@"120",@"60",@"@2x"];
 
         for (NSString *match in matches) {
             NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains[c] %@",match];
             NSArray *results = [icons filteredArrayUsingPredicate:predicate];
-            if([results count]) {
+            if ([results count]) {
                 iconName = [results firstObject];
                 //Check for @2x existence
-                if([match isEqualToString:@"60"] && ![[iconName pathExtension] length]) {
-                    if(![iconName hasSuffix:@"@2x"]) {
+                if ([match isEqualToString:@"60"] && ![[iconName pathExtension] length]) {
+                    if (![iconName hasSuffix:@"@2x"]) {
                         iconName = [iconName stringByAppendingString:@"@2x"];
                     }
                 }
@@ -99,20 +99,20 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
         }
 
         //If no one matches any pattern, just take first item
-        if(!iconName) {
+        if (!iconName) {
             iconName = [icons firstObject];
         }
     } else {
         //Check for CFBundleIconFile (legacy, before 3.2)
         NSString *legacyIcon = [appPropertyList objectForKey:@"CFBundleIconFile"];
-        if([legacyIcon length]) {
+        if ([legacyIcon length]) {
             iconName = legacyIcon;
         }
     }
 
     //Load NSImage
-    if([iconName length]) {
-        if(![[iconName pathExtension] length]) {
+    if ([iconName length]) {
+        if (![[iconName pathExtension] length]) {
             iconName = [iconName stringByAppendingPathExtension:@"png"];
         }
         return iconName;

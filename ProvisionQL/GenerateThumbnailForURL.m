@@ -36,7 +36,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
         NSUInteger devicesCount = 0;
         int expStatus = 0;
 
-        if([dataType isEqualToString:kDataType_ipa]) {
+        if ([dataType isEqualToString:kDataType_ipa]) {
             // get the embedded plist from an app arcive using: unzip -p <URL> 'Payload/*.app/Info.plist' (piped to standard output)
             NSTask *unzipTask = [NSTask new];
             [unzipTask setLaunchPath:@"/usr/bin/unzip"];
@@ -56,19 +56,19 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
         }
 
         NSDictionary *propertiesDict = nil;
-        if([dataType isEqualToString:kDataType_ipa]) {
+        if ([dataType isEqualToString:kDataType_ipa]) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
             NSString *iconName = mainIconNameForApp(appPropertyList);
             appIcon = imageFromApp(URL, dataType, iconName);
 
-            if(!appIcon) {
+            if (!appIcon) {
                 NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"defaultIcon" withExtension:@"png"];
                 appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
             }
             appIcon = roundCorners(appIcon);
             propertiesDict = @{@"IconFlavor" : @(0)};
         } else {
-            if(iconMode) {
+            if (iconMode) {
                 NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"blankIcon" withExtension:@"png"];
                 appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
             } else {
@@ -118,7 +118,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             NSGraphicsContext* _graphicsContext = [NSGraphicsContext graphicsContextWithGraphicsPort:(void *)_context flipped:NO];
 
             [NSGraphicsContext setCurrentContext:_graphicsContext];
-            if([dataType isEqualToString:kDataType_ipa]) {
+            if ([dataType isEqualToString:kDataType_ipa]) {
                 [appIcon drawInRect:renderRect];
             } else {
                 [appIcon drawInRect:renderRect];
@@ -126,9 +126,9 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
                 NSString *badge = [NSString stringWithFormat:@"%lu",(unsigned long)devicesCount];
                 NSColor *outlineColor;
 
-                if(expStatus == 2) {
+                if (expStatus == 2) {
                     outlineColor = BADGE_VALID_COLOR;
-                } else if(expStatus == 1) {
+                } else if (expStatus == 1) {
                     outlineColor = BADGE_EXPIRING_COLOR;
                 } else {
                     outlineColor = BADGE_EXPIRED_COLOR;
@@ -146,7 +146,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
 
                 int badgeX = renderRect.origin.x + BADGE_MARGIN_X;
                 int badgeY = renderRect.origin.y + renderRect.size.height - BADGE_HEIGHT - BADGE_MARGIN_Y;
-                if(!iconMode) {
+                if (!iconMode) {
                     badgeX += 75;
                     badgeY -= 10;
                 }
