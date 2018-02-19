@@ -177,7 +177,7 @@ NSDictionary *formattedDevicesData(NSArray *value) {
     return @{@"ProvisionedDevicesFormatted" : [devices copy], @"ProvisionedDevicesCount" : [NSString stringWithFormat:@"%zd Device%s", [array count], ([array count] == 1 ? "" : "s")]};
 }
 
-NSString *formattedDictionaryWithReplacements(NSDictionary *dictionary, NSDictionary *replacements) {
+NSString *formattedDictionaryWithReplacements(NSDictionary *dictionary, NSDictionary *replacements, int level) {
 
     NSMutableString *string = [NSMutableString string];
 
@@ -185,8 +185,16 @@ NSString *formattedDictionaryWithReplacements(NSDictionary *dictionary, NSDictio
         NSString *localizedKey = replacements[key] ?: key;
         NSObject *object = dictionary[key];
 
+        for (int idx = 0; idx < level; idx++) {
+            if (level == 1) {
+                [string appendString:@"- "];
+            } else {
+                [string appendString:@"&nbsp;&nbsp;"];
+            }
+        }
+
         if ([object isKindOfClass:[NSDictionary class]]) {
-            object = formattedDictionaryWithReplacements((NSDictionary *)object, replacements);
+            object = formattedDictionaryWithReplacements((NSDictionary *)object, replacements, level + 1);
             [string appendFormat:@"%@:<div class=\"list\">%@</div>", localizedKey, object];
         }
         else if ([object isKindOfClass:[NSNumber class]]) {
@@ -317,12 +325,24 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             if ([appTransportSecurity isKindOfClass:[NSDictionary class]]) {
                 NSDictionary *localizedKeys = @{
                                                 @"NSAllowsArbitraryLoads": @"Allows Arbitrary Loads",
+                                                @"NSAllowsArbitraryLoadsForMedia": @"Allows Arbitrary Loads for Media",
                                                 @"NSAllowsArbitraryLoadsInWebContent": @"Allows Arbitrary Loads in Web Content",
-                                                @"NSAllowsArbitraryLoadsInWebContent": @"Allows Arbitrary Loads in Web Content",
-                                                @"NSExceptionDomains": @"Exception Domains"
+                                                @"NSAllowsLocalNetworking": @"Allows Local Networking",
+                                                @"NSExceptionDomains": @"Exception Domains",
+
+                                                @"NSIncludesSubdomains": @"Includes Subdomains",
+                                                @"NSRequiresCertificateTransparency": @"Requires Certificate Transparency",
+
+                                                @"NSExceptionAllowsInsecureHTTPLoads": @"Allows Insecure HTTP Loads",
+                                                @"NSExceptionMinimumTLSVersion": @"Minimum TLS Version",
+                                                @"NSExceptionRequiresForwardSecrecy": @"Requires Forward Secrecy",
+
+                                                @"NSThirdPartyExceptionAllowsInsecureHTTPLoads": @"Allows Insecure HTTP Loads",
+                                                @"NSThirdPartyExceptionMinimumTLSVersion": @"Minimum TLS Version",
+                                                @"NSThirdPartyExceptionRequiresForwardSecrecy": @"Requires Forward Secrecy"
                                                 };
 
-                NSString *formattedDictionaryString = formattedDictionaryWithReplacements(appTransportSecurity, localizedKeys);
+                NSString *formattedDictionaryString = formattedDictionaryWithReplacements(appTransportSecurity, localizedKeys, 0);
                 appTransportSecurityFormatted = [NSString stringWithFormat:@"<div class=\"list\">%@</div>", formattedDictionaryString];
             }
             else {
