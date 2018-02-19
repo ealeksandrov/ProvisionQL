@@ -55,6 +55,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             return noErr;
         }
         
+        NSDictionary *propertiesDict = nil;
         if([dataType isEqualToString:kDataType_ipa]) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
             NSString *iconName = mainIconNameForApp(appPropertyList);
@@ -65,6 +66,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
                 appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
             }
             appIcon = roundCorners(appIcon);
+            propertiesDict = @{@"IconFlavor" : @(0)};
         } else {
             if(iconMode) {
                 NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"blankIcon" withExtension:@"png"];
@@ -111,7 +113,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
         NSSize canvasSize = appIcon.size;
         NSRect renderRect = NSMakeRect(0.0, 0.0, appIcon.size.width, appIcon.size.height);
         
-        CGContextRef _context = QLThumbnailRequestCreateContext(thumbnail, canvasSize, false, (__bridge CFDictionaryRef)(@{@"IconFlavor" : @(0)}));
+        CGContextRef _context = QLThumbnailRequestCreateContext(thumbnail, canvasSize, false, (__bridge CFDictionaryRef)propertiesDict);
         if (_context) {
             NSGraphicsContext* _graphicsContext = [NSGraphicsContext graphicsContextWithGraphicsPort:(void *)_context flipped:NO];
             
