@@ -11,7 +11,7 @@ void CancelPreviewGeneration(void *thisInterface, QLPreviewRequestRef preview);
 
 void displayKeyAndValue(NSUInteger level, NSString *key, id value, NSMutableString *output) {
 	int indent = (int)(level * 4);
-	
+
 	if ([value isKindOfClass:[NSDictionary class]]) {
 		if (key) {
 			[output appendFormat:@"%*s%@ = {\n", indent, "", key];
@@ -49,7 +49,7 @@ void displayKeyAndValue(NSUInteger level, NSString *key, id value, NSMutableStri
 
 NSString *expirationStringForDateInCalendar(NSDate *date, NSCalendar *calendar) {
 	NSString *result = nil;
-	
+
 	if (date) {
 		NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:[NSDate date] toDate:date options:0];
 		if (dateComponents.day == 0) {
@@ -66,14 +66,14 @@ NSString *expirationStringForDateInCalendar(NSDate *date, NSCalendar *calendar) 
 			result = [NSString stringWithFormat:@"Expires in %zd days", dateComponents.day];
 		}
 	}
-    
+
 	return result;
 }
 
 NSString *formattedStringForCertificates(NSArray *value) {
     static NSString *const devCertSummaryKey = @"summary";
     static NSString *const devCertInvalidityDateKey = @"invalidity";
-    
+
     NSMutableArray *certificateDetails = [NSMutableArray array];
     NSArray *array = (NSArray *)value;
     for (NSData *data in array) {
@@ -83,7 +83,7 @@ NSString *formattedStringForCertificates(NSArray *value) {
             NSString *summary = (NSString *)CFBridgingRelease(summaryRef);
             if (summary) {
                 NSMutableDictionary *detailsDict = [NSMutableDictionary dictionaryWithObject:summary forKey:devCertSummaryKey];
-                
+
                 CFErrorRef error;
                 CFDictionaryRef valuesDict = SecCertificateCopyValues(certificateRef, (__bridge CFArrayRef)@[(__bridge id)kSecOIDInvalidityDate], &error);
                 if (valuesDict) {
@@ -91,7 +91,7 @@ NSString *formattedStringForCertificates(NSArray *value) {
                     if (invalidityDateDictionaryRef) {
                         CFTypeRef invalidityRef = CFDictionaryGetValue(invalidityDateDictionaryRef, kSecPropertyKeyValue);
                         CFRetain(invalidityRef);
-                        
+
                         // NOTE: the invalidity date type of kSecPropertyTypeDate is documented as a CFStringRef in the "Certificate, Key, and Trust Services Reference".
                         // In reality, it's a __NSTaggedDate (presumably a tagged pointer representing an NSDate.) But to sure, we'll check:
                         id invalidity = CFBridgingRelease(invalidityRef);
@@ -115,28 +115,28 @@ NSString *formattedStringForCertificates(NSArray *value) {
                     } else {
                         NSLog(@"No invalidity values in '%@' certificate, dictionary = %@", summary, valuesDict);
                     }
-                    
+
                     CFRelease(valuesDict);
                 } else {
                     NSLog(@"Could not get values in '%@' certificate, error = %@", summary, error);
                 }
-                
+
                 [certificateDetails addObject:detailsDict];
             } else {
                 NSLog(@"Could not get summary from certificate");
             }
-            
+
             CFRelease(certificateRef);
         }
     }
-    
+
     NSMutableString *certificates = [NSMutableString string];
     [certificates appendString:@"<table>\n"];
-    
+
     NSArray *sortedCertificateDetails = [certificateDetails sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
         return [((NSDictionary *)obj1)[devCertSummaryKey] compare:((NSDictionary *)obj2)[devCertSummaryKey]];
     }];
-    
+
     for (NSDictionary *detailsDict in sortedCertificateDetails) {
         NSString *summary = detailsDict[devCertSummaryKey];
         NSDate *invalidityDate = detailsDict[devCertInvalidityDateKey];
@@ -147,7 +147,7 @@ NSString *formattedStringForCertificates(NSArray *value) {
         [certificates appendFormat:@"<tr><td>%@</td><td>%@</td></tr>\n", summary, expiration];
     }
     [certificates appendString:@"</table>\n"];
-    
+
     return [certificates copy];
 }
 
@@ -178,13 +178,13 @@ NSDictionary *formattedDevicesData(NSArray *value) {
 }
 
 NSString *formattedDictionaryWithReplacements(NSDictionary *dictionary, NSDictionary *replacements) {
-    
+
     NSMutableString *string = [NSMutableString string];
-    
+
     for (NSString *key in dictionary) {
         NSString *localizedKey = replacements[key] ?: key;
         NSObject *object = dictionary[key];
-        
+
         if ([object isKindOfClass:[NSDictionary class]]) {
             object = formattedDictionaryWithReplacements((NSDictionary *)object, replacements);
             [string appendFormat:@"%@:<div class=\"list\">%@</div>", localizedKey, object];
@@ -197,7 +197,7 @@ NSString *formattedDictionaryWithReplacements(NSDictionary *dictionary, NSDictio
             [string appendFormat:@"%@: %@<br />", localizedKey, object];
         }
     }
-    
+
     return string;
 }
 
@@ -205,7 +205,7 @@ NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePat
     // read the CFBundleExecutable and extract it
     NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:infoPlistData options:0 format:NULL error:NULL];
     NSString *bundleExecutable = [appPropertyList objectForKey:@"CFBundleExecutable"];
-    
+
     NSString *binaryPath = [basePath stringByAppendingPathComponent:bundleExecutable];
     // get entitlements: codesign -d <AppBinary> --entitlements :-
     NSPipe *codesignPipe = [NSPipe pipe];
@@ -216,7 +216,7 @@ NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePat
     [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @":-"]];
     [codesignTask launch];
     [codesignTask waitUntilExit];
-    
+
     // save output of codesign task
     NSData *codesignEntitlementsData = [codesignOutputFile readDataToEndOfFile];
     [codesignOutputFile closeFile];
@@ -231,14 +231,14 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         NSString* tempDirFolder = [NSTemporaryDirectory() stringByAppendingPathComponent:kPluginBundleId];
         NSString* currentTempDirFolder = [tempDirFolder stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
         [fileManager createDirectoryAtPath:currentTempDirFolder withIntermediateDirectories:YES attributes:nil error:nil];
-		
+
         NSURL *URL = (__bridge NSURL *)url;
         NSString *dataType = (__bridge NSString *)contentTypeUTI;
         NSData *provisionData = nil;
         NSData *appPlist = nil;
         NSData *codesignEntitlementsData = nil;
         NSImage *appIcon = nil;
-        
+
         if([dataType isEqualToString:kDataType_ipa]) {
             // get the embedded provisioning & plist from an app archive using: unzip -u -j -d <currentTempDirFolder> <URL> <files to unzip>
             NSTask *unzipTask = [NSTask new];
@@ -247,23 +247,23 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 			[unzipTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], @"Payload/*.app/embedded.mobileprovision", @"Payload/*.app/Info.plist"]];
 			[unzipTask launch];
 			[unzipTask waitUntilExit];
-            
+
             NSString *provisionPath = [currentTempDirFolder stringByAppendingPathComponent:@"embedded.mobileprovision"];
 			provisionData = [NSData dataWithContentsOfFile:provisionPath];
             NSString *plistPath = [currentTempDirFolder stringByAppendingPathComponent:@"Info.plist"];
 			appPlist = [NSData dataWithContentsOfFile:plistPath];
-            
+
             // read codesigning entitlements from application binary (extract it first)
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
             NSString *bundleExecutable = [appPropertyList objectForKey:@"CFBundleExecutable"];
-            
+
             NSTask *unzipAppTask = [NSTask new];
             [unzipAppTask setLaunchPath:@"/usr/bin/unzip"];
             [unzipAppTask setStandardOutput:[NSPipe pipe]];
             [unzipAppTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], [@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable]]];
             [unzipAppTask launch];
             [unzipAppTask waitUntilExit];
-            
+
             codesignEntitlementsData = codesignEntitlementsDataFromApp(appPlist, currentTempDirFolder);
 
             [fileManager removeItemAtPath:tempDirFolder error:nil];
@@ -271,7 +271,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             // use provisioning directly
             provisionData = [NSData dataWithContentsOfURL:URL];
         }
-        
+
         NSMutableDictionary *synthesizedInfo = [NSMutableDictionary dictionary];
         NSURL *htmlURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"template" withExtension:@"html"];
         NSMutableString *html = [NSMutableString stringWithContentsOfURL:htmlURL encoding:NSUTF8StringEncoding error:NULL];
@@ -281,10 +281,10 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         NSCalendar *calendar = [NSCalendar currentCalendar];
         id value = nil;
         NSString *synthesizedValue = nil;
-        
+
         if (!provisionData) {
 			NSLog(@"No provisionData for %@", URL);
-            
+
             if([dataType isEqualToString:kDataType_ipa]) {
                 [synthesizedInfo setObject:@"hiddenDiv" forKey:@"ProvisionInfo"];
             } else {
@@ -293,10 +293,10 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 		} else {
             [synthesizedInfo setObject:@"" forKey:@"ProvisionInfo"];
         }
-        
+
         if([dataType isEqualToString:kDataType_ipa]) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
-            
+
             NSString *bundleName = [appPropertyList objectForKey:@"CFBundleDisplayName"];
             if(!bundleName) {
                 bundleName = [appPropertyList objectForKey:@"CFBundleName"];
@@ -305,13 +305,13 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleIdentifier"] forKey:@"CFBundleIdentifier"];
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleShortVersionString"] forKey:@"CFBundleShortVersionString"];
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleVersion"] forKey:@"CFBundleVersion"];
-            
+
             NSString *sdkName = [appPropertyList objectForKey:@"DTSDKName"] ?: @"";
             [synthesizedInfo setObject:sdkName forKey:@"DTSDKName"];
-            
+
             NSString *minimumOSVersion = [appPropertyList objectForKey:@"MinimumOSVersion"] ?: @"";
             [synthesizedInfo setObject:minimumOSVersion forKey:@"MinimumOSVersion"];
-            
+
             NSDictionary *appTransportSecurity = [appPropertyList objectForKey:@"NSAppTransportSecurity"];
             NSString *appTransportSecurityFormatted = @"No exceptions";
             if ([appTransportSecurity isKindOfClass:[NSDictionary class]]) {
@@ -321,7 +321,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                                                 @"NSAllowsArbitraryLoadsInWebContent": @"Allows Arbitrary Loads in Web Content",
                                                 @"NSExceptionDomains": @"Exception Domains"
                                                 };
-                
+
                 NSString *formattedDictionaryString = formattedDictionaryWithReplacements(appTransportSecurity, localizedKeys);
                 appTransportSecurityFormatted = [NSString stringWithFormat:@"<div class=\"list\">%@</div>", formattedDictionaryString];
             }
@@ -331,10 +331,9 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                     appTransportSecurityFormatted = @"Not applicable before iOS 9.0";
                 }
             }
-            
+
             [synthesizedInfo setObject:appTransportSecurityFormatted forKey:@"AppTransportSecurityFormatted"];
-            
-            
+
             NSString *iconName = mainIconNameForApp(appPropertyList);
             appIcon = imageFromApp(URL, dataType, iconName);
             
@@ -347,13 +346,13 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 }
             }
             [synthesizedInfo setObject:[platforms componentsJoinedByString:@", "] forKey:@"UIDeviceFamily"];
-            
+
             if(!appIcon) {
                 NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"defaultIcon" withExtension:@"png"];
                 appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
             }
             appIcon = roundCorners(appIcon);
-            
+
             NSData *imageData = [appIcon TIFFRepresentation];
             NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
             imageData = [imageRep representationUsingType:NSPNGFileType properties:@{}];
@@ -365,7 +364,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             [synthesizedInfo setObject:@"hiddenDiv" forKey:@"AppInfo"];
             [synthesizedInfo setObject:@"" forKey:@"ProvisionAsSubheader"];
         }
-        
+
         CMSDecoderRef decoder = NULL;
         CMSDecoderCreate(&decoder);
         CMSDecoderUpdateMessage(decoder, provisionData.bytes, provisionData.length);
@@ -374,11 +373,11 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         CMSDecoderCopyContent(decoder, &dataRef);
         NSData *data = (NSData *)CFBridgingRelease(dataRef);
         CFRelease(decoder);
-        
+
         if ((!data && ![dataType isEqualToString:kDataType_ipa]) || QLPreviewRequestIsCancelled(preview)) {
             return noErr;
         }
-        
+
         if(data) {
             // use all keys and values in the property list to generate replacement tokens and values
             NSDictionary *propertyList = [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:NULL];
@@ -387,14 +386,14 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 NSString *replacementToken = [NSString stringWithFormat:@"__%@__", key];
                 [html replaceOccurrencesOfString:replacementToken withString:replacementValue options:0 range:NSMakeRange(0, [html length])];
             }
-            
+
             // synthesize other replacement tokens and values
             value = [propertyList objectForKey:@"CreationDate"];
             if ([value isKindOfClass:[NSDate class]]) {
                 NSDate *date = (NSDate *)value;
                 synthesizedValue = [dateFormatter stringFromDate:date];
                 [synthesizedInfo setObject:synthesizedValue forKey:@"CreationDateFormatted"];
-                
+
                 NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:date toDate:[NSDate date] options:0];
                 if (dateComponents.day == 0) {
                     synthesizedValue = @"Created today";
@@ -403,16 +402,16 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 }
                 [synthesizedInfo setObject:synthesizedValue forKey:@"CreationSummary"];
             }
-            
+
             value = [propertyList objectForKey:@"ExpirationDate"];
             if ([value isKindOfClass:[NSDate class]]) {
                 NSDate *date = (NSDate *)value;
                 synthesizedValue = [dateFormatter stringFromDate:date];
                 [synthesizedInfo setObject:synthesizedValue forKey:@"ExpirationDateFormatted"];
-                
+
                 synthesizedValue = expirationStringForDateInCalendar(date, calendar);
                 [synthesizedInfo setObject:synthesizedValue forKey:@"ExpirationSummary"];
-                
+
                 int expStatus = expirationStatus(date, calendar);
                 if(expStatus == 0) {
                     synthesizedValue = @"expired";
@@ -423,21 +422,21 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 }
                 [synthesizedInfo setObject:synthesizedValue forKey:@"ExpStatus"];
             }
-            
+
             value = [propertyList objectForKey:@"TeamIdentifier"];
             if ([value isKindOfClass:[NSArray class]]) {
                 NSArray *array = (NSArray *)value;
                 synthesizedValue = [array componentsJoinedByString:@", "];
                 [synthesizedInfo setObject:synthesizedValue forKey:@"TeamIds"];
             }
-            
+
             if (codesignEntitlementsData != nil) {
                 // read the entitlements directly from the codesign output
                 NSDictionary *entitlementsPropertyList = [NSPropertyListSerialization propertyListWithData:codesignEntitlementsData options:0 format:NULL error:NULL];
                 NSMutableString *dictionaryFormatted = [NSMutableString string];
                 displayKeyAndValue(0, nil, entitlementsPropertyList, dictionaryFormatted);
                 synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", dictionaryFormatted];
-                
+
                 [synthesizedInfo setObject:synthesizedValue forKey:@"EntitlementsFormatted"];
             } else {
                 // read the entitlements from the provisioning profile instead
@@ -447,20 +446,20 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                     NSMutableString *dictionaryFormatted = [NSMutableString string];
                     displayKeyAndValue(0, nil, dictionary, dictionaryFormatted);
                     synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", dictionaryFormatted];
-                    
+
                     [synthesizedInfo setObject:synthesizedValue forKey:@"EntitlementsFormatted"];
                 } else {
                     [synthesizedInfo setObject:@"No Entitlements" forKey:@"EntitlementsFormatted"];
                 }
             }
-            
+
             value = [propertyList objectForKey:@"DeveloperCertificates"];
             if ([value isKindOfClass:[NSArray class]]) {
                 [synthesizedInfo setObject:formattedStringForCertificates(value) forKey:@"DeveloperCertificatesFormatted"];
             } else {
                 [synthesizedInfo setObject:@"No Developer Certificates" forKey:@"DeveloperCertificatesFormatted"];
             }
-            
+
             value = [propertyList objectForKey:@"ProvisionedDevices"];
             if ([value isKindOfClass:[NSArray class]]) {
                 [synthesizedInfo addEntriesFromDictionary:formattedDevicesData(value)];
@@ -468,7 +467,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 [synthesizedInfo setObject:@"No Devices" forKey:@"ProvisionedDevicesFormatted"];
                 [synthesizedInfo setObject:@"Distribution Profile" forKey:@"ProvisionedDevicesCount"];
             }
-            
+
             {
                 NSString *profileString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
                 profileString = [profileString stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"];
@@ -485,7 +484,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", profileString];
                 [synthesizedInfo setObject:synthesizedValue forKey:@"RawData"];
             }
-            
+
             // older provisioning files don't include some key/value pairs
             value = [propertyList objectForKey:@"TeamName"];
             if (! value) {
@@ -499,7 +498,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             if (! value) {
                 [synthesizedInfo setObject:@"<em>App name not available</em>" forKey:@"AppIDName"];
             }
-            
+
             // determine the profile type
             BOOL getTaskAllow = NO;
             value = [propertyList objectForKey:@"Entitlements"];
@@ -507,18 +506,18 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 NSDictionary *dictionary = (NSDictionary *)value;
                 getTaskAllow = [[dictionary valueForKey:@"get-task-allow"] boolValue];
             }
-            
+
             BOOL hasDevices = NO;
             value = [propertyList objectForKey:@"ProvisionedDevices"];
             if ([value isKindOfClass:[NSArray class]]) {
                 hasDevices = YES;
             }
-            
+
             BOOL isEnterprise = [[propertyList objectForKey:@"ProvisionsAllDevices"] boolValue];
-            
+
             if ([dataType isEqualToString:kDataType_osx_provision]) {
                 [synthesizedInfo setObject:@"mac" forKey:@"Platform"];
-                
+
                 [synthesizedInfo setObject:@"Mac" forKey:@"ProfilePlatform"];
                 if (hasDevices) {
                     [synthesizedInfo setObject:@"Development" forKey:@"ProfileType"];
@@ -527,7 +526,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 }
             } else {
                 [synthesizedInfo setObject:@"ios" forKey:@"Platform"];
-                
+
                 [synthesizedInfo setObject:@"iOS" forKey:@"ProfilePlatform"];
                 if (hasDevices) {
                     if (getTaskAllow) {
@@ -544,18 +543,18 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 }
             }
         }
-        
+
         {
             [synthesizedInfo setObject:[URL lastPathComponent] forKey:@"FileName"];
-            
+
             if ([[URL pathExtension] isEqualToString:@"app"] || [[URL pathExtension] isEqualToString:@"appex"]) {
                 // get the "file" information using the application package folder
                 NSString *folderPath = [URL path];
-                
+
                 NSDictionary *folderAttributes = [fileManager attributesOfItemAtPath:folderPath error:NULL];
                 if (folderAttributes) {
                     NSDate *folderModificationDate = [folderAttributes fileModificationDate];
-                    
+
                     unsigned long long folderSize = 0;
                     NSArray *filesArray = [fileManager subpathsOfDirectoryAtPath:folderPath error:nil];
                     for (NSString *fileName in filesArray) {
@@ -563,7 +562,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                         if (fileAttributes)
                             folderSize += [fileAttributes fileSize];
                     }
-                    
+
                     synthesizedValue = [NSString stringWithFormat:@"%@, Modified %@",
                                         [NSByteCountFormatter stringFromByteCount:folderSize countStyle:NSByteCountFormatterCountStyleFile],
                                         [dateFormatter stringFromDate:folderModificationDate]];
@@ -576,7 +575,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 if (fileAttributes) {
                     NSDate *fileModificationDate = [fileAttributes fileModificationDate];
                     unsigned long long fileSize = [fileAttributes fileSize];
-                    
+
                     synthesizedValue = [NSString stringWithFormat:@"%@, Modified %@",
                                         [NSByteCountFormatter stringFromByteCount:fileSize countStyle:NSByteCountFormatterCountStyleFile],
                                         [dateFormatter stringFromDate:fileModificationDate]];
@@ -584,31 +583,31 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 }
             }
         }
-        
+
 #ifdef DEBUG
         [synthesizedInfo setObject:@"(debug)" forKey:@"DEBUG"];
 #else
         [synthesizedInfo setObject:@"" forKey:@"DEBUG"];
 #endif
-        
+
         {
             synthesizedValue = [[NSBundle bundleWithIdentifier:kPluginBundleId] objectForInfoDictionaryKey:@"CFBundleVersion"];
             [synthesizedInfo setObject:synthesizedValue forKey:@"BundleVersion"];
         }
-        
+
         for (NSString *key in [synthesizedInfo allKeys]) {
             NSString *replacementValue = [synthesizedInfo objectForKey:key];
             NSString *replacementToken = [NSString stringWithFormat:@"__%@__", key];
             [html replaceOccurrencesOfString:replacementToken withString:replacementValue options:0 range:NSMakeRange(0, [html length])];
         }
-        
+
         NSDictionary *properties = @{ // properties for the HTML data
                                      (__bridge NSString *)kQLPreviewPropertyTextEncodingNameKey : @"UTF-8",
                                      (__bridge NSString *)kQLPreviewPropertyMIMETypeKey : @"text/html" };
-        
+
         QLPreviewRequestSetDataRepresentation(preview, (__bridge CFDataRef)[html dataUsingEncoding:NSUTF8StringEncoding], kUTTypeHTML, (__bridge CFDictionaryRef)properties);
 	}
-	
+
 	return noErr;
 }
 

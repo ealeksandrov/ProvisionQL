@@ -35,7 +35,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
         NSImage *appIcon = nil;
         NSUInteger devicesCount = 0;
         int expStatus = 0;
-        
+
         if([dataType isEqualToString:kDataType_ipa]) {
             // get the embedded plist from an app arcive using: unzip -p <URL> 'Payload/*.app/Info.plist' (piped to standard output)
             NSTask *unzipTask = [NSTask new];
@@ -44,23 +44,23 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             [unzipTask setArguments:@[@"-p", [URL path], @"Payload/*.app/Info.plist"]];
             [unzipTask launch];
             [unzipTask waitUntilExit];
-            
+
             appPlist = [[[unzipTask standardOutput] fileHandleForReading] readDataToEndOfFile];
         } else {
             // use provisioning directly
             provisionData = [NSData dataWithContentsOfURL:URL];
         }
-        
+
         if (QLThumbnailRequestIsCancelled(thumbnail)) {
             return noErr;
         }
-        
+
         NSDictionary *propertiesDict = nil;
         if([dataType isEqualToString:kDataType_ipa]) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
             NSString *iconName = mainIconNameForApp(appPropertyList);
             appIcon = imageFromApp(URL, dataType, iconName);
-            
+
             if(!appIcon) {
                 NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"defaultIcon" withExtension:@"png"];
                 appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
@@ -75,12 +75,12 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
                 appIcon = [[NSWorkspace sharedWorkspace] iconForFileType:dataType];
                 [appIcon setSize:NSMakeSize(512,512)];
             }
-            
+
             if (!provisionData) {
                 NSLog(@"No provisionData for %@", URL);
                 return noErr;
             }
-            
+
             CMSDecoderRef decoder = NULL;
             CMSDecoderCreate(&decoder);
             CMSDecoderUpdateMessage(decoder, provisionData.bytes, provisionData.length);
@@ -89,43 +89,43 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             CMSDecoderCopyContent(decoder, &dataRef);
             NSData *data = (NSData *)CFBridgingRelease(dataRef);
             CFRelease(decoder);
-            
+
             if (!data || QLThumbnailRequestIsCancelled(thumbnail)) {
                 return noErr;
             }
-            
+
             NSDictionary *propertyList = [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:NULL];
             id value = [propertyList objectForKey:@"ProvisionedDevices"];
             if ([value isKindOfClass:[NSArray class]]) {
                 devicesCount = [value count];
             }
-            
+
             value = [propertyList objectForKey:@"ExpirationDate"];
             if ([value isKindOfClass:[NSDate class]]) {
                 expStatus = expirationStatus(value,[NSCalendar currentCalendar]);
             }
         }
-        
+
         if (QLThumbnailRequestIsCancelled(thumbnail)) {
             return noErr;
         }
-        
+
         NSSize canvasSize = appIcon.size;
         NSRect renderRect = NSMakeRect(0.0, 0.0, appIcon.size.width, appIcon.size.height);
-        
+
         CGContextRef _context = QLThumbnailRequestCreateContext(thumbnail, canvasSize, false, (__bridge CFDictionaryRef)propertiesDict);
         if (_context) {
             NSGraphicsContext* _graphicsContext = [NSGraphicsContext graphicsContextWithGraphicsPort:(void *)_context flipped:NO];
-            
+
             [NSGraphicsContext setCurrentContext:_graphicsContext];
             if([dataType isEqualToString:kDataType_ipa]) {
                 [appIcon drawInRect:renderRect];
             } else {
                 [appIcon drawInRect:renderRect];
-                
+
                 NSString *badge = [NSString stringWithFormat:@"%lu",(unsigned long)devicesCount];
                 NSColor *outlineColor;
-                
+
                 if(expStatus == 2) {
                     outlineColor = BADGE_VALID_COLOR;
                 } else if(expStatus == 1) {
@@ -133,17 +133,17 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
                 } else {
                     outlineColor = BADGE_EXPIRED_COLOR;
                 }
-                
+
                 NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
                 paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
                 paragraphStyle.alignment = kCTTextAlignmentCenter;
-                
+
                 NSDictionary *attrDict = @{NSFontAttributeName : BADGE_FONT, NSForegroundColorAttributeName : outlineColor, NSParagraphStyleAttributeName: paragraphStyle};
-                
+
                 NSSize badgeNumSize = [badge sizeWithAttributes:attrDict];
                 int badgeWidth = badgeNumSize.width + BADGE_MARGIN * 2;
                 badgeWidth = MAX(badgeWidth, MIN_BADGE_WIDTH);
-                
+
                 int badgeX = renderRect.origin.x + BADGE_MARGIN_X;
                 int badgeY = renderRect.origin.y + renderRect.size.height - BADGE_HEIGHT - BADGE_MARGIN_Y;
                 if(!iconMode) {
@@ -152,22 +152,22 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
                 }
                 int badgeNumX = badgeX + BADGE_MARGIN;
                 NSRect badgeRect = NSMakeRect(badgeX, badgeY, badgeWidth, BADGE_HEIGHT);
-                
+
                 NSBezierPath *badgePath = [NSBezierPath bezierPathWithRoundedRect:badgeRect xRadius:10 yRadius:10];
                 [badgePath setLineWidth:8.0];
                 [BADGE_BG_COLOR set];
                 [badgePath fill];
                 [outlineColor set];
                 [badgePath stroke];
-                
+
                 [badge drawAtPoint:NSMakePoint(badgeNumX,badgeY) withAttributes:attrDict];
             }
-            
+
             QLThumbnailRequestFlushContext(thumbnail, _context);
             CFRelease(_context);
         }
     }
-    
+
     return noErr;
 }
 

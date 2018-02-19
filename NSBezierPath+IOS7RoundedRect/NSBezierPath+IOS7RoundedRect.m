@@ -21,7 +21,7 @@
     NSBezierPath* path = NSBezierPath.bezierPath;
     CGFloat limit = MIN(rect.size.width, rect.size.height) / 2 / 1.52866483;
     CGFloat limitedRadius = MIN(radius, limit);
-    
+
     [path moveToPoint: TOP_LEFT(1.52866483, 0.00000000)];
     [path lineToPoint: TOP_RIGHT(1.52866471, 0.00000000)];
     [path curveToPoint: TOP_RIGHT(0.66993427, 0.06549600) controlPoint1: TOP_RIGHT(1.08849323, 0.00000000) controlPoint2: TOP_RIGHT(0.86840689, 0.00000000)];

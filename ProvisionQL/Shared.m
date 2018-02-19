@@ -4,25 +4,25 @@ NSImage *roundCorners(NSImage *image) {
     NSImage *existingImage = image;
     NSSize existingSize = [existingImage size];
     NSImage *composedImage = [[NSImage alloc] initWithSize:existingSize];
-    
+
     [composedImage lockFocus];
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
-    
+
     NSRect imageFrame = NSRectFromCGRect(CGRectMake(0, 0, existingSize.width, existingSize.height));
     NSBezierPath *clipPath = [NSBezierPath bezierPathWithIOS7RoundedRect:imageFrame cornerRadius:existingSize.width*0.225];
     [clipPath setWindingRule:NSEvenOddWindingRule];
     [clipPath addClip];
-    
+
     [image drawAtPoint:NSZeroPoint fromRect:NSMakeRect(0, 0, existingSize.width, existingSize.height) operation:NSCompositeSourceOver fraction:1];
-    
+
     [composedImage unlockFocus];
-    
+
     return composedImage;
 }
 
 int expirationStatus(NSDate *date, NSCalendar *calendar) {
 	int result = 0;
-	
+
 	if (date) {
 		NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:[NSDate date] toDate:date options:0];
         if([date compare: [NSDate date]] == NSOrderedAscending) {
@@ -33,13 +33,13 @@ int expirationStatus(NSDate *date, NSCalendar *calendar) {
 			result = 2;
 		}
 	}
-    
+
 	return result;
 }
 
 NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
     NSImage *appIcon = nil;
-    
+
     if([dataType isEqualToString:kDataType_ipa]) {
         // get the embedded icon from an app arcive using: unzip -p <URL> 'Payload/*.app/<fileName>' (piped to standard output)
         NSTask *unzipTask = [NSTask new];
@@ -48,17 +48,17 @@ NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
         [unzipTask setArguments:@[@"-p", [URL path], [NSString stringWithFormat:@"Payload/*.app/%@",fileName]]];
         [unzipTask launch];
         [unzipTask waitUntilExit];
-        
+
         appIcon = [[NSImage alloc] initWithData:[[[unzipTask standardOutput] fileHandleForReading] readDataToEndOfFile]];
     }
-    
+
     return appIcon;
 }
 
 NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
     id icons;
     NSString *iconName;
-    
+
     //Check for CFBundleIcons (since 5.0)
     id iconsDict = [appPropertyList objectForKey:@"CFBundleIcons"];
     if([iconsDict isKindOfClass:[NSDictionary class]]) {
@@ -70,7 +70,7 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
             }
         }
     }
-    
+
     if(!icons) {
         //Check for CFBundleIconFiles (since 3.2)
         id tempIcons = [appPropertyList objectForKey:@"CFBundleIconFiles"];
@@ -78,11 +78,11 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
             icons = tempIcons;
         }
     }
-    
+
     if(icons) {
         //Search some patterns for primary app icon (120x120)
         NSArray *matches = @[@"120",@"60",@"@2x"];
-        
+
         for (NSString *match in matches) {
             NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains[c] %@",match];
             NSArray *results = [icons filteredArrayUsingPredicate:predicate];
@@ -97,7 +97,7 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
                 break;
             }
         }
-        
+
         //If no one matches any pattern, just take first item
         if(!iconName) {
             iconName = [icons firstObject];
@@ -109,7 +109,7 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
             iconName = legacyIcon;
         }
     }
-    
+
     //Load NSImage
     if([iconName length]) {
         if(![[iconName pathExtension] length]) {
@@ -117,6 +117,6 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
         }
         return iconName;
     }
-    
+
     return nil;
 }
