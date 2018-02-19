@@ -32,6 +32,10 @@
                 .info .list {
                     padding-left: 20px;
                 }
+            
+                .icon {
+                    padding-right: 20px;
+                }
 
                 .info > .list {
                     display: inline-block;
@@ -104,7 +108,7 @@
     <body>
         <div class="app __AppInfo__">
             <h1>App info</h1>
-            <div class="floatLeft"><img alt="App icon" src="data:image/png;base64,__AppIcon__"/></div>
+            <div class="floatLeft icon"><img alt="App icon" src="data:image/png;base64,__AppIcon__"/></div>
             <div class="floatLeft info">
 				Name: <strong>__CFBundleName__</strong><br />
 				Version: __CFBundleShortVersionString__ (__CFBundleVersion__)<br />
@@ -112,9 +116,10 @@
 				DeviceFamily: __UIDeviceFamily__<br />
                 SDK: __DTSDKName__<br />
                 Minimum OS Version: __MinimumOSVersion__<br />
-                <div class="subsection">App Transport Security:</div> __AppTransportSecurityFormatted__
             </div>
             <br class="clear" />
+            <h2>App Transport Security</h2>
+            __AppTransportSecurityFormatted__
         </div>
 
         <div class="provision __ProvisionInfo__">
