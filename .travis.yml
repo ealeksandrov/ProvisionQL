@@ -1,0 +1,4 @@
+language: objective-c
+osx_image: xcode9
+script:
+  - set -o pipefail && xcodebuild -project ProvisionQL.xcodeproj -scheme ProvisionQL | xcpretty
