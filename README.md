@@ -50,3 +50,7 @@ Just clone the repository, open `ProvisionQL.xcodeproj` and build active target.
 * Download archive with latest version from the [Releases](https://github.com/ealeksandrov/ProvisionQL/releases) page.
 * Move `ProvisionQL.qlgenerator` to `~/Library/QuickLook/`(current user) or `/Library/QuickLook/`(all users).
 * run `qlmanage -r` to refresh Quick Look plugins list.
+
+## License
+
+`ProvisionQL` is available under the MIT license. See the [LICENSE.md](LICENSE.md) file for more info.
