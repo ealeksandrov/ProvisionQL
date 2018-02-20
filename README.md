@@ -11,6 +11,8 @@ Inspired by number of existing alternatives, the goal of this project is to prov
 
 Thumbnails will show app icon for `.ipa`/ `.xcarchive` or expiring status and device count for `.mobileprovision`. Quick look preview will give a lot of information, including devices UUIDs, certificates, entitlements and much more.
 
+![Valid AdHoc provision](https://raw.github.com/ealeksandrov/ProvisionQL/master/Screenshots/2.png)
+
 Supporting file types:
 
 * `.ipa` - iOS packaged application
