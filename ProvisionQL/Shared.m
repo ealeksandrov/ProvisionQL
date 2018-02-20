@@ -54,7 +54,7 @@ NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
         NSTask *unzipTask = [NSTask new];
         [unzipTask setLaunchPath:@"/usr/bin/unzip"];
         [unzipTask setStandardOutput:[NSPipe pipe]];
-        [unzipTask setArguments:@[@"-p", [URL path], [NSString stringWithFormat:@"Payload/*.app/%@", fileName]]];
+        [unzipTask setArguments:@[@"-p", [URL path], [NSString stringWithFormat:@"Payload/*.app/%@", fileName], @"-x", @"*/*/*/*"]];
         [unzipTask launch];
         [unzipTask waitUntilExit];
 

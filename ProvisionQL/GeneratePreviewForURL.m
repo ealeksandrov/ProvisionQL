@@ -252,7 +252,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             NSTask *unzipTask = [NSTask new];
 			[unzipTask setLaunchPath:@"/usr/bin/unzip"];
 			[unzipTask setStandardOutput:[NSPipe pipe]];
-			[unzipTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], @"Payload/*.app/embedded.mobileprovision", @"Payload/*.app/Info.plist"]];
+			[unzipTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], @"Payload/*.app/embedded.mobileprovision", @"Payload/*.app/Info.plist", @"-x", @"*/*/*/*"]];
 			[unzipTask launch];
 			[unzipTask waitUntilExit];
 
@@ -268,7 +268,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             NSTask *unzipAppTask = [NSTask new];
             [unzipAppTask setLaunchPath:@"/usr/bin/unzip"];
             [unzipAppTask setStandardOutput:[NSPipe pipe]];
-            [unzipAppTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], [@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable]]];
+            [unzipAppTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], [@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable], @"-x", @"*/*/*/*"]];
             [unzipAppTask launch];
             [unzipAppTask waitUntilExit];
 

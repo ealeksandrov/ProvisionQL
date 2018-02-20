@@ -50,7 +50,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             NSTask *unzipTask = [NSTask new];
             [unzipTask setLaunchPath:@"/usr/bin/unzip"];
             [unzipTask setStandardOutput:[NSPipe pipe]];
-            [unzipTask setArguments:@[@"-p", [URL path], @"Payload/*.app/Info.plist"]];
+            [unzipTask setArguments:@[@"-p", [URL path], @"Payload/*.app/Info.plist", @"-x", @"*/*/*/*"]];
             [unzipTask launch];
             [unzipTask waitUntilExit];
 
