@@ -34,6 +34,7 @@
 		55424C651870DB2A002F5408 /* NSBezierPath+IOS7RoundedRect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBezierPath+IOS7RoundedRect.h"; sourceTree = "<group>"; };
 		55424C661870DB2A002F5408 /* NSBezierPath+IOS7RoundedRect.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBezierPath+IOS7RoundedRect.m"; sourceTree = "<group>"; };
 		55457C11203C4A9E00ED02E5 /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
+		55457C12203C4A9E00ED02E5 /* CHANGELOG.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
 		55457C13203C4A9E00ED02E5 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		555E9512186E2D67001D406A /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		555E9513186E2D67001D406A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -83,6 +84,7 @@
 		55457C10203C4A7500ED02E5 /* Metadata */ = {
 			isa = PBXGroup;
 			children = (
+				55457C12203C4A9E00ED02E5 /* CHANGELOG.md */,
 				55457C13203C4A9E00ED02E5 /* README.md */,
 				55457C11203C4A9E00ED02E5 /* LICENSE.md */,
 			);
