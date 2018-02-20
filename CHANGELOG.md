@@ -1,6 +1,6 @@
 # ProvisionQL
 
-## Upcoming
+## Version 1.4.0
 
 * Adds parsing code signing entitlements from the application binary ([#16](https://github.com/ealeksandrov/ProvisionQL/pull/16) and [#3](https://github.com/ealeksandrov/ProvisionQL/issues/3))
 * Adds xcarchives support (`.xcarchive`) ([#10](https://github.com/ealeksandrov/ProvisionQL/issues/10))
