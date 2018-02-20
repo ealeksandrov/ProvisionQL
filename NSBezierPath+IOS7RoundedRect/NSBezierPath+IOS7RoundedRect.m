@@ -16,9 +16,8 @@
 #define BOTTOM_LEFT(X, Y) NSMakePoint(rect.origin.x + X * limitedRadius, rect.origin.y + rect.size.height - Y * limitedRadius)
 
 
-+ (NSBezierPath*)bezierPathWithIOS7RoundedRect: (NSRect)rect cornerRadius: (CGFloat)radius;
-{
-    NSBezierPath* path = NSBezierPath.bezierPath;
++ (NSBezierPath *)bezierPathWithIOS7RoundedRect:(NSRect)rect cornerRadius:(CGFloat)radius {
+    NSBezierPath *path = NSBezierPath.bezierPath;
     CGFloat limit = MIN(rect.size.width, rect.size.height) / 2 / 1.52866483;
     CGFloat limitedRadius = MIN(radius, limit);
 
@@ -48,5 +47,3 @@
 }
 
 @end
-
-

@@ -236,8 +236,8 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
     @autoreleasepool {
         // create temp directory
 		NSFileManager *fileManager = [NSFileManager defaultManager];
-        NSString* tempDirFolder = [NSTemporaryDirectory() stringByAppendingPathComponent:kPluginBundleId];
-        NSString* currentTempDirFolder = [tempDirFolder stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
+        NSString *tempDirFolder = [NSTemporaryDirectory() stringByAppendingPathComponent:kPluginBundleId];
+        NSString *currentTempDirFolder = [tempDirFolder stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
         [fileManager createDirectoryAtPath:currentTempDirFolder withIntermediateDirectories:YES attributes:nil error:nil];
 
         NSURL *URL = (__bridge NSURL *)url;
@@ -314,7 +314,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         if (!provisionData) {
 			NSLog(@"No provisionData for %@", URL);
 
-            if ([dataType isEqualToString:kDataType_ipa]) {
+            if ([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_xcode_archive]) {
                 [synthesizedInfo setObject:@"hiddenDiv" forKey:@"ProvisionInfo"];
             } else {
                 return noErr;
@@ -322,6 +322,8 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 		} else {
             [synthesizedInfo setObject:@"" forKey:@"ProvisionInfo"];
         }
+
+        // MARK: App Info
 
         if ([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_xcode_archive]) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
@@ -365,8 +367,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 
                 NSString *formattedDictionaryString = formattedDictionaryWithReplacements(appTransportSecurity, localizedKeys, 0);
                 appTransportSecurityFormatted = [NSString stringWithFormat:@"<div class=\"list\">%@</div>", formattedDictionaryString];
-            }
-            else {
+            } else {
                 double sdkNumber = [[sdkName stringByTrimmingCharactersInSet:[NSCharacterSet letterCharacterSet]] doubleValue];
                 if (sdkNumber < 9.0) {
                     appTransportSecurityFormatted = @"Not applicable before iOS 9.0";
@@ -406,6 +407,8 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             [synthesizedInfo setObject:@"" forKey:@"ProvisionAsSubheader"];
         }
 
+        // MARK: Provisioning
+
         CMSDecoderRef decoder = NULL;
         CMSDecoderCreate(&decoder);
         CMSDecoderUpdateMessage(decoder, provisionData.bytes, provisionData.length);
@@ -415,7 +418,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         NSData *data = (NSData *)CFBridgingRelease(dataRef);
         CFRelease(decoder);
 
-        if ((!data && ![dataType isEqualToString:kDataType_ipa] && ![dataType isEqualToString:kDataType_xcode_archive]) || QLPreviewRequestIsCancelled(preview)) {
+        if ((!data && !([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_xcode_archive])) || QLPreviewRequestIsCancelled(preview)) {
             return noErr;
         }
 
@@ -585,45 +588,47 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             }
         }
 
-        {
-            [synthesizedInfo setObject:[URL lastPathComponent] forKey:@"FileName"];
+        // MARK: File Info
+        
+        [synthesizedInfo setObject:[URL lastPathComponent] forKey:@"FileName"];
 
-            if ([[URL pathExtension] isEqualToString:@"app"] || [[URL pathExtension] isEqualToString:@"appex"]) {
-                // get the "file" information using the application package folder
-                NSString *folderPath = [URL path];
+        if ([[URL pathExtension] isEqualToString:@"app"] || [[URL pathExtension] isEqualToString:@"appex"]) {
+            // get the "file" information using the application package folder
+            NSString *folderPath = [URL path];
 
-                NSDictionary *folderAttributes = [fileManager attributesOfItemAtPath:folderPath error:NULL];
-                if (folderAttributes) {
-                    NSDate *folderModificationDate = [folderAttributes fileModificationDate];
+            NSDictionary *folderAttributes = [fileManager attributesOfItemAtPath:folderPath error:NULL];
+            if (folderAttributes) {
+                NSDate *folderModificationDate = [folderAttributes fileModificationDate];
 
-                    unsigned long long folderSize = 0;
-                    NSArray *filesArray = [fileManager subpathsOfDirectoryAtPath:folderPath error:nil];
-                    for (NSString *fileName in filesArray) {
-                        NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:[folderPath stringByAppendingPathComponent:fileName] error:NULL];
-                        if (fileAttributes)
-                            folderSize += [fileAttributes fileSize];
-                    }
-
-                    synthesizedValue = [NSString stringWithFormat:@"%@, Modified %@",
-                                        [NSByteCountFormatter stringFromByteCount:folderSize countStyle:NSByteCountFormatterCountStyleFile],
-                                        [dateFormatter stringFromDate:folderModificationDate]];
-                    [synthesizedInfo setObject:synthesizedValue forKey:@"FileInfo"];
-                } else {
-                    [synthesizedInfo setObject:@"" forKey:@"FileInfo"];
+                unsigned long long folderSize = 0;
+                NSArray *filesArray = [fileManager subpathsOfDirectoryAtPath:folderPath error:nil];
+                for (NSString *fileName in filesArray) {
+                    NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:[folderPath stringByAppendingPathComponent:fileName] error:NULL];
+                    if (fileAttributes)
+                    folderSize += [fileAttributes fileSize];
                 }
+
+                synthesizedValue = [NSString stringWithFormat:@"%@, Modified %@",
+                                    [NSByteCountFormatter stringFromByteCount:folderSize countStyle:NSByteCountFormatterCountStyleFile],
+                                    [dateFormatter stringFromDate:folderModificationDate]];
+                [synthesizedInfo setObject:synthesizedValue forKey:@"FileInfo"];
             } else {
-                NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:[URL path] error:NULL];
-                if (fileAttributes) {
-                    NSDate *fileModificationDate = [fileAttributes fileModificationDate];
-                    unsigned long long fileSize = [fileAttributes fileSize];
-
-                    synthesizedValue = [NSString stringWithFormat:@"%@, Modified %@",
-                                        [NSByteCountFormatter stringFromByteCount:fileSize countStyle:NSByteCountFormatterCountStyleFile],
-                                        [dateFormatter stringFromDate:fileModificationDate]];
-                    [synthesizedInfo setObject:synthesizedValue forKey:@"FileInfo"];
-                }
+                [synthesizedInfo setObject:@"" forKey:@"FileInfo"];
+            }
+        } else {
+            NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:[URL path] error:NULL];
+            if (fileAttributes) {
+                NSDate *fileModificationDate = [fileAttributes fileModificationDate];
+                unsigned long long fileSize = [fileAttributes fileSize];
+                
+                synthesizedValue = [NSString stringWithFormat:@"%@, Modified %@",
+                                    [NSByteCountFormatter stringFromByteCount:fileSize countStyle:NSByteCountFormatterCountStyleFile],
+                                    [dateFormatter stringFromDate:fileModificationDate]];
+                [synthesizedInfo setObject:synthesizedValue forKey:@"FileInfo"];
             }
         }
+
+        // MARK: Footer
 
 #ifdef DEBUG
         [synthesizedInfo setObject:@"(debug)" forKey:@"DEBUG"];
@@ -631,10 +636,8 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         [synthesizedInfo setObject:@"" forKey:@"DEBUG"];
 #endif
 
-        {
-            synthesizedValue = [[NSBundle bundleWithIdentifier:kPluginBundleId] objectForInfoDictionaryKey:@"CFBundleVersion"];
-            [synthesizedInfo setObject:synthesizedValue forKey:@"BundleVersion"];
-        }
+        synthesizedValue = [[NSBundle bundleWithIdentifier:kPluginBundleId] objectForInfoDictionaryKey:@"CFBundleVersion"];
+        [synthesizedInfo setObject:synthesizedValue forKey:@"BundleVersion"];
 
         for (NSString *key in [synthesizedInfo allKeys]) {
             NSString *replacementValue = [synthesizedInfo objectForKey:key];
@@ -652,6 +655,6 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 	return noErr;
 }
 
-void CancelPreviewGeneration(void *thisInterface, QLPreviewRequestRef preview) {
+void CancelThumbnailGeneration(void *thisInterface, QLThumbnailRequestRef thumbnail) {
     // Implement only if supported
 }

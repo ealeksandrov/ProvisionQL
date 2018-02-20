@@ -10,6 +10,6 @@
 
 @interface NSBezierPath (IOS7RoundedRect)
 
-+ (NSBezierPath*)bezierPathWithIOS7RoundedRect: (NSRect)rect cornerRadius: (CGFloat)radius;
++ (NSBezierPath *)bezierPathWithIOS7RoundedRect:(NSRect)rect cornerRadius:(CGFloat)radius;
 
 @end

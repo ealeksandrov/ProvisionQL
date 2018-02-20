@@ -13,7 +13,6 @@
 		55424C671870DB2A002F5408 /* NSBezierPath+IOS7RoundedRect.h in Headers */ = {isa = PBXBuildFile; fileRef = 55424C651870DB2A002F5408 /* NSBezierPath+IOS7RoundedRect.h */; };
 		55424C681870DB2A002F5408 /* NSBezierPath+IOS7RoundedRect.m in Sources */ = {isa = PBXBuildFile; fileRef = 55424C661870DB2A002F5408 /* NSBezierPath+IOS7RoundedRect.m */; };
 		555E9515186E2D67001D406A /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 555E9512186E2D67001D406A /* main.c */; };
-		555E9517186E2D67001D406A /* Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 555E9514186E2D67001D406A /* Prefix.pch */; };
 		555E951C186E2DC0001D406A /* template.html in Resources */ = {isa = PBXBuildFile; fileRef = 555E9519186E2DC0001D406A /* template.html */; };
 		557C842218731FB7008A2A0C /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 557C842118731FB7008A2A0C /* WebKit.framework */; };
 		557C842618732599008A2A0C /* Shared.m in Sources */ = {isa = PBXBuildFile; fileRef = 557C842418732599008A2A0C /* Shared.m */; };
@@ -38,7 +37,6 @@
 		55457C13203C4A9E00ED02E5 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		555E9512186E2D67001D406A /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		555E9513186E2D67001D406A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		555E9514186E2D67001D406A /* Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Prefix.pch; sourceTree = "<group>"; };
 		555E9519186E2DC0001D406A /* template.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = template.html; sourceTree = "<group>"; };
 		555E951B186E2DC0001D406A /* install.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = install.sh; sourceTree = "<group>"; };
 		557C842118731FB7008A2A0C /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
@@ -96,7 +94,6 @@
 			children = (
 				555E9512186E2D67001D406A /* main.c */,
 				555E9513186E2D67001D406A /* Info.plist */,
-				555E9514186E2D67001D406A /* Prefix.pch */,
 			);
 			path = "Supporting-files";
 			sourceTree = "<group>";
@@ -173,7 +170,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				555E9517186E2D67001D406A /* Prefix.pch in Headers */,
 				55424C671870DB2A002F5408 /* NSBezierPath+IOS7RoundedRect.h in Headers */,
 				557C842818733828008A2A0C /* Shared.h in Headers */,
 			);
@@ -378,8 +374,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ProvisionQL/Supporting-files/Prefix.pch";
 				INFOPLIST_FILE = "ProvisionQL/Supporting-files/Info.plist";
 				INSTALL_PATH = /Library/QuickLook;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ealeksandrov.ProvisionQL;
@@ -392,8 +386,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ProvisionQL/Supporting-files/Prefix.pch";
 				INFOPLIST_FILE = "ProvisionQL/Supporting-files/Info.plist";
 				INSTALL_PATH = /Library/QuickLook;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ealeksandrov.ProvisionQL;

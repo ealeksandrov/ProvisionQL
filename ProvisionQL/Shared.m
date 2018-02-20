@@ -9,7 +9,7 @@ NSImage *roundCorners(NSImage *image) {
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
 
     NSRect imageFrame = NSRectFromCGRect(CGRectMake(0, 0, existingSize.width, existingSize.height));
-    NSBezierPath *clipPath = [NSBezierPath bezierPathWithIOS7RoundedRect:imageFrame cornerRadius:existingSize.width*0.225];
+    NSBezierPath *clipPath = [NSBezierPath bezierPathWithIOS7RoundedRect:imageFrame cornerRadius:existingSize.width * 0.225];
     [clipPath setWindingRule:NSEvenOddWindingRule];
     [clipPath addClip];
 
@@ -26,10 +26,13 @@ int expirationStatus(NSDate *date, NSCalendar *calendar) {
 	if (date) {
 		NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:[NSDate date] toDate:date options:0];
         if ([date compare: [NSDate date]] == NSOrderedAscending) {
+            // expired
 			result = 0;
 		} else if (dateComponents.day < 30) {
+            // expiring
 			result = 1;
 		} else {
+            // valid
 			result = 2;
 		}
 	}
