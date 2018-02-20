@@ -13,6 +13,7 @@ static NSString * const kDataType_ipa               = @"com.apple.itunes.ipa";
 static NSString * const kDataType_ios_provision     = @"com.apple.mobileprovision";
 static NSString * const kDataType_ios_provision_old = @"com.apple.iphone.mobileprovision";
 static NSString * const kDataType_osx_provision     = @"com.apple.provisionprofile";
+static NSString * const kDataType_xcode_archive     = @"com.apple.xcode.archive";
 
 NSImage *roundCorners(NSImage *image);
 NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName);

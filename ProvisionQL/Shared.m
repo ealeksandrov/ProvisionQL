@@ -40,12 +40,21 @@ int expirationStatus(NSDate *date, NSCalendar *calendar) {
 NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
     NSImage *appIcon = nil;
 
-    if ([dataType isEqualToString:kDataType_ipa]) {
+    if ([dataType isEqualToString:kDataType_xcode_archive]) {
+        // get the embedded icon for the iOS app
+        NSURL *appsDir = [URL URLByAppendingPathComponent:@"Products/Applications/"];
+        if (appsDir != nil) {
+            NSArray *dirFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appsDir.path error:nil];
+            if (dirFiles.count > 0) {
+                appIcon = [[NSImage alloc] initWithContentsOfURL:[appsDir URLByAppendingPathComponent:[NSString stringWithFormat:@"%@/%@", dirFiles[0], fileName]]];
+            }
+        }
+    } else if([dataType isEqualToString:kDataType_ipa]) {
         // get the embedded icon from an app arcive using: unzip -p <URL> 'Payload/*.app/<fileName>' (piped to standard output)
         NSTask *unzipTask = [NSTask new];
         [unzipTask setLaunchPath:@"/usr/bin/unzip"];
         [unzipTask setStandardOutput:[NSPipe pipe]];
-        [unzipTask setArguments:@[@"-p", [URL path], [NSString stringWithFormat:@"Payload/*.app/%@",fileName]]];
+        [unzipTask setArguments:@[@"-p", [URL path], [NSString stringWithFormat:@"Payload/*.app/%@", fileName]]];
         [unzipTask launch];
         [unzipTask waitUntilExit];
 
