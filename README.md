@@ -19,7 +19,7 @@ Supporting file types:
 * `.mobileprovision` - iOS provisioning profile
 * `.provisionprofile` - OSX provisioning profile
 
-[More screenshots](https://github.com/ealeksandrov/ProvisionQL/blob/master/screenshots.md)
+[More screenshots](https://github.com/ealeksandrov/ProvisionQL/blob/master/Screenshots/README.md)
 
 ### Acknowledgments
 
