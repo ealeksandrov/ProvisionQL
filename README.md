@@ -7,13 +7,13 @@
 
 ![Thumbnails example](https://raw.github.com/ealeksandrov/ProvisionQL/master/Screenshots/1.png)
 
-Inspired by number of existing alternatives, the goal of this project is to provide clean, reliable, current and open-source Quick Look plugin for iOS & OSX developers.
+Inspired by a number of existing alternatives, the goal of this project is to provide clean, reliable, current and open source Quick Look plugin for iOS & macOS developers.
 
-Thumbnails will show app icon for `.ipa`/ `.xcarchive` or expiring status and device count for `.mobileprovision`. Quick look preview will give a lot of information, including devices UUIDs, certificates, entitlements and much more.
+Thumbnails will show app icon for `.ipa`/ `.xcarchive` or expiring status and device count for `.mobileprovision`. Quick Look preview will give a lot of information, including devices UUIDs, certificates, entitlements and much more.
 
 ![Valid AdHoc provision](https://raw.github.com/ealeksandrov/ProvisionQL/master/Screenshots/2.png)
 
-Supporting file types:
+Supported file types:
 
 * `.ipa` - iOS packaged application
 * `.xcarchive` - Xcode archive
@@ -29,14 +29,16 @@ Initially based on [Provisioning by Craig Hockenberry](https://github.com/chocke
 
 ### Tutorials based on this example:
 
-* english - [aleksandrov.ws](https://aleksandrov.ws/2014/02/25/osx-quick-look-plugin-development/)
-* russian - [habrahabr.ru](http://habrahabr.ru/post/208552/)
+* English - [aleksandrov.ws](https://aleksandrov.ws/2014/02/25/osx-quick-look-plugin-development/)
+* Russian - [habrahabr.ru](https://habrahabr.ru/post/208552/)
 
 ## Installation
 
 ### Homebrew Cask
 
-[Homebrew cask](http://caskroom.io/) is the easiest way to install binary applications and quicklook plugins. If you have [homebrew](http://brew.sh/) - use the line below and you are ready.
+[Homebrew cask](https://caskroom.github.io) is the easiest way to install binary applications and Quick Look plugins.
+
+If you have [homebrew](http://brew.sh/) installed - just run one line and you are ready:
 
 ```sh
 brew cask install provisionql
@@ -48,13 +50,13 @@ Just clone the repository, open `ProvisionQL.xcodeproj` and build active target.
 
 ### Manual
 
-* Download archive with latest version from the [Releases](https://github.com/ealeksandrov/ProvisionQL/releases/latest) page;
+* download archive with latest version from the [Releases](https://github.com/ealeksandrov/ProvisionQL/releases/latest) page;
 * move `ProvisionQL.qlgenerator` to `~/Library/QuickLook/`(current user) or `/Library/QuickLook/`(all users);
 * run `qlmanage -r` to refresh Quick Look plugins list.
 
 ## Author
 
-Created and maintained by Evgeny Aleksandrov ([@EAleksandrov](https://twitter.com/EAleksandrov)).
+Created and maintained by Evgeny Aleksandrov ([@ealeksandrov](https://twitter.com/ealeksandrov)).
 
 ## License
 
