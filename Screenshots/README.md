@@ -24,6 +24,10 @@
 
 ![Xcode archive](https://raw.github.com/ealeksandrov/ProvisionQL/master/Screenshots/5.png)
 
-### App Store ipa
+### AdHoc ipa
 
 ![App from App Store](https://raw.github.com/ealeksandrov/ProvisionQL/master/Screenshots/6.png)
+
+### App Store ipa
+
+![App from App Store](https://raw.github.com/ealeksandrov/ProvisionQL/master/Screenshots/7.png)
