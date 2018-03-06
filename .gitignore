@@ -1,31 +1,29 @@
-#OS noise
-profile
-[Tt]humbs.db
-*.DS_Store
+# OS noise
+.DS_Store
+._*
 *~
-*.swp
-*.out
-*.bak*
-*.lock
 
-#Other CSM
+# Other CSM
 .hg
 .svn
 CVS
 
-#Xcode noise
+# Xcode settings
+xcuserdata/
+
+# Xcode noise
 *.log
 *~.nib
 *.moved-aside
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-*.xcworkspace/*
-!*.xcworkspace/contents.xcworkspacedata
-!xcshareddata
+*.xccheckout
+*.xcscmblueprint
 
-#Project files
+# Build generated
 [Bb]uild/
 DerivedData/
 
-#CocoaPods
-Pods
+# Obj-C/Swift specific
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
