@@ -52,9 +52,11 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             [unzipTask setStandardOutput:[NSPipe pipe]];
             [unzipTask setArguments:@[@"-p", [URL path], @"Payload/*.app/Info.plist", @"-x", @"*/*/*/*"]];
             [unzipTask launch];
+
+            NSData *pipeData = [[[unzipTask standardOutput] fileHandleForReading] readDataToEndOfFile];
             [unzipTask waitUntilExit];
 
-            appPlist = [[[unzipTask standardOutput] fileHandleForReading] readDataToEndOfFile];
+            appPlist = pipeData;
         } else {
             // use provisioning directly
             provisionData = [NSData dataWithContentsOfURL:URL];

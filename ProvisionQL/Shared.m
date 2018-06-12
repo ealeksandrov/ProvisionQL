@@ -59,9 +59,11 @@ NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
         [unzipTask setStandardOutput:[NSPipe pipe]];
         [unzipTask setArguments:@[@"-p", [URL path], [NSString stringWithFormat:@"Payload/*.app/%@", fileName], @"-x", @"*/*/*/*"]];
         [unzipTask launch];
+
+        NSData *pipeData = [[[unzipTask standardOutput] fileHandleForReading] readDataToEndOfFile];
         [unzipTask waitUntilExit];
 
-        appIcon = [[NSImage alloc] initWithData:[[[unzipTask standardOutput] fileHandleForReading] readDataToEndOfFile]];
+        appIcon = [[NSImage alloc] initWithData:pipeData];
     }
 
     return appIcon;

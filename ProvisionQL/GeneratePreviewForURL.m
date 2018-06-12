@@ -216,20 +216,16 @@ NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePat
 
     NSString *binaryPath = [basePath stringByAppendingPathComponent:bundleExecutable];
     // get entitlements: codesign -d <AppBinary> --entitlements :-
-    NSPipe *codesignPipe = [NSPipe pipe];
-    NSFileHandle *codesignOutputFile = [codesignPipe fileHandleForReading];
     NSTask *codesignTask = [NSTask new];
     [codesignTask setLaunchPath:@"/usr/bin/codesign"];
-    [codesignTask setStandardOutput:codesignPipe];
+    [codesignTask setStandardOutput:[NSPipe pipe]];
     [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @":-"]];
     [codesignTask launch];
+
+    NSData *pipeData = [[[codesignTask standardOutput] fileHandleForReading] readDataToEndOfFile];
     [codesignTask waitUntilExit];
 
-    // save output of codesign task
-    NSData *codesignEntitlementsData = [codesignOutputFile readDataToEndOfFile];
-    [codesignOutputFile closeFile];
-
-    return codesignEntitlementsData;
+    return pipeData;
 }
 
 OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview, CFURLRef url, CFStringRef contentTypeUTI, CFDictionaryRef options) {
@@ -251,7 +247,6 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             // get the embedded provisioning & plist from an app archive using: unzip -u -j -d <currentTempDirFolder> <URL> <files to unzip>
             NSTask *unzipTask = [NSTask new];
 			[unzipTask setLaunchPath:@"/usr/bin/unzip"];
-			[unzipTask setStandardOutput:[NSPipe pipe]];
 			[unzipTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], @"Payload/*.app/embedded.mobileprovision", @"Payload/*.app/Info.plist", @"-x", @"*/*/*/*"]];
 			[unzipTask launch];
 			[unzipTask waitUntilExit];
@@ -267,7 +262,6 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 
             NSTask *unzipAppTask = [NSTask new];
             [unzipAppTask setLaunchPath:@"/usr/bin/unzip"];
-            [unzipAppTask setStandardOutput:[NSPipe pipe]];
             [unzipAppTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], [@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable], @"-x", @"*/*/*/*"]];
             [unzipAppTask launch];
             [unzipAppTask waitUntilExit];
