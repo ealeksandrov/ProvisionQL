@@ -46,18 +46,32 @@ NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
     if ([dataType isEqualToString:kDataType_xcode_archive]) {
         // get the embedded icon for the iOS app
         NSURL *appsDir = [URL URLByAppendingPathComponent:@"Products/Applications/"];
-        if (appsDir != nil) {
-            NSArray *dirFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appsDir.path error:nil];
-            if (dirFiles.count > 0) {
-                appIcon = [[NSImage alloc] initWithContentsOfURL:[appsDir URLByAppendingPathComponent:[NSString stringWithFormat:@"%@/%@", dirFiles[0], fileName]]];
-            }
+        if (!appsDir) {
+            return nil;
         }
+
+        NSArray *dirFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appsDir.path error:nil];
+        NSString *appName = dirFiles.firstObject;
+        if (!appName) {
+            return nil;
+        }
+
+        NSURL *appURL = [appsDir URLByAppendingPathComponent:appName];
+        NSArray *appContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appURL.path error:nil];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains %@", fileName];
+        NSString *appIconFullName = [appContents filteredArrayUsingPredicate:predicate].lastObject;
+        if (!appIconFullName) {
+            return nil;
+        }
+
+        NSURL *appIconFullURL = [appURL URLByAppendingPathComponent:appIconFullName];
+        appIcon = [[NSImage alloc] initWithContentsOfURL:appIconFullURL];
     } else if([dataType isEqualToString:kDataType_ipa]) {
         // get the embedded icon from an app arcive using: unzip -p <URL> 'Payload/*.app/<fileName>' (piped to standard output)
         NSTask *unzipTask = [NSTask new];
         [unzipTask setLaunchPath:@"/usr/bin/unzip"];
         [unzipTask setStandardOutput:[NSPipe pipe]];
-        [unzipTask setArguments:@[@"-p", [URL path], [NSString stringWithFormat:@"Payload/*.app/%@", fileName], @"-x", @"*/*/*/*"]];
+        [unzipTask setArguments:@[@"-p", [URL path], [NSString stringWithFormat:@"Payload/*.app/%@*", fileName], @"-x", @"*/*/*/*"]];
         [unzipTask launch];
 
         NSData *pipeData = [[[unzipTask standardOutput] fileHandleForReading] readDataToEndOfFile];
@@ -69,20 +83,28 @@ NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
     return appIcon;
 }
 
-NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
-    id icons;
-    NSString *iconName;
-
-    //Check for CFBundleIcons (since 5.0)
-    id iconsDict = [appPropertyList objectForKey:@"CFBundleIcons"];
+NSArray *iconsListForDictionary(NSDictionary *iconsDict) {
     if ([iconsDict isKindOfClass:[NSDictionary class]]) {
         id primaryIconDict = [iconsDict objectForKey:@"CFBundlePrimaryIcon"];
         if ([primaryIconDict isKindOfClass:[NSDictionary class]]) {
             id tempIcons = [primaryIconDict objectForKey:@"CFBundleIconFiles"];
             if ([tempIcons isKindOfClass:[NSArray class]]) {
-                icons = tempIcons;
+                return tempIcons;
             }
         }
+    }
+
+    return nil;
+}
+
+NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
+    NSArray *icons;
+    NSString *iconName;
+
+    //Check for CFBundleIcons (since 5.0)
+    icons = iconsListForDictionary([appPropertyList objectForKey:@"CFBundleIcons"]);
+    if (!icons) {
+        icons = iconsListForDictionary([appPropertyList objectForKey:@"CFBundleIcons~ipad"]);
     }
 
     if (!icons) {
@@ -95,26 +117,20 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
 
     if (icons) {
         //Search some patterns for primary app icon (120x120)
-        NSArray *matches = @[@"120",@"60",@"@2x"];
+        NSArray *matches = @[@"120",@"60"];
 
         for (NSString *match in matches) {
             NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains[c] %@",match];
             NSArray *results = [icons filteredArrayUsingPredicate:predicate];
             if ([results count]) {
                 iconName = [results firstObject];
-                //Check for @2x existence
-                if ([match isEqualToString:@"60"] && ![[iconName pathExtension] length]) {
-                    if (![iconName hasSuffix:@"@2x"]) {
-                        iconName = [iconName stringByAppendingString:@"@2x"];
-                    }
-                }
                 break;
             }
         }
 
-        //If no one matches any pattern, just take first item
+        //If no one matches any pattern, just take last item
         if (!iconName) {
-            iconName = [icons firstObject];
+            iconName = [icons lastObject];
         }
     } else {
         //Check for CFBundleIconFile (legacy, before 3.2)
@@ -124,13 +140,5 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
         }
     }
 
-    //Load NSImage
-    if ([iconName length]) {
-        if (![[iconName pathExtension] length]) {
-            iconName = [iconName stringByAppendingPathExtension:@"png"];
-        }
-        return iconName;
-    }
-
-    return nil;
+    return iconName;
 }
