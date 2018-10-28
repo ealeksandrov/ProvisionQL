@@ -1,8 +1,13 @@
 # ProvisionQL
 
+## Version 1.5.0
+
+* Fixes missing icons for iPad-only apps ([#8](https://github.com/ealeksandrov/ProvisionQL/issues/22))
+* Improves icons parsing and extraction
+
 ## Version 1.4.1
 
-* Fix Quick Look timeout in some cases ([#8](https://github.com/ealeksandrov/ProvisionQL/issues/8))
+* Fixes Quick Look timeout in some cases ([#8](https://github.com/ealeksandrov/ProvisionQL/issues/8))
 
 ## Version 1.4.0
 
