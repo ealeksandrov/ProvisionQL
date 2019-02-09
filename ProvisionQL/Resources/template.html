@@ -6,6 +6,7 @@
             <style>
                 body {
                     background: #f7f7f7;
+                    color: #000;
                     margin: 20px;
                     font: 13px courier, monospaced, sans-serif;
                     line-height: 1.3;
@@ -102,6 +103,35 @@
                     margin-top: 20px;
                     color: #aaa;
                     font-size: 11px;
+                }
+
+                @media (prefers-color-scheme: dark) {
+                    body {
+                        background: #323232;
+                        color: #fff;
+                    }
+
+                    a         { color: #aaa; }
+                    a:hover   { color: #fff; }
+                    a:visited { color: #aaa; }
+
+                    .expired {
+                        color: red;
+                    }
+                    .expiring {
+                        color: orange;
+                    }
+                    .valid {
+                        color: lightgreen;
+                    }
+
+                    tr:nth-child(odd) {
+                        background-color: #292929;
+                    }
+
+                    tr:nth-child(even) {
+                        background-color: #1e1e1e;
+                    }
                 }
                 </style>
             </head>
