@@ -1,5 +1,9 @@
 # ProvisionQL
 
+## Version 1.6.0
+
+* Adds dark mode support ([#29](https://github.com/ealeksandrov/ProvisionQL/pull/29))
+
 ## Version 1.5.0
 
 * Fixes missing icons for iPad-only apps ([#8](https://github.com/ealeksandrov/ProvisionQL/issues/22))
