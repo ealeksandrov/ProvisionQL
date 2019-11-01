@@ -209,11 +209,11 @@
 			};
 			buildConfigurationList = 55DB7276186E193500CAFEE7 /* Build configuration list for PBXProject "ProvisionQL" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
+				Base,
 			);
 			mainGroup = 55DB7272186E193500CAFEE7;
 			productRefGroup = 55DB727E186E193500CAFEE7 /* Products */;
