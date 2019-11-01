@@ -50,6 +50,7 @@
 		55DB728E186E193500CAFEE7 /* GenerateThumbnailForURL.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GenerateThumbnailForURL.m; sourceTree = "<group>"; };
 		55DB7290186E193500CAFEE7 /* GeneratePreviewForURL.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GeneratePreviewForURL.m; sourceTree = "<group>"; };
 		55DB729A186E195500CAFEE7 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		AE61B2AE236C969C003749A1 /* autoupdate-revision.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "autoupdate-revision.sh"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +112,7 @@
 		555E951A186E2DC0001D406A /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
+				AE61B2AE236C969C003749A1 /* autoupdate-revision.sh */,
 				555E951B186E2DC0001D406A /* install.sh */,
 			);
 			path = Scripts;
@@ -260,7 +262,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "sh ProvisionQL/Scripts/install.sh\n";
+			shellScript = "sh ProvisionQL/Scripts/autoupdate-revision.sh\nsh ProvisionQL/Scripts/install.sh\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -379,8 +381,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = "ProvisionQL/Supporting-files/Info.plist";
 				INSTALL_PATH = /Library/QuickLook;
+				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ealeksandrov.ProvisionQL;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = qlgenerator;
@@ -391,8 +395,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = "ProvisionQL/Supporting-files/Info.plist";
 				INSTALL_PATH = /Library/QuickLook;
+				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ealeksandrov.ProvisionQL;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = qlgenerator;
