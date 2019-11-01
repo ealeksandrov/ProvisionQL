@@ -630,6 +630,9 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         [synthesizedInfo setObject:@"" forKey:@"DEBUG"];
 #endif
 
+        synthesizedValue = [[NSBundle bundleWithIdentifier:kPluginBundleId] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+        [synthesizedInfo setObject:synthesizedValue forKey:@"BundleShortVersionString"];
+
         synthesizedValue = [[NSBundle bundleWithIdentifier:kPluginBundleId] objectForInfoDictionaryKey:@"CFBundleVersion"];
         [synthesizedInfo setObject:synthesizedValue forKey:@"BundleVersion"];
 
