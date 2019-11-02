@@ -1,4 +1,4 @@
 language: objective-c
-osx_image: xcode9
+osx_image: xcode11.2
 script:
-  - set -o pipefail && xcodebuild -project ProvisionQL.xcodeproj -scheme ProvisionQL | xcpretty
+  - set -o pipefail && xcodebuild -project ProvisionQL.xcodeproj -scheme ProvisionQL CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty
