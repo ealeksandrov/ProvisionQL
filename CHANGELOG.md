@@ -1,5 +1,9 @@
 # ProvisionQL
 
+## Version 1.6.1
+
+* Adds code signing, fixes macOS Catalina compatibility ([#30](https://github.com/ealeksandrov/ProvisionQL/issues/30))
+
 ## Version 1.6.0
 
 * Adds dark mode support ([#29](https://github.com/ealeksandrov/ProvisionQL/pull/29))
