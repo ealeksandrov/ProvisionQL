@@ -209,6 +209,21 @@ NSString *formattedDictionaryWithReplacements(NSDictionary *dictionary, NSDictio
     return string;
 }
 
+NSString *escapedXML(NSString *stringToEscape) {
+    stringToEscape = [stringToEscape stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"];
+    NSDictionary *htmlEntityReplacement = @{
+                                            @"\"": @"&quot;",
+                                            @"'": @"&apos;",
+                                            @"<": @"&lt;",
+                                            @">": @"&gt;",
+                                            };
+    for (NSString *key in [htmlEntityReplacement allKeys]) {
+        NSString *replacement = [htmlEntityReplacement objectForKey:key];
+        stringToEscape = [stringToEscape stringByReplacingOccurrencesOfString:key withString:replacement];
+    }
+    return stringToEscape;
+}
+
 NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePath) {
     // read the CFBundleExecutable and extract it
     NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:infoPlistData options:0 format:NULL error:NULL];
@@ -508,17 +523,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 
             {
                 NSString *profileString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-                profileString = [profileString stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"];
-                NSDictionary *htmlEntityReplacement = @{
-                                                        @"\"": @"&quot;",
-                                                        @"'": @"&apos;",
-                                                        @"<": @"&lt;",
-                                                        @">": @"&gt;",
-                                                        };
-                for (NSString *key in [htmlEntityReplacement allKeys]) {
-                    NSString *replacement = [htmlEntityReplacement objectForKey:key];
-                    profileString = [profileString stringByReplacingOccurrencesOfString:key withString:replacement];
-                }
+                profileString = escapedXML(profileString);
                 synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", profileString];
                 [synthesizedInfo setObject:synthesizedValue forKey:@"RawData"];
             }
@@ -584,7 +589,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 
         // MARK: File Info
         
-        [synthesizedInfo setObject:[URL lastPathComponent] forKey:@"FileName"];
+        [synthesizedInfo setObject:escapedXML([URL lastPathComponent]) forKey:@"FileName"];
 
         if ([[URL pathExtension] isEqualToString:@"app"] || [[URL pathExtension] isEqualToString:@"appex"]) {
             // get the "file" information using the application package folder
