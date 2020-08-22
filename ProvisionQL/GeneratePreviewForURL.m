@@ -51,20 +51,34 @@ NSString *expirationStringForDateInCalendar(NSDate *date, NSCalendar *calendar) 
 	NSString *result = nil;
 
 	if (date) {
-		NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:[NSDate date] toDate:date options:0];
-		if (dateComponents.day == 0) {
-            if ([date compare: [NSDate date]] == NSOrderedAscending) {
+        NSDateComponentsFormatter *formatter = [[NSDateComponentsFormatter alloc] init];
+        formatter.unitsStyle = NSDateComponentsFormatterUnitsStyleFull;
+        formatter.maximumUnitCount = 1;
+
+		NSDateComponents *dateComponents = [calendar components:(NSDayCalendarUnit|NSCalendarUnitHour|NSCalendarUnitMinute)
+                                                       fromDate:[NSDate date]
+                                                         toDate:date
+                                                        options:0];
+        if ([date compare:[NSDate date]] == NSOrderedAscending) {
+            if ([calendar isDate:date inSameDayAsDate:[NSDate date]]) {
                 result = @"<span>Expired today</span>";
             } else {
-                result = @"<span>Expires today</span>";
+                NSDateComponents *reverseDateComponents = [calendar components:(NSDayCalendarUnit|NSCalendarUnitHour|NSCalendarUnitMinute)
+                                                                      fromDate:date
+                                                                        toDate:[NSDate date]
+                                                                       options:0];
+                result = [NSString stringWithFormat:@"<span>Expired %@ ago</span>", [formatter stringFromDateComponents:reverseDateComponents]];
             }
-		} else if (dateComponents.day < 0) {
-			result = [NSString stringWithFormat:@"<span>Expired %zd day%s ago</span>", -dateComponents.day, (dateComponents.day == -1 ? "" : "s")];
-		} else if (dateComponents.day < 30) {
-			result = [NSString stringWithFormat:@"<span>Expires in %zd day%s</span>", dateComponents.day, (dateComponents.day == 1 ? "" : "s")];
-		} else {
-			result = [NSString stringWithFormat:@"Expires in %zd days", dateComponents.day];
-		}
+        } else {
+            if (dateComponents.day == 0) {
+                result = @"<span>Expires today</span>";
+            } else if (dateComponents.day < 30) {
+                result = [NSString stringWithFormat:@"<span>Expires in %@</span>", [formatter stringFromDateComponents:dateComponents]];
+            } else {
+                result = [NSString stringWithFormat:@"Expires in %@", [formatter stringFromDateComponents:dateComponents]];
+            }
+        }
+
 	}
 
 	return result;
@@ -447,11 +461,18 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 synthesizedValue = [dateFormatter stringFromDate:date];
                 [synthesizedInfo setObject:synthesizedValue forKey:@"CreationDateFormatted"];
 
-                NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:date toDate:[NSDate date] options:0];
-                if (dateComponents.day == 0) {
+                NSDateComponents *dateComponents = [calendar components:(NSDayCalendarUnit|NSCalendarUnitHour|NSCalendarUnitMinute)
+                                                               fromDate:date
+                                                                 toDate:[NSDate date]
+                                                                options:0];
+                if ([calendar isDate:date inSameDayAsDate:[NSDate date]]) {
                     synthesizedValue = @"Created today";
                 } else {
-                    synthesizedValue = [NSString stringWithFormat:@"Created %zd day%s ago", dateComponents.day, (dateComponents.day == 1 ? "" : "s")];
+                    NSDateComponentsFormatter *formatter = [[NSDateComponentsFormatter alloc] init];
+                    formatter.unitsStyle = NSDateComponentsFormatterUnitsStyleFull;
+                    formatter.maximumUnitCount = 1;
+
+                    synthesizedValue = [NSString stringWithFormat:@"Created %@ ago", [formatter stringFromDateComponents:dateComponents]];
                 }
                 [synthesizedInfo setObject:synthesizedValue forKey:@"CreationSummary"];
             }
