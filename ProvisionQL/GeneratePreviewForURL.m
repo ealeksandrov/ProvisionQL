@@ -15,15 +15,18 @@ void displayKeyAndValue(NSUInteger level, NSString *key, id value, NSMutableStri
 	if ([value isKindOfClass:[NSDictionary class]]) {
 		if (key) {
 			[output appendFormat:@"%*s%@ = {\n", indent, "", key];
-		} else {
+		} else if (level != 0) {
 			[output appendFormat:@"%*s{\n", indent, ""];
 		}
 		NSDictionary *dictionary = (NSDictionary *)value;
 		NSArray *keys = [[dictionary allKeys] sortedArrayUsingSelector:@selector(compare:)];
-		for (NSString *key in keys) {
-			displayKeyAndValue(level + 1, key, [dictionary valueForKey:key], output);
+		for (NSString *subKey in keys) {
+            NSUInteger subLevel = (key == nil && level == 0) ? 0 : level + 1;
+			displayKeyAndValue(subLevel, subKey, [dictionary valueForKey:subKey], output);
 		}
-		[output appendFormat:@"%*s}\n", indent, ""];
+        if (level != 0) {
+            [output appendFormat:@"%*s}\n", indent, ""];
+        }
 	} else if ([value isKindOfClass:[NSArray class]]) {
 		[output appendFormat:@"%*s%@ = (\n", indent, "", key];
 		NSArray *array = (NSArray *)value;
