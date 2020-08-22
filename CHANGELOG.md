@@ -1,5 +1,11 @@
 # ProvisionQL
 
+## Version 1.6.2
+
+* Adds XML escaping for file name ([#36](https://github.com/ealeksandrov/ProvisionQL/issues/36))
+* Improves relative date intervals formatting ([#35](https://github.com/ealeksandrov/ProvisionQL/issues/35))
+* Moves entitlements higher in preview ([#31](https://github.com/ealeksandrov/ProvisionQL/issues/31))
+
 ## Version 1.6.1
 
 * Adds code signing, fixes macOS Catalina compatibility ([#30](https://github.com/ealeksandrov/ProvisionQL/issues/30))

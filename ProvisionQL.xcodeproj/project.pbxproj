@@ -395,7 +395,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "ProvisionQL/Supporting-files/Info.plist";
 				INSTALL_PATH = /Library/QuickLook;
-				MARKETING_VERSION = 1.6.1;
+				MARKETING_VERSION = 1.6.2;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ealeksandrov.ProvisionQL;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -415,7 +415,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "ProvisionQL/Supporting-files/Info.plist";
 				INSTALL_PATH = /Library/QuickLook;
-				MARKETING_VERSION = 1.6.1;
+				MARKETING_VERSION = 1.6.2;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ealeksandrov.ProvisionQL;
 				PRODUCT_NAME = "$(TARGET_NAME)";
