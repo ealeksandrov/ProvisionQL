@@ -1,0 +1,17 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: macOS-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build project
+        run: set -o pipefail && xcodebuild -project ProvisionQL.xcodeproj -scheme ProvisionQL CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty
