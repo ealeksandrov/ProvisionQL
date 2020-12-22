@@ -41,7 +41,7 @@ Initially based on [Provisioning by Craig Hockenberry](https://github.com/chocke
 If you have [homebrew](http://brew.sh/) installed - just run one line and you are ready:
 
 ```sh
-brew cask install provisionql
+brew install --cask provisionql
 ```
 
 ### Xcode project
