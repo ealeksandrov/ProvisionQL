@@ -36,13 +36,20 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
         NSUInteger devicesCount = 0;
         int expStatus = 0;
 
-        if ([dataType isEqualToString:kDataType_xcode_archive]) {
+        if ([dataType isEqualToString:kDataType_xcode_archive] || [dataType isEqualToString:kDataType_ipa_app_bundle]) {
             // get the embedded plist for the iOS app
-            NSURL *appsDir = [URL URLByAppendingPathComponent:@"Products/Applications/"];
+            NSURL *appsDir = [URL URLByAppendingPathComponent:@"/"];
+            if ([dataType isEqualToString:kDataType_xcode_archive]) {
+                appsDir = [URL URLByAppendingPathComponent:@"Products/Applications/"];
+            }
             if (appsDir != nil) {
                 NSArray *dirFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appsDir.path error:nil];
                 if (dirFiles.count > 0) {
-                    appPlist = [NSData dataWithContentsOfURL:[appsDir URLByAppendingPathComponent:[NSString stringWithFormat:@"%@/Info.plist", dirFiles[0]]]];
+                    if ([dataType isEqualToString:kDataType_xcode_archive]) {
+                        appPlist = [NSData dataWithContentsOfURL:[appsDir URLByAppendingPathComponent:[NSString stringWithFormat:@"%@/Info.plist", dirFiles[0]]]];
+                    } else if ([dataType isEqualToString:kDataType_ipa_app_bundle]) {
+                        appPlist = [NSData dataWithContentsOfURL:[appsDir URLByAppendingPathComponent:@"Info.plist"]];
+                    }
                 }
             }
         } else if([dataType isEqualToString:kDataType_ipa]) {
@@ -67,7 +74,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
         }
 
         NSDictionary *propertiesDict = nil;
-        if ([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_xcode_archive]) {
+        if ([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_xcode_archive] || [dataType isEqualToString:kDataType_ipa_app_bundle]) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
             NSString *iconName = mainIconNameForApp(appPropertyList);
             appIcon = imageFromApp(URL, dataType, iconName);
@@ -77,7 +84,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
                 appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
             }
             appIcon = roundCorners(appIcon);
-            if ([dataType isEqualToString:kDataType_xcode_archive]) {
+            if ([dataType isEqualToString:kDataType_xcode_archive] || [dataType isEqualToString:kDataType_ipa_app_bundle]) {
                 propertiesDict = @{@"IconFlavor" : @(12)};
             } else {
                 propertiesDict = @{@"IconFlavor" : @(0)};
@@ -133,7 +140,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             NSGraphicsContext *_graphicsContext = [NSGraphicsContext graphicsContextWithGraphicsPort:(void *)_context flipped:NO];
 
             [NSGraphicsContext setCurrentContext:_graphicsContext];
-            if ([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_xcode_archive]) {
+            if ([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_xcode_archive] || [dataType isEqualToString:kDataType_ipa_app_bundle]) {
                 [appIcon drawInRect:renderRect];
             } else {
                 [appIcon drawInRect:renderRect];

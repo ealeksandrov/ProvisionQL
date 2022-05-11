@@ -43,20 +43,30 @@ int expirationStatus(NSDate *date, NSCalendar *calendar) {
 NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
     NSImage *appIcon = nil;
 
-    if ([dataType isEqualToString:kDataType_xcode_archive]) {
+    if ([dataType isEqualToString:kDataType_xcode_archive] || [dataType isEqualToString:kDataType_ipa_app_bundle]) {
         // get the embedded icon for the iOS app
-        NSURL *appsDir = [URL URLByAppendingPathComponent:@"Products/Applications/"];
+        
+        NSURL *appsDir = [URL URLByAppendingPathComponent:@"/"];
+        if ([dataType isEqualToString:kDataType_xcode_archive]) {
+            appsDir = [URL URLByAppendingPathComponent:@"Products/Applications/"];
+        }
         if (!appsDir) {
             return nil;
         }
-
+        
+        NSURL *appURL = nil;
         NSArray *dirFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appsDir.path error:nil];
-        NSString *appName = dirFiles.firstObject;
-        if (!appName) {
+        if (dirFiles.count > 0) {
+            if ([dataType isEqualToString:kDataType_ipa_app_bundle]) {
+                appURL = appsDir;
+            } else if ([dataType isEqualToString:kDataType_xcode_archive]) {
+                appURL = [appsDir URLByAppendingPathComponent:dirFiles[0] isDirectory:YES];
+            }
+        }
+        if (!appURL) {
             return nil;
         }
 
-        NSURL *appURL = [appsDir URLByAppendingPathComponent:appName];
         NSArray *appContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appURL.path error:nil];
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains %@", fileName];
         NSString *appIconFullName = [appContents filteredArrayUsingPredicate:predicate].lastObject;
@@ -102,9 +112,9 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
     NSString *iconName;
 
     //Check for CFBundleIcons (since 5.0)
-    icons = iconsListForDictionary([appPropertyList objectForKey:@"CFBundleIcons"]);
+    icons = iconsListForDictionary([appPropertyList objectForKey:@"CFBundleIcons~ipad"]);
     if (!icons) {
-        icons = iconsListForDictionary([appPropertyList objectForKey:@"CFBundleIcons~ipad"]);
+        icons = iconsListForDictionary([appPropertyList objectForKey:@"CFBundleIcons"]);
     }
 
     if (!icons) {
@@ -117,7 +127,7 @@ NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
 
     if (icons) {
         //Search some patterns for primary app icon (120x120)
-        NSArray *matches = @[@"120",@"60"];
+        NSArray *matches = @[@"83.5", @"76", @"120",@"60"];
 
         for (NSString *match in matches) {
             NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains[c] %@",match];

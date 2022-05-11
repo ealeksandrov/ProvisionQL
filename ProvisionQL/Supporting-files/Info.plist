@@ -17,6 +17,7 @@
 				<string>com.apple.provisionprofile</string>
 				<string>com.apple.application-and-system-extension</string>
 				<string>com.apple.xcode.archive</string>
+				<string>com.apple.application-bundle</string>
 			</array>
 		</dict>
 	</array>
