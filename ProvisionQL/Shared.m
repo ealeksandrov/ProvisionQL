@@ -10,10 +10,10 @@ NSImage *roundCorners(NSImage *image) {
 
     NSRect imageFrame = NSRectFromCGRect(CGRectMake(0, 0, existingSize.width, existingSize.height));
     NSBezierPath *clipPath = [NSBezierPath bezierPathWithIOS7RoundedRect:imageFrame cornerRadius:existingSize.width * 0.225];
-    [clipPath setWindingRule:NSEvenOddWindingRule];
+    [clipPath setWindingRule:NSWindingRuleEvenOdd];
     [clipPath addClip];
 
-    [image drawAtPoint:NSZeroPoint fromRect:NSMakeRect(0, 0, existingSize.width, existingSize.height) operation:NSCompositeSourceOver fraction:1];
+    [image drawAtPoint:NSZeroPoint fromRect:NSMakeRect(0, 0, existingSize.width, existingSize.height) operation:NSCompositingOperationSourceOver fraction:1];
 
     [composedImage unlockFocus];
 
@@ -24,7 +24,7 @@ int expirationStatus(NSDate *date, NSCalendar *calendar) {
 	int result = 0;
 
 	if (date) {
-		NSDateComponents *dateComponents = [calendar components:NSDayCalendarUnit fromDate:[NSDate date] toDate:date options:0];
+        NSDateComponents *dateComponents = [calendar components:NSCalendarUnitDay fromDate:[NSDate date] toDate:date options:0];
         if ([date compare:[NSDate date]] == NSOrderedAscending) {
             // expired
 			result = 0;

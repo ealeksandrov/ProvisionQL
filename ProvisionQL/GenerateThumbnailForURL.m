@@ -130,7 +130,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
 
         CGContextRef _context = QLThumbnailRequestCreateContext(thumbnail, canvasSize, false, (__bridge CFDictionaryRef)propertiesDict);
         if (_context) {
-            NSGraphicsContext *_graphicsContext = [NSGraphicsContext graphicsContextWithGraphicsPort:(void *)_context flipped:NO];
+            NSGraphicsContext *_graphicsContext = [NSGraphicsContext graphicsContextWithCGContext:(void *)_context flipped:NO];
 
             [NSGraphicsContext setCurrentContext:_graphicsContext];
             if ([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_xcode_archive]) {
@@ -151,7 +151,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
 
                 NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
                 paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
-                paragraphStyle.alignment = kCTTextAlignmentCenter;
+                paragraphStyle.alignment = NSTextAlignmentCenter;
 
                 NSDictionary *attrDict = @{NSFontAttributeName : BADGE_FONT, NSForegroundColorAttributeName : outlineColor, NSParagraphStyleAttributeName: paragraphStyle};
 

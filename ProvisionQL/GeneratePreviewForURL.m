@@ -58,7 +58,7 @@ NSString *expirationStringForDateInCalendar(NSDate *date, NSCalendar *calendar) 
         formatter.unitsStyle = NSDateComponentsFormatterUnitsStyleFull;
         formatter.maximumUnitCount = 1;
 
-		NSDateComponents *dateComponents = [calendar components:(NSDayCalendarUnit|NSCalendarUnitHour|NSCalendarUnitMinute)
+        NSDateComponents *dateComponents = [calendar components:(NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute)
                                                        fromDate:[NSDate date]
                                                          toDate:date
                                                         options:0];
@@ -66,7 +66,7 @@ NSString *expirationStringForDateInCalendar(NSDate *date, NSCalendar *calendar) 
             if ([calendar isDate:date inSameDayAsDate:[NSDate date]]) {
                 result = @"<span>Expired today</span>";
             } else {
-                NSDateComponents *reverseDateComponents = [calendar components:(NSDayCalendarUnit|NSCalendarUnitHour|NSCalendarUnitMinute)
+                NSDateComponents *reverseDateComponents = [calendar components:(NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute)
                                                                       fromDate:date
                                                                         toDate:[NSDate date]
                                                                        options:0];
@@ -423,7 +423,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 
             NSData *imageData = [appIcon TIFFRepresentation];
             NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
-            imageData = [imageRep representationUsingType:NSPNGFileType properties:@{}];
+            imageData = [imageRep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
             NSString *base64 = [imageData base64EncodedStringWithOptions:0];
             [synthesizedInfo setObject:base64 forKey:@"AppIcon"];
             [synthesizedInfo setObject:@"" forKey:@"AppInfo"];
@@ -464,7 +464,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 synthesizedValue = [dateFormatter stringFromDate:date];
                 [synthesizedInfo setObject:synthesizedValue forKey:@"CreationDateFormatted"];
 
-                NSDateComponents *dateComponents = [calendar components:(NSDayCalendarUnit|NSCalendarUnitHour|NSCalendarUnitMinute)
+                NSDateComponents *dateComponents = [calendar components:(NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute)
                                                                fromDate:date
                                                                  toDate:[NSDate date]
                                                                 options:0];
