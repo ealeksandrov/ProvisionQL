@@ -44,10 +44,6 @@ If you have [homebrew](http://brew.sh/) installed - just run one line and you ar
 brew install --cask provisionql
 ```
 
-### Xcode project
-
-Just clone the repository, open `ProvisionQL.xcodeproj` and build active target. Shell script will place generator in `~/Library/QuickLook` and call `qlmanage -r` automatically.
-
 ### Manual
 
 * download archive with latest version from the [Releases](https://github.com/ealeksandrov/ProvisionQL/releases/latest) page;
