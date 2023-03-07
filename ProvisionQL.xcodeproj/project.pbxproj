@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -38,7 +38,6 @@
 		555E9512186E2D67001D406A /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		555E9513186E2D67001D406A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		555E9519186E2DC0001D406A /* template.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = template.html; sourceTree = "<group>"; };
-		555E951B186E2DC0001D406A /* install.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = install.sh; sourceTree = "<group>"; };
 		557C842118731FB7008A2A0C /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		557C842418732599008A2A0C /* Shared.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Shared.m; sourceTree = "<group>"; };
 		557C842718733828008A2A0C /* Shared.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Shared.h; sourceTree = "<group>"; };
@@ -113,7 +112,6 @@
 			isa = PBXGroup;
 			children = (
 				AE61B2AE236C969C003749A1 /* autoupdate-revision.sh */,
-				555E951B186E2DC0001D406A /* install.sh */,
 			);
 			path = Scripts;
 			sourceTree = "<group>";
@@ -189,7 +187,7 @@
 				55DB7279186E193500CAFEE7 /* Headers */,
 				55DB727A186E193500CAFEE7 /* Resources */,
 				55DB727B186E193500CAFEE7 /* Rez */,
-				554C6385186E258000D9EEDE /* ShellScript */,
+				554C6385186E258000D9EEDE /* Run Script */,
 			);
 			buildRules = (
 			);
@@ -257,18 +255,20 @@
 /* End PBXRezBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		554C6385186E258000D9EEDE /* ShellScript */ = {
+		554C6385186E258000D9EEDE /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			alwaysOutOfDate = 1;
+			buildActionMask = 12;
 			files = (
 			);
 			inputPaths = (
 			);
+			name = "Run Script";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "sh ProvisionQL/Scripts/autoupdate-revision.sh\nsh ProvisionQL/Scripts/install.sh\n";
+			shellScript = "sh ProvisionQL/Scripts/autoupdate-revision.sh\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
