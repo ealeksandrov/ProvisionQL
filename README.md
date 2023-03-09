@@ -1,6 +1,6 @@
 # ProvisionQL - Quick Look for ipa & provision
 
-[![CI Status](https://github.com/ealeksandrov/ProvisionQL/workflows/CI/badge.svg?branch=master)](https://github.com/ealeksandrov/ProvisionQL/actions)
+[![Build Status](https://github.com/ealeksandrov/ProvisionQL/workflows/build/badge.svg?branch=master)](https://github.com/ealeksandrov/ProvisionQL/actions)
 [![Latest Release](https://img.shields.io/github/release/ealeksandrov/ProvisionQL.svg)](https://github.com/ealeksandrov/ProvisionQL/releases/latest)
 [![License](https://img.shields.io/github/license/ealeksandrov/ProvisionQL.svg)](LICENSE.md)
 ![Platform](https://img.shields.io/badge/platform-macos-lightgrey.svg)
