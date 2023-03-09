@@ -407,10 +407,21 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             
             NSMutableArray *platforms = [NSMutableArray array];
             for (NSNumber *number in [appPropertyList objectForKey:@"UIDeviceFamily"]) {
-                if ([number intValue] == 1) {
-                    [platforms addObject:@"iPhone"];
-                } else if ([number intValue] == 2) {
-                    [platforms addObject:@"iPad"];
+                switch ([number intValue]) {
+                    case 1:
+                        [platforms addObject:@"iPhone"];
+                        break;
+                    case 2:
+                        [platforms addObject:@"iPad"];
+                        break;
+                    case 3:
+                        [platforms addObject:@"TV"];
+                        break;
+                    case 4:
+                        [platforms addObject:@"Watch"];
+                        break;
+                    default:
+                        break;
                 }
             }
             [synthesizedInfo setObject:[platforms componentsJoinedByString:@", "] forKey:@"UIDeviceFamily"];
