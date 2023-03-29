@@ -371,6 +371,14 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleShortVersionString"] forKey:@"CFBundleShortVersionString"];
             [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleVersion"] forKey:@"CFBundleVersion"];
 
+            NSString *extensionType = [[appPropertyList objectForKey:@"NSExtension"] objectForKey:@"NSExtensionPointIdentifier"];
+            if(extensionType != nil) {
+                [synthesizedInfo setObject:@"" forKey:@"ExtensionInfo"];
+                [synthesizedInfo setObject:extensionType forKey:@"NSExtensionPointIdentifier"];
+            } else {
+                [synthesizedInfo setObject:@"hiddenDiv" forKey:@"ExtensionInfo"];
+            }
+
             NSString *sdkName = [appPropertyList objectForKey:@"DTSDKName"] ?: @"";
             [synthesizedInfo setObject:sdkName forKey:@"DTSDKName"];
 
