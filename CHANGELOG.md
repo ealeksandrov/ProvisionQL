@@ -1,5 +1,9 @@
 # ProvisionQL
 
+## Version 1.6.3
+
+* Improves app extensions (`.appex`) support ([#45](https://github.com/ealeksandrov/ProvisionQL/pull/45))
+
 ## Version 1.6.2
 
 * Adds XML escaping for file name ([#36](https://github.com/ealeksandrov/ProvisionQL/issues/36))
