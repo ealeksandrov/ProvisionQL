@@ -247,11 +247,11 @@ NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePat
     NSString *bundleExecutable = [appPropertyList objectForKey:@"CFBundleExecutable"];
 
     NSString *binaryPath = [basePath stringByAppendingPathComponent:bundleExecutable];
-    // get entitlements: codesign -d <AppBinary> --entitlements :-
+    // get entitlements: codesign -d <AppBinary> --entitlements - --xml
     NSTask *codesignTask = [NSTask new];
     [codesignTask setLaunchPath:@"/usr/bin/codesign"];
     [codesignTask setStandardOutput:[NSPipe pipe]];
-    [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @":-"]];
+    [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @"-", @"--xml"]];
     [codesignTask launch];
 
     NSData *pipeData = [[[codesignTask standardOutput] fileHandleForReading] readDataToEndOfFile];
