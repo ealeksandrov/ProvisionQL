@@ -61,7 +61,7 @@
                     text-transform: uppercase;
                 }
 
-                .expired {
+                .expired, .warning {
                     color: darkred;
                 }
                 .expiring {
@@ -116,7 +116,7 @@
                     a:hover   { color: #fff; }
                     a:visited { color: #aaa; }
 
-                    .expired {
+                    .expired, .warning {
                         color: red;
                     }
                     .expiring {
@@ -144,7 +144,7 @@
 				Name: <strong>__CFBundleName__</strong><br />
 				Version: __CFBundleShortVersionString__ (__CFBundleVersion__)<br />
 				BundleId: __CFBundleIdentifier__<br />
-                <div class="extension __ExtensionInfo__">
+                <div class="__ExtensionInfo__">
                     Extension type: __NSExtensionPointIdentifier__<br />
                 </div>
 				DeviceFamily: __UIDeviceFamily__<br />
@@ -156,7 +156,7 @@
             __AppTransportSecurityFormatted__
         </div>
 
-        <div class="provision __ProvisionInfo__">
+        <div class="__ProvisionInfo__">
             <div class="__AppInfo__">
                 <h1>Provisioning</h1>
                 Profile name: <strong>__Name__</strong><br />
@@ -172,6 +172,9 @@
 			Expiration Date: <strong><span class="__ExpStatus__">__ExpirationDateFormatted__ (__ExpirationSummary__)</span></strong><br />
 
             <h2>Entitlements</h2>
+            <div class="__EntitlementsWarning__ warning">
+                <strong>Entitlements extraction failed.</strong>
+            </div>
             __EntitlementsFormatted__
 
 			<h2>Developer Certificates</h2>
@@ -181,7 +184,7 @@
             __ProvisionedDevicesFormatted__
 
 		</div>
-        <div class="fileInfo">
+        <div>
             <h2>File info</h2>
             __FileName__<br />
             __FileInfo__<br />

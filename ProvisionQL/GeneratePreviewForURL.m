@@ -247,17 +247,23 @@ NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePat
     NSString *bundleExecutable = [appPropertyList objectForKey:@"CFBundleExecutable"];
 
     NSString *binaryPath = [basePath stringByAppendingPathComponent:bundleExecutable];
-    // get entitlements: codesign -d <AppBinary> --entitlements :-
+    // get entitlements: codesign -d <AppBinary> --entitlements - --xml
     NSTask *codesignTask = [NSTask new];
     [codesignTask setLaunchPath:@"/usr/bin/codesign"];
     [codesignTask setStandardOutput:[NSPipe pipe]];
-    [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @":-"]];
+    [codesignTask setStandardError:[NSPipe pipe]];
+    [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @"-", @"--xml"]];
     [codesignTask launch];
 
-    NSData *pipeData = [[[codesignTask standardOutput] fileHandleForReading] readDataToEndOfFile];
+    NSData *outputData = [[[codesignTask standardOutput] fileHandleForReading] readDataToEndOfFile];
+    NSData *errorData = [[[codesignTask standardError] fileHandleForReading] readDataToEndOfFile];
     [codesignTask waitUntilExit];
 
-    return pipeData;
+    if (outputData.length == 0) {
+        return errorData;
+    }
+
+    return outputData;
 }
 
 OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview, CFURLRef url, CFStringRef contentTypeUTI, CFDictionaryRef options) {
@@ -534,13 +540,27 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 [synthesizedInfo setObject:synthesizedValue forKey:@"TeamIds"];
             }
 
+            BOOL showEntitlementsWarning = false;
             if (codesignEntitlementsData != nil) {
                 // read the entitlements directly from the codesign output
                 NSDictionary *entitlementsPropertyList = [NSPropertyListSerialization propertyListWithData:codesignEntitlementsData options:0 format:NULL error:NULL];
-                NSMutableString *dictionaryFormatted = [NSMutableString string];
-                displayKeyAndValue(0, nil, entitlementsPropertyList, dictionaryFormatted);
-                synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", dictionaryFormatted];
-
+                if (entitlementsPropertyList != nil) {
+                    NSMutableString *dictionaryFormatted = [NSMutableString string];
+                    displayKeyAndValue(0, nil, entitlementsPropertyList, dictionaryFormatted);
+                    synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", dictionaryFormatted];
+                } else {
+                    NSString *outputString = [[NSString alloc] initWithData:codesignEntitlementsData encoding:NSUTF8StringEncoding];
+                    NSString *errorOutput;
+                    if ([outputString hasPrefix:@"Executable="]) {
+                        // remove first line with long temporary path to the executable
+                        NSArray *allLines = [outputString componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+                        errorOutput = [[allLines subarrayWithRange:NSMakeRange(1, allLines.count - 1)] componentsJoinedByString:@"<br />"];
+                    } else {
+                        errorOutput = outputString;
+                    }
+                    showEntitlementsWarning = true;
+                    synthesizedValue = errorOutput;
+                }
                 [synthesizedInfo setObject:synthesizedValue forKey:@"EntitlementsFormatted"];
             } else {
                 // read the entitlements from the provisioning profile instead
@@ -555,6 +575,11 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 } else {
                     [synthesizedInfo setObject:@"No Entitlements" forKey:@"EntitlementsFormatted"];
                 }
+            }
+            if (showEntitlementsWarning) {
+                [synthesizedInfo setObject:@"" forKey:@"EntitlementsWarning"];
+            } else {
+                [synthesizedInfo setObject:@"hiddenDiv" forKey:@"EntitlementsWarning"];
             }
 
             value = [propertyList objectForKey:@"DeveloperCertificates"];
