@@ -537,10 +537,13 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             if (codesignEntitlementsData != nil) {
                 // read the entitlements directly from the codesign output
                 NSDictionary *entitlementsPropertyList = [NSPropertyListSerialization propertyListWithData:codesignEntitlementsData options:0 format:NULL error:NULL];
-                NSMutableString *dictionaryFormatted = [NSMutableString string];
-                displayKeyAndValue(0, nil, entitlementsPropertyList, dictionaryFormatted);
-                synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", dictionaryFormatted];
-
+                if (entitlementsPropertyList != nil) {
+                    NSMutableString *dictionaryFormatted = [NSMutableString string];
+                    displayKeyAndValue(0, nil, entitlementsPropertyList, dictionaryFormatted);
+                    synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", dictionaryFormatted];
+                } else {
+                    synthesizedValue = @"Entitlements extraction failed.";
+                }
                 [synthesizedInfo setObject:synthesizedValue forKey:@"EntitlementsFormatted"];
             } else {
                 // read the entitlements from the provisioning profile instead
