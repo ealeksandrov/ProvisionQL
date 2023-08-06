@@ -1,5 +1,9 @@
 # ProvisionQL
 
+## Version 1.6.4
+
+* Adds error handling to entitlements parsing ([#47](https://github.com/ealeksandrov/ProvisionQL/pull/47))
+
 ## Version 1.6.3
 
 * Improves app extensions (`.appex`) support ([#45](https://github.com/ealeksandrov/ProvisionQL/pull/45))
