@@ -61,7 +61,7 @@
                     text-transform: uppercase;
                 }
 
-                .expired {
+                .expired, .warning {
                     color: darkred;
                 }
                 .expiring {
@@ -116,7 +116,7 @@
                     a:hover   { color: #fff; }
                     a:visited { color: #aaa; }
 
-                    .expired {
+                    .expired, .warning {
                         color: red;
                     }
                     .expiring {
@@ -172,6 +172,9 @@
 			Expiration Date: <strong><span class="__ExpStatus__">__ExpirationDateFormatted__ (__ExpirationSummary__)</span></strong><br />
 
             <h2>Entitlements</h2>
+            <div class="__EntitlementsWarning__ warning">
+                <strong>Entitlements extraction failed.</strong>
+            </div>
             __EntitlementsFormatted__
 
 			<h2>Developer Certificates</h2>

@@ -540,6 +540,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 [synthesizedInfo setObject:synthesizedValue forKey:@"TeamIds"];
             }
 
+            BOOL showEntitlementsWarning = false;
             if (codesignEntitlementsData != nil) {
                 // read the entitlements directly from the codesign output
                 NSDictionary *entitlementsPropertyList = [NSPropertyListSerialization propertyListWithData:codesignEntitlementsData options:0 format:NULL error:NULL];
@@ -557,6 +558,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                     } else {
                         errorOutput = outputString;
                     }
+                    showEntitlementsWarning = true;
                     synthesizedValue = errorOutput;
                 }
                 [synthesizedInfo setObject:synthesizedValue forKey:@"EntitlementsFormatted"];
@@ -573,6 +575,11 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 } else {
                     [synthesizedInfo setObject:@"No Entitlements" forKey:@"EntitlementsFormatted"];
                 }
+            }
+            if (showEntitlementsWarning) {
+                [synthesizedInfo setObject:@"" forKey:@"EntitlementsWarning"];
+            } else {
+                [synthesizedInfo setObject:@"hiddenDiv" forKey:@"EntitlementsWarning"];
             }
 
             value = [propertyList objectForKey:@"DeveloperCertificates"];
