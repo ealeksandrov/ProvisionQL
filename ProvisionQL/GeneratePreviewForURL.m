@@ -251,13 +251,19 @@ NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePat
     NSTask *codesignTask = [NSTask new];
     [codesignTask setLaunchPath:@"/usr/bin/codesign"];
     [codesignTask setStandardOutput:[NSPipe pipe]];
+    [codesignTask setStandardError:[NSPipe pipe]];
     [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @"-", @"--xml"]];
     [codesignTask launch];
 
-    NSData *pipeData = [[[codesignTask standardOutput] fileHandleForReading] readDataToEndOfFile];
+    NSData *outputData = [[[codesignTask standardOutput] fileHandleForReading] readDataToEndOfFile];
+    NSData *errorData = [[[codesignTask standardError] fileHandleForReading] readDataToEndOfFile];
     [codesignTask waitUntilExit];
 
-    return pipeData;
+    if (outputData.length == 0) {
+        return errorData;
+    }
+
+    return outputData;
 }
 
 OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview, CFURLRef url, CFStringRef contentTypeUTI, CFDictionaryRef options) {
@@ -542,7 +548,16 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                     displayKeyAndValue(0, nil, entitlementsPropertyList, dictionaryFormatted);
                     synthesizedValue = [NSString stringWithFormat:@"<pre>%@</pre>", dictionaryFormatted];
                 } else {
-                    synthesizedValue = @"Entitlements extraction failed.";
+                    NSString *outputString = [[NSString alloc] initWithData:codesignEntitlementsData encoding:NSUTF8StringEncoding];
+                    NSString *errorOutput;
+                    if ([outputString hasPrefix:@"Executable="]) {
+                        // remove first line with long temporary path to the executable
+                        NSArray *allLines = [outputString componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+                        errorOutput = [[allLines subarrayWithRange:NSMakeRange(1, allLines.count - 1)] componentsJoinedByString:@"<br />"];
+                    } else {
+                        errorOutput = outputString;
+                    }
+                    synthesizedValue = errorOutput;
                 }
                 [synthesizedInfo setObject:synthesizedValue forKey:@"EntitlementsFormatted"];
             } else {
