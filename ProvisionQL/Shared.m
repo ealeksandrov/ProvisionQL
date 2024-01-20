@@ -90,7 +90,10 @@ NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
         NSURL *appIconFullURL = [appURL URLByAppendingPathComponent:appIconFullName];
         appIcon = [[NSImage alloc] initWithContentsOfURL:appIconFullURL];
     } else if([dataType isEqualToString:kDataType_ipa]) {
-		NSData *data = unzipFile(URL, [NSString stringWithFormat:@"Payload/*.app/%@*", fileName]);
+		NSData *data = unzipFile(URL, @"iTunesArtwork");
+		if (!data && fileName.length > 0) {
+			data = unzipFile(URL, [NSString stringWithFormat:@"Payload/*.app/%@*", fileName]);
+		}
 		if (data != nil) {
 			appIcon = [[NSImage alloc] initWithData:data];
 		}
