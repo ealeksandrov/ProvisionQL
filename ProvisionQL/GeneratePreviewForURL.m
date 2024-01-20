@@ -359,10 +359,10 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             if (!bundleName) {
                 bundleName = [appPropertyList objectForKey:@"CFBundleName"];
             }
-            [synthesizedInfo setObject:bundleName forKey:@"CFBundleName"];
-            [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleIdentifier"] forKey:@"CFBundleIdentifier"];
-            [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleShortVersionString"] forKey:@"CFBundleShortVersionString"];
-            [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleVersion"] forKey:@"CFBundleVersion"];
+            [synthesizedInfo setObject:bundleName ?: @"" forKey:@"CFBundleName"];
+            [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleIdentifier"] ?: @"" forKey:@"CFBundleIdentifier"];
+            [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleShortVersionString"] ?: @"" forKey:@"CFBundleShortVersionString"];
+            [synthesizedInfo setObject:[appPropertyList objectForKey:@"CFBundleVersion"] ?: @"" forKey:@"CFBundleVersion"];
 
             NSString *extensionType = [[appPropertyList objectForKey:@"NSExtension"] objectForKey:@"NSExtensionPointIdentifier"];
             if(extensionType != nil) {
@@ -699,10 +699,10 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 #endif
 
         synthesizedValue = [[NSBundle bundleWithIdentifier:kPluginBundleId] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-        [synthesizedInfo setObject:synthesizedValue forKey:@"BundleShortVersionString"];
+        [synthesizedInfo setObject:synthesizedValue ?: @"" forKey:@"BundleShortVersionString"];
 
         synthesizedValue = [[NSBundle bundleWithIdentifier:kPluginBundleId] objectForInfoDictionaryKey:@"CFBundleVersion"];
-        [synthesizedInfo setObject:synthesizedValue forKey:@"BundleVersion"];
+        [synthesizedInfo setObject:synthesizedValue ?: @"" forKey:@"BundleVersion"];
 
         for (NSString *key in [synthesizedInfo allKeys]) {
             NSString *replacementValue = [synthesizedInfo objectForKey:key];
