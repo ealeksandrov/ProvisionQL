@@ -266,6 +266,18 @@ NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePat
     return outputData;
 }
 
+NSString *iconAsBase64(NSImage *appIcon) {
+	if (!appIcon) {
+		NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"defaultIcon" withExtension:@"png"];
+		appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
+	}
+	appIcon = roundCorners(appIcon);
+	NSData *imageData = [appIcon TIFFRepresentation];
+	NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
+	imageData = [imageRep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+	return [imageData base64EncodedStringWithOptions:0];
+}
+
 OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview, CFURLRef url, CFStringRef contentTypeUTI, CFDictionaryRef options) {
     @autoreleasepool {
         // create temp directory
@@ -355,6 +367,10 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         if (appPlist != nil) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
 
+			NSString *iconName = mainIconNameForApp(appPropertyList);
+			appIcon = imageFromApp(URL, dataType, iconName);
+			[synthesizedInfo setObject:iconAsBase64(appIcon) forKey:@"AppIcon"];
+
             NSString *bundleName = [appPropertyList objectForKey:@"CFBundleDisplayName"];
             if (!bundleName) {
                 bundleName = [appPropertyList objectForKey:@"CFBundleName"];
@@ -410,9 +426,6 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             }
 
             [synthesizedInfo setObject:appTransportSecurityFormatted forKey:@"AppTransportSecurityFormatted"];
-
-            NSString *iconName = mainIconNameForApp(appPropertyList);
-            appIcon = imageFromApp(URL, dataType, iconName);
             
             NSMutableArray *platforms = [NSMutableArray array];
             for (NSNumber *number in [appPropertyList objectForKey:@"UIDeviceFamily"]) {
@@ -434,18 +447,6 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                 }
             }
             [synthesizedInfo setObject:[platforms componentsJoinedByString:@", "] forKey:@"UIDeviceFamily"];
-
-            if (!appIcon) {
-                NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"defaultIcon" withExtension:@"png"];
-                appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
-            }
-            appIcon = roundCorners(appIcon);
-
-            NSData *imageData = [appIcon TIFFRepresentation];
-            NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
-            imageData = [imageRep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
-            NSString *base64 = [imageData base64EncodedStringWithOptions:0];
-            [synthesizedInfo setObject:base64 forKey:@"AppIcon"];
             [synthesizedInfo setObject:@"" forKey:@"AppInfo"];
             [synthesizedInfo setObject:@"hiddenDiv" forKey:@"ProvisionAsSubheader"];
         } else {
