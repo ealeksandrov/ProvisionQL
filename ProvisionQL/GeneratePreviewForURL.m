@@ -282,27 +282,14 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         NSImage *appIcon = nil;
 
         if ([dataType isEqualToString:kDataType_ipa]) {
-            // get the embedded provisioning & plist from an app archive using: unzip -u -j -d <currentTempDirFolder> <URL> <files to unzip>
-            NSTask *unzipTask = [NSTask new];
-			[unzipTask setLaunchPath:@"/usr/bin/unzip"];
-			[unzipTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], @"Payload/*.app/embedded.mobileprovision", @"Payload/*.app/Info.plist", @"-x", @"*/*/*/*"]];
-			[unzipTask launch];
-			[unzipTask waitUntilExit];
-
-            NSString *provisionPath = [currentTempDirFolder stringByAppendingPathComponent:@"embedded.mobileprovision"];
-			provisionData = [NSData dataWithContentsOfFile:provisionPath];
-            NSString *plistPath = [currentTempDirFolder stringByAppendingPathComponent:@"Info.plist"];
-			appPlist = [NSData dataWithContentsOfFile:plistPath];
+			provisionData = unzipFile(URL, @"Payload/*.app/embedded.mobileprovision");
+			appPlist = unzipFile(URL, @"Payload/*.app/Info.plist");
 
             // read codesigning entitlements from application binary (extract it first)
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
             NSString *bundleExecutable = [appPropertyList objectForKey:@"CFBundleExecutable"];
 
-            NSTask *unzipAppTask = [NSTask new];
-            [unzipAppTask setLaunchPath:@"/usr/bin/unzip"];
-            [unzipAppTask setArguments:@[@"-u", @"-j", @"-d", currentTempDirFolder, [URL path], [@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable], @"-x", @"*/*/*/*"]];
-            [unzipAppTask launch];
-            [unzipAppTask waitUntilExit];
+			unzipFileToDir(URL, currentTempDirFolder, [@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable]);
 
             codesignEntitlementsData = codesignEntitlementsDataFromApp(appPlist, currentTempDirFolder);
 

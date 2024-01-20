@@ -46,17 +46,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
                 }
             }
         } else if([dataType isEqualToString:kDataType_ipa]) {
-            // get the embedded plist from an app archive using: unzip -p <URL> 'Payload/*.app/Info.plist' (piped to standard output)
-            NSTask *unzipTask = [NSTask new];
-            [unzipTask setLaunchPath:@"/usr/bin/unzip"];
-            [unzipTask setStandardOutput:[NSPipe pipe]];
-            [unzipTask setArguments:@[@"-p", [URL path], @"Payload/*.app/Info.plist", @"-x", @"*/*/*/*"]];
-            [unzipTask launch];
-
-            NSData *pipeData = [[[unzipTask standardOutput] fileHandleForReading] readDataToEndOfFile];
-            [unzipTask waitUntilExit];
-
-            appPlist = pipeData;
+			appPlist = unzipFile(URL, @"Payload/*.app/Info.plist");
         } else {
             // use provisioning directly
             provisionData = [NSData dataWithContentsOfURL:URL];
