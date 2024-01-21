@@ -36,6 +36,13 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
         NSUInteger devicesCount = 0;
         int expStatus = 0;
 
+		static const NSString *IconFlavor;
+		if (@available(macOS 10.15, *)) {
+			IconFlavor = @"icon";
+		} else {
+			IconFlavor = @"IconFlavor";
+		}
+
         if ([dataType isEqualToString:kDataType_xcode_archive]) {
             // get the embedded plist for the iOS app
             NSURL *appsDir = [URL URLByAppendingPathComponent:@"Products/Applications/"];
@@ -68,9 +75,11 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             }
             appIcon = roundCorners(appIcon);
             if ([dataType isEqualToString:kDataType_xcode_archive]) {
-                propertiesDict = @{@"IconFlavor" : @(12)};
+                // 0: Plain transparent, 1: Shadow, 2: Book, 3: Movie, 4: Address, 5: Image,
+                // 6: Gloss, 7: Slide, 8: Square, 9: Border, 11: Calendar, 12: Pattern
+                propertiesDict = @{IconFlavor : @(12)};
             } else {
-                propertiesDict = @{@"IconFlavor" : @(0)};
+                propertiesDict = @{IconFlavor : @(0)};
             }
         } else {
             if (iconMode) {
