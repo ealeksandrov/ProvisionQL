@@ -124,6 +124,13 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             return noErr;
         }
 
+		// image-only can be drawn efficiently.
+		if ([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_xcode_archive]) {
+			[appIcon setSize:QLThumbnailRequestGetMaximumSize(thumbnail)];
+			QLThumbnailRequestSetImageWithData(thumbnail, (__bridge CFDataRef)[appIcon TIFFRepresentation], (__bridge CFDictionaryRef)propertiesDict);
+			return noErr;
+		}
+
         NSSize canvasSize = appIcon.size;
         NSRect renderRect = NSMakeRect(0.0, 0.0, appIcon.size.width, appIcon.size.height);
 
@@ -133,7 +140,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
 
             [NSGraphicsContext setCurrentContext:_graphicsContext];
             if ([dataType isEqualToString:kDataType_ipa] || [dataType isEqualToString:kDataType_xcode_archive]) {
-                [appIcon drawInRect:renderRect];
+                // handled above
             } else {
                 [appIcon drawInRect:renderRect];
 
