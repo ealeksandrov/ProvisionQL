@@ -252,7 +252,11 @@ NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePat
     [codesignTask setLaunchPath:@"/usr/bin/codesign"];
     [codesignTask setStandardOutput:[NSPipe pipe]];
     [codesignTask setStandardError:[NSPipe pipe]];
-    [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @"-", @"--xml"]];
+	if (@available(macOS 11, *)) {
+		[codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @"-", @"--xml"]];
+	} else {
+		[codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @":-"]];
+	}
     [codesignTask launch];
 
     NSData *outputData = [[[codesignTask standardOutput] fileHandleForReading] readDataToEndOfFile];
