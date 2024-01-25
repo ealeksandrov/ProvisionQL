@@ -671,6 +671,6 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 	return noErr;
 }
 
-void CancelThumbnailGeneration(void *thisInterface, QLThumbnailRequestRef thumbnail) {
+void CancelPreviewGeneration(void *thisInterface, QLPreviewRequestRef preview) {
 	// Implement only if supported
 }

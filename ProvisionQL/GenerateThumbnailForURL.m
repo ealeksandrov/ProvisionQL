@@ -159,6 +159,6 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
 	return noErr;
 }
 
-void CancelPreviewGeneration(void *thisInterface, QLPreviewRequestRef preview) {
+void CancelThumbnailGeneration(void *thisInterface, QLThumbnailRequestRef thumbnail) {
 	// Implement only if supported
 }
