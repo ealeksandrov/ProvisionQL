@@ -117,7 +117,6 @@ OSStatus renderProvision(QuickLookInfo meta, QLThumbnailRequestRef thumbnail, BO
 	NSSize badgeNumSize = [badge sizeWithAttributes:fontAttrs];
 	int badgeWidth = badgeNumSize.width + BADGE_MARGIN * 2;
 	NSRect badgeOutlineRect = NSMakeRect(badgeX, badgeY, MAX(badgeWidth, MIN_BADGE_WIDTH), BADGE_HEIGHT);
-	ALLOW_EXIT
 
 	// Do as much work as possible before the `CreateContext`. We can try to quit early before that!
 	CGContextRef _context = QLThumbnailRequestCreateContext(thumbnail, renderRect.size, false, NULL);

@@ -621,14 +621,11 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 
 		// App Info
 		NSDictionary *plistApp = readPlistApp(meta);
-		ALLOW_EXIT
-
 		[infoLayer addEntriesFromDictionary:procAppInfo(plistApp)];
 		ALLOW_EXIT
 
 		// Provisioning
 		NSDictionary *plistProvision = readPlistProvision(meta);
-		ALLOW_EXIT
 
 		if (!plistApp && !plistProvision) {
 			return noErr; // nothing to do. Maybe another QL plugin can do better.
@@ -644,14 +641,11 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 		// Entitlements
 		NSString *bundleExecutable = plistApp[@"CFBundleExecutable"];
 		NSData *codeSignData = getCodeSignEntitlements(meta, bundleExecutable);
-		ALLOW_EXIT
-
 		[infoLayer addEntriesFromDictionary:procEntitlements(codeSignData, plistProvision)];
 		ALLOW_EXIT
 
 		// File Info
 		[infoLayer addEntriesFromDictionary:procFileInfo(meta.url)];
-		ALLOW_EXIT
 
 		// Footer Info
 		[infoLayer addEntriesFromDictionary:procFooterInfo()];
@@ -659,7 +653,6 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 
 		// prepare html, replace values
 		NSString *html = applyHtmlTemplate(infoLayer);
-		ALLOW_EXIT
 
 		// QL render html
 		NSDictionary *properties = @{ // properties for the HTML data
