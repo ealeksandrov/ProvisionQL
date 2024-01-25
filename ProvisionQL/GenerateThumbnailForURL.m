@@ -79,10 +79,10 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
             }
 			// image-only icons can be drawn efficiently.
 			appIcon = roundCorners(appIcon);
-			// downscale as required by QLThumbnailRequestSetImageWithData
-			if (appIcon.size.width > maxSize.width && appIcon.size.height > maxSize.height) {
-				[appIcon setSize:maxSize];
-			}
+			// if downscale, then this should respect retina resolution
+//			if (appIcon.size.width > maxSize.width && appIcon.size.height > maxSize.height) {
+//				[appIcon setSize:maxSize];
+//			}
 			QLThumbnailRequestSetImageWithData(thumbnail, (__bridge CFDataRef)[appIcon TIFFRepresentation], (__bridge CFDictionaryRef)propertiesDict);
 			return noErr;
 		}
