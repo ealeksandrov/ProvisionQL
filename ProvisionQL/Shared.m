@@ -1,6 +1,48 @@
 #import "Shared.h"
 
-NSData *unzipFile(NSURL *url, NSString *filePath) {
+// MARK: - Meta data for QuickLook
+
+/// Search an archive for the .app or .ipa bundle.
+NSURL * _Nullable appPathForArchive(NSURL *url) {
+	NSURL *appsDir = [url URLByAppendingPathComponent:@"Products/Applications/"];
+	if (appsDir != nil) {
+		NSArray *dirFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appsDir.path error:nil];
+		if (dirFiles.count > 0) {
+			return [appsDir URLByAppendingPathComponent:dirFiles[0] isDirectory:YES];
+		}
+	}
+	return nil;
+}
+
+/// Use file url and UTI type to generate an info object to pass around.
+QuickLookInfo initQLInfo(CFStringRef contentTypeUTI, CFURLRef url) {
+	QuickLookInfo data = {};
+	data.UTI = (__bridge NSString *)contentTypeUTI;
+	data.url = (__bridge NSURL *)url;
+
+	if ([data.UTI isEqualToString:kDataType_ipa]) {
+		data.type = FileTypeIPA;
+	} else if ([data.UTI isEqualToString:kDataType_xcode_archive]) {
+		data.type = FileTypeArchive;
+		data.effectiveUrl = appPathForArchive(data.url);
+	} else if ([data.UTI isEqualToString:kDataType_app_extension]) {
+		data.type = FileTypeExtension;
+	} else if ([data.UTI isEqualToString:kDataType_ios_provision]) {
+		data.type = FileTypeProvision;
+	} else if ([data.UTI isEqualToString:kDataType_ios_provision_old]) {
+		data.type = FileTypeProvision;
+	} else if ([data.UTI isEqualToString:kDataType_osx_provision]) {
+		data.type = FileTypeProvision;
+		data.isOSX = YES;
+	}
+	return data;
+}
+
+
+// MARK: Unzip
+
+/// Unzip file directly into memory.
+NSData * _Nullable unzipFile(NSURL *url, NSString *filePath) {
 	NSTask *task = [NSTask new];
 	[task setLaunchPath:@"/usr/bin/unzip"];
 	[task setStandardOutput:[NSPipe pipe]];
@@ -15,6 +57,7 @@ NSData *unzipFile(NSURL *url, NSString *filePath) {
 	return pipeData;
 }
 
+/// Unzip file to filesystem.
 void unzipFileToDir(NSURL *url, NSString *targetDir, NSString *filePath) {
 	NSTask *task = [NSTask new];
 	[task setLaunchPath:@"/usr/bin/unzip"];
@@ -23,7 +66,89 @@ void unzipFileToDir(NSURL *url, NSString *targetDir, NSString *filePath) {
 	[task waitUntilExit];
 }
 
-NSImage *roundCorners(NSImage *image) {
+/// Load a file from bundle into memory. Either by file path or via unzip.
+NSData * _Nullable readPayloadFile(QuickLookInfo meta, NSString *filename) {
+	switch (meta.type) {
+		case FileTypeIPA: return unzipFile(meta.url, [@"Payload/*.app/" stringByAppendingString:filename]);
+		case FileTypeArchive: return [NSData dataWithContentsOfURL:[meta.effectiveUrl URLByAppendingPathComponent:filename]];
+		case FileTypeExtension: return [NSData dataWithContentsOfURL:[meta.url URLByAppendingPathComponent:filename]];
+		case FileTypeProvision: return nil;
+	}
+}
+
+
+// MARK: Plist
+
+/// Read app default @c Info.plist.
+NSDictionary * _Nullable readPlistApp(QuickLookInfo meta) {
+	NSLog(@"read once");
+	switch (meta.type) {
+		case FileTypeIPA:
+		case FileTypeArchive:
+		case FileTypeExtension: {
+			NSData *plistData = readPayloadFile(meta, @"Info.plist");
+			return [NSPropertyListSerialization propertyListWithData:plistData options:0 format:NULL error:NULL];
+		}
+		case FileTypeProvision:
+			return nil;
+	}
+}
+
+/// Read @c embedded.mobileprovision file and decode with CMS decoder.
+NSDictionary * _Nullable readPlistProvision(QuickLookInfo meta) {
+	NSData *provisionData;
+	if (meta.type == FileTypeProvision) {
+		provisionData = [NSData dataWithContentsOfURL:meta.url]; // the target file itself
+	} else {
+		provisionData = readPayloadFile(meta, @"embedded.mobileprovision");
+	}
+	if (!provisionData) {
+		NSLog(@"No provisionData for %@", meta.url);
+		return nil;
+	}
+
+	CMSDecoderRef decoder = NULL;
+	CMSDecoderCreate(&decoder);
+	CMSDecoderUpdateMessage(decoder, provisionData.bytes, provisionData.length);
+	CMSDecoderFinalizeMessage(decoder);
+	CFDataRef dataRef = NULL;
+	CMSDecoderCopyContent(decoder, &dataRef);
+	NSData *data = (NSData *)CFBridgingRelease(dataRef);
+	CFRelease(decoder);
+
+	if (!data) {
+		return nil;
+	}
+	return [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:NULL];
+}
+
+
+// MARK: - Other helper
+
+/// Check time between date and now. Set Expiring if less than 30 days until expiration
+ExpirationStatus expirationStatus(NSDate *date) {
+	if (!date || [date compare:[NSDate date]] == NSOrderedAscending) {
+		return ExpirationStatusExpired;
+	}
+	NSDateComponents *dateComponents = [[NSCalendar currentCalendar] components:NSCalendarUnitDay fromDate:[NSDate date] toDate:date options:0];
+	return dateComponents.day < 30 ? ExpirationStatusExpiring : ExpirationStatusValid;
+}
+
+/// Ensures the value is of type @c NSDate
+NSDate * _Nullable dateOrNil(NSDate * _Nullable value) {
+	return [value isKindOfClass:[NSDate class]] ? value : nil;
+}
+
+/// Ensures the value is of type @c NSArray
+NSArray * _Nullable arrayOrNil(NSArray * _Nullable value) {
+	return [value isKindOfClass:[NSArray class]] ? value : nil;
+}
+
+
+// MARK: - App Icon
+
+/// Apply rounded corners to image (iOS7 style)
+NSImage * _Nonnull roundCorners(NSImage *image) {
     NSImage *existingImage = image;
     NSSize existingSize = [existingImage size];
     NSImage *composedImage = [[NSImage alloc] initWithSize:existingSize];
@@ -43,121 +168,75 @@ NSImage *roundCorners(NSImage *image) {
     return composedImage;
 }
 
-int expirationStatus(NSDate *date, NSCalendar *calendar) {
-	int result = 0;
-
-	if (date) {
-        NSDateComponents *dateComponents = [calendar components:NSCalendarUnitDay fromDate:[NSDate date] toDate:date options:0];
-        if ([date compare:[NSDate date]] == NSOrderedAscending) {
-            // expired
-			result = 0;
-		} else if (dateComponents.day < 30) {
-            // expiring
-			result = 1;
-		} else {
-            // valid
-			result = 2;
+/// Given a list of filenames, try to find the one with the highest resolution
+NSString *selectBestIcon(NSArray<NSString *> *icons) {
+	for (NSString *match in @[@"@3x", @"@2x", @"180", @"167", @"152", @"120"]) {
+		for (NSString *icon in icons) {
+			if ([icon containsString:match]) {
+				return icon;
+			}
 		}
 	}
-
-	return result;
+	//If no one matches any pattern, just take last item
+	return [icons lastObject];
 }
 
-NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
-    NSImage *appIcon = nil;
-
-    if ([dataType isEqualToString:kDataType_xcode_archive]) {
-        // get the embedded icon for the iOS app
-        NSURL *appsDir = [URL URLByAppendingPathComponent:@"Products/Applications/"];
-        if (!appsDir) {
-            return nil;
-        }
-
-        NSArray *dirFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appsDir.path error:nil];
-        NSString *appName = dirFiles.firstObject;
-        if (!appName) {
-            return nil;
-        }
-
-        NSURL *appURL = [appsDir URLByAppendingPathComponent:appName];
-        NSArray *appContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appURL.path error:nil];
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains %@", fileName];
-        NSString *appIconFullName = [appContents filteredArrayUsingPredicate:predicate].lastObject;
-        if (!appIconFullName) {
-            return nil;
-        }
-
-        NSURL *appIconFullURL = [appURL URLByAppendingPathComponent:appIconFullName];
-        appIcon = [[NSImage alloc] initWithContentsOfURL:appIconFullURL];
-    } else if([dataType isEqualToString:kDataType_ipa]) {
-		NSData *data = unzipFile(URL, @"iTunesArtwork");
-		if (!data && fileName.length > 0) {
-			data = unzipFile(URL, [NSString stringWithFormat:@"Payload/*.app/%@*", fileName]);
+/// Deep select icons from plist key @c CFBundleIcons and @c CFBundleIcons~ipad
+NSArray * _Nullable iconsListForDictionary(NSDictionary *bundleDict) {
+	if ([bundleDict isKindOfClass:[NSDictionary class]]) {
+		NSDictionary *primaryDict = [bundleDict objectForKey:@"CFBundlePrimaryIcon"];
+		if ([primaryDict isKindOfClass:[NSDictionary class]]) {
+			NSArray *icons = [primaryDict objectForKey:@"CFBundleIconFiles"];
+			if ([icons isKindOfClass:[NSArray class]]) {
+				return icons;
+			}
 		}
-		if (data != nil) {
-			appIcon = [[NSImage alloc] initWithData:data];
+	}
+	return nil;
+}
+
+/// Parse app plist to find the bundle icon filename.
+NSString * _Nullable mainIconNameForApp(NSDictionary *appPlist) {
+	//Check for CFBundleIcons (since 5.0)
+	NSArray *icons = iconsListForDictionary(appPlist[@"CFBundleIcons"]);
+	if (!icons) {
+		icons = iconsListForDictionary(appPlist[@"CFBundleIcons~ipad"]);
+		if (!icons) {
+			//Check for CFBundleIconFiles (since 3.2)
+			icons = arrayOrNil(appPlist[@"CFBundleIconFiles"]);
+			if (!icons) {
+				//Check for CFBundleIconFile (legacy, before 3.2)
+				return appPlist[@"CFBundleIconFile"]; // may be nil
+			}
 		}
-    }
-
-    return appIcon;
+	}
+	return selectBestIcon(icons);
 }
 
-NSArray *iconsListForDictionary(NSDictionary *iconsDict) {
-    if ([iconsDict isKindOfClass:[NSDictionary class]]) {
-        id primaryIconDict = [iconsDict objectForKey:@"CFBundlePrimaryIcon"];
-        if ([primaryIconDict isKindOfClass:[NSDictionary class]]) {
-            id tempIcons = [primaryIconDict objectForKey:@"CFBundleIconFiles"];
-            if ([tempIcons isKindOfClass:[NSArray class]]) {
-                return tempIcons;
-            }
-        }
-    }
-
-    return nil;
-}
-
-NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
-    NSArray *icons;
-    NSString *iconName;
-
-    //Check for CFBundleIcons (since 5.0)
-    icons = iconsListForDictionary([appPropertyList objectForKey:@"CFBundleIcons"]);
-    if (!icons) {
-        icons = iconsListForDictionary([appPropertyList objectForKey:@"CFBundleIcons~ipad"]);
-    }
-
-    if (!icons) {
-        //Check for CFBundleIconFiles (since 3.2)
-        id tempIcons = [appPropertyList objectForKey:@"CFBundleIconFiles"];
-        if ([tempIcons isKindOfClass:[NSArray class]]) {
-            icons = tempIcons;
-        }
-    }
-
-    if (icons) {
-        //Search some patterns for primary app icon (120x120)
-        NSArray *matches = @[@"120",@"60"];
-
-        for (NSString *match in matches) {
-            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains[c] %@",match];
-            NSArray *results = [icons filteredArrayUsingPredicate:predicate];
-            if ([results count]) {
-                iconName = [results firstObject];
-                break;
-            }
-        }
-
-        //If no one matches any pattern, just take last item
-        if (!iconName) {
-            iconName = [icons lastObject];
-        }
-    } else {
-        //Check for CFBundleIconFile (legacy, before 3.2)
-        NSString *legacyIcon = [appPropertyList objectForKey:@"CFBundleIconFile"];
-        if ([legacyIcon length]) {
-            iconName = legacyIcon;
-        }
-    }
-
-    return iconName;
+/// Depending on the file type, find the icon within the bundle
+/// @param appPlist If @c nil, will load plist on the fly (used for thumbnail)
+NSImage * _Nonnull imageFromApp(QuickLookInfo meta, NSDictionary *appPlist) {
+	if (meta.type == FileTypeIPA) {
+		NSData *data = unzipFile(meta.url, @"iTunesArtwork");
+		if (!data) {
+			NSString *fileName = mainIconNameForApp(appPlist ?: readPlistApp(meta));
+			data = unzipFile(meta.url, [NSString stringWithFormat:@"Payload/*.app/%@*", fileName]);
+		}
+		if (data) {
+			return [[NSImage alloc] initWithData:data];
+		}
+	} else if (meta.type == FileTypeArchive) {
+		// get the embedded icon for the iOS app
+		NSString *fileName = mainIconNameForApp(appPlist ?: readPlistApp(meta));
+		NSArray *appContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:meta.effectiveUrl.path error:nil];
+		NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains %@", fileName];
+		NSString *matchedName = [appContents filteredArrayUsingPredicate:predicate].lastObject;
+		if (matchedName) {
+			NSURL *appIconFullURL = [meta.effectiveUrl URLByAppendingPathComponent:matchedName];
+			return [[NSImage alloc] initWithContentsOfURL:appIconFullURL];
+		}
+	}
+	// Fallback to default icon
+	NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"defaultIcon" withExtension:@"png"];
+	return [[NSImage alloc] initWithContentsOfURL:iconURL];
 }
