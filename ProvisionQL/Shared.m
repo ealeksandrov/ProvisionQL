@@ -135,12 +135,12 @@ ExpirationStatus expirationStatus(NSDate *date) {
 }
 
 /// Ensures the value is of type @c NSDate
-NSDate * _Nullable dateOrNil(NSDate * _Nullable value) {
+inline NSDate * _Nullable dateOrNil(NSDate * _Nullable value) {
 	return [value isKindOfClass:[NSDate class]] ? value : nil;
 }
 
 /// Ensures the value is of type @c NSArray
-NSArray * _Nullable arrayOrNil(NSArray * _Nullable value) {
+inline NSArray * _Nullable arrayOrNil(NSArray * _Nullable value) {
 	return [value isKindOfClass:[NSArray class]] ? value : nil;
 }
 
