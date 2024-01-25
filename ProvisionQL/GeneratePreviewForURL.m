@@ -603,7 +603,9 @@ NSString *applyHtmlTemplate(NSDictionary *templateValues) {
 		[rv appendString:[html substringWithRange:NSMakeRange(prevLoc, start - prevLoc)]];
 		NSString *value = templateValues[key];
 		if (!value) {
-			NSLog(@"WARN: unused key %@", key);
+#ifdef DEBUG
+			 NSLog(@"WARN: unused key %@", key);
+#endif
 		} else {
 			[rv appendString:value];
 		}

@@ -33,11 +33,11 @@ OSStatus renderAppIcon(QuickLookInfo meta, QLThumbnailRequestRef thumbnail) {
 	NSImage *appIcon = imageFromApp(meta, nil);
 	ALLOW_EXIT
 
-	// downscale as required by QLThumbnailRequestSetImageWithData
-	CGSize maxSize = QLThumbnailRequestGetMaximumSize(thumbnail);
-	if (appIcon.size.width > maxSize.width && appIcon.size.height > maxSize.height) {
-		[appIcon setSize:maxSize];
-	}
+	// if downscale, then this should respect retina resolution
+//	CGSize maxSize = QLThumbnailRequestGetMaximumSize(thumbnail);
+//	if (appIcon.size.width > maxSize.width && appIcon.size.height > maxSize.height) {
+//		[appIcon setSize:maxSize];
+//	}
 
 	appIcon = roundCorners(appIcon);
 	ALLOW_EXIT
