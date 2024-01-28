@@ -1,5 +1,17 @@
 # ProvisionQL
 
+## Version 1.7.0
+
+* fix codesign unkown param on <10.15 (`--xml` flag)
+* fix crash if a plist key is not present (e.g. `CFBundleShortVersionString` for some old iOS 3.2 ipa)
+* fix fixed-width size for  preview of app-icon  (consistency)
+* fix `IconFlavor` attribute for thumbnail drawing in 10.15+
+* unzip with zlib instead of sys-call (performance)
+* parse html template tags with regex (performance)
+* use higher resolution app icon if available (try `iTunesArtwork`)
+* minor html template improvements
+* some refactoring to reduce duplicate code 
+
 ## Version 1.6.4
 
 * Adds error handling to entitlements parsing ([#47](https://github.com/ealeksandrov/ProvisionQL/pull/47))
