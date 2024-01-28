@@ -1,4 +1,5 @@
 #import "Shared.h"
+#import "ZipFile.h"
 
 // MARK: - Meta data for QuickLook
 
@@ -22,6 +23,7 @@ QuickLookInfo initQLInfo(CFStringRef contentTypeUTI, CFURLRef url) {
 
 	if ([data.UTI isEqualToString:kDataType_ipa]) {
 		data.type = FileTypeIPA;
+		data.zipFile = [ZipFile open:data.url.path];
 	} else if ([data.UTI isEqualToString:kDataType_xcode_archive]) {
 		data.type = FileTypeArchive;
 		data.effectiveUrl = appPathForArchive(data.url);
@@ -38,50 +40,20 @@ QuickLookInfo initQLInfo(CFStringRef contentTypeUTI, CFURLRef url) {
 	return data;
 }
 
-
-// MARK: Unzip
-
-/// Unzip file directly into memory.
-NSData * _Nullable unzipFile(NSURL *url, NSString *filePath) {
-	NSTask *task = [NSTask new];
-	[task setLaunchPath:@"/usr/bin/unzip"];
-	[task setStandardOutput:[NSPipe pipe]];
-	[task setArguments:@[@"-p", [url path], filePath]]; // @"-x", @"*/*/*/*"
-	[task launch];
-
-	NSData *pipeData = [[[task standardOutput] fileHandleForReading] readDataToEndOfFile];
-	[task waitUntilExit];
-	if (pipeData.length == 0) {
-		return nil;
-	}
-	return pipeData;
-}
-
-/// Unzip file to filesystem.
-void unzipFileToDir(NSURL *url, NSString *targetDir, NSString *filePath) {
-	NSTask *task = [NSTask new];
-	[task setLaunchPath:@"/usr/bin/unzip"];
-	[task setArguments:@[@"-u", @"-j", @"-d", targetDir, [url path], filePath]]; // @"-x", @"*/*/*/*"
-	[task launch];
-	[task waitUntilExit];
-}
-
 /// Load a file from bundle into memory. Either by file path or via unzip.
 NSData * _Nullable readPayloadFile(QuickLookInfo meta, NSString *filename) {
 	switch (meta.type) {
-		case FileTypeIPA: return unzipFile(meta.url, [@"Payload/*.app/" stringByAppendingString:filename]);
+		case FileTypeIPA: return [meta.zipFile unzipFile:[@"Payload/*.app/" stringByAppendingString:filename]];
 		case FileTypeArchive: return [NSData dataWithContentsOfURL:[meta.effectiveUrl URLByAppendingPathComponent:filename]];
 		case FileTypeExtension: return [NSData dataWithContentsOfURL:[meta.url URLByAppendingPathComponent:filename]];
 		case FileTypeProvision: return nil;
 	}
 }
 
-
-// MARK: Plist
+// MARK: - Plist
 
 /// Read app default @c Info.plist.
 NSDictionary * _Nullable readPlistApp(QuickLookInfo meta) {
-	NSLog(@"read once");
 	switch (meta.type) {
 		case FileTypeIPA:
 		case FileTypeArchive:
@@ -217,10 +189,13 @@ NSString * _Nullable mainIconNameForApp(NSDictionary *appPlist) {
 /// @param appPlist If @c nil, will load plist on the fly (used for thumbnail)
 NSImage * _Nonnull imageFromApp(QuickLookInfo meta, NSDictionary *appPlist) {
 	if (meta.type == FileTypeIPA) {
-		NSData *data = unzipFile(meta.url, @"iTunesArtwork");
+		NSData *data = [meta.zipFile unzipFile:@"iTunesArtwork"];
 		if (!data) {
 			NSString *fileName = mainIconNameForApp(appPlist ?: readPlistApp(meta));
-			data = unzipFile(meta.url, [NSString stringWithFormat:@"Payload/*.app/%@*", fileName]);
+			if (fileName) {
+				data = [meta.zipFile unzipFile:[NSString stringWithFormat:@"Payload/*.app/%@*", fileName]];
+			}
+			// TODO: load assets.car
 		}
 		if (data) {
 			return [[NSImage alloc] initWithData:data];
