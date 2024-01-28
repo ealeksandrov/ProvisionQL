@@ -436,6 +436,10 @@ NSData *runCodeSign(NSString *binaryPath) {
 	}
 	[codesignTask launch];
 
+#ifdef DEBUG
+	NSLog(@"[sys-call] codesign %@", [[codesignTask arguments] componentsJoinedByString:@" "]);
+#endif
+
 	NSData *outputData = [[[codesignTask standardOutput] fileHandleForReading] readDataToEndOfFile];
 	NSData *errorData = [[[codesignTask standardError] fileHandleForReading] readDataToEndOfFile];
 	[codesignTask waitUntilExit];
@@ -457,7 +461,7 @@ NSData *getCodeSignEntitlements(QuickLookInfo meta, NSString *bundleExecutable) 
 		case FileTypeIPA:
 			basePath = currentTempDirFolder;
 			[fileManager createDirectoryAtPath:currentTempDirFolder withIntermediateDirectories:YES attributes:nil error:nil];
-			unzipFileToDir(meta.url, currentTempDirFolder, [@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable]);
+			[meta.zipFile unzipFile:[@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable] toDir:currentTempDirFolder];
 			break;
 		case FileTypeArchive:
 			basePath = meta.effectiveUrl.path;

@@ -8,6 +8,8 @@
 
 #import <NSBezierPath+IOS7RoundedRect.h>
 
+#import "ZipFile.h"
+
 static NSString * _Nonnull const kPluginBundleId = @"com.ealeksandrov.ProvisionQL";
 static NSString * _Nonnull const kDataType_ipa               = @"com.apple.itunes.ipa";
 static NSString * _Nonnull const kDataType_ios_provision     = @"com.apple.mobileprovision";
@@ -31,13 +33,10 @@ typedef struct QuickLookMeta {
 
 	FileType type;
 	BOOL isOSX;
+	ZipFile * _Nullable zipFile; // only set for zipped file types
 } QuickLookInfo;
 
 QuickLookInfo initQLInfo(_Nonnull CFStringRef contentTypeUTI, _Nonnull CFURLRef url);
-
-
-// Unzip
-void unzipFileToDir(NSURL * _Nonnull url, NSString * _Nonnull filePath, NSString * _Nonnull targetDir);
 
 // Plist
 NSDictionary * _Nullable readPlistApp(QuickLookInfo meta);
