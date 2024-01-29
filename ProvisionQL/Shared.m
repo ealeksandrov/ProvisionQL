@@ -52,14 +52,19 @@ NSData * _Nullable readPayloadFile(QuickLookInfo meta, NSString *filename) {
 
 // MARK: - Plist
 
+/// Helper for optional chaining.
+NSDictionary * _Nullable asPlistOrNil(NSData * _Nullable data) {
+	if (!data) { return nil; }
+	return [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:NULL];
+}
+
 /// Read app default @c Info.plist.
 NSDictionary * _Nullable readPlistApp(QuickLookInfo meta) {
 	switch (meta.type) {
 		case FileTypeIPA:
 		case FileTypeArchive:
 		case FileTypeExtension: {
-			NSData *plistData = readPayloadFile(meta, @"Info.plist");
-			return [NSPropertyListSerialization propertyListWithData:plistData options:0 format:NULL error:NULL];
+			return asPlistOrNil(readPayloadFile(meta, @"Info.plist"));
 		}
 		case FileTypeProvision:
 			return nil;
@@ -87,11 +92,7 @@ NSDictionary * _Nullable readPlistProvision(QuickLookInfo meta) {
 	CMSDecoderCopyContent(decoder, &dataRef);
 	NSData *data = (NSData *)CFBridgingRelease(dataRef);
 	CFRelease(decoder);
-
-	if (!data) {
-		return nil;
-	}
-	return [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:NULL];
+	return asPlistOrNil(data);
 }
 
 
