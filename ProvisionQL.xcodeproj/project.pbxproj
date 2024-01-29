@@ -14,6 +14,8 @@
 		54F4EB0F2B668F7E0000CE41 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F4EB0E2B668F7E0000CE41 /* libz.dylib */; };
 		54F4EB222B66D6FE0000CE41 /* ZipFile.h in Headers */ = {isa = PBXBuildFile; fileRef = 54F4EB202B66D6FE0000CE41 /* ZipFile.h */; };
 		54F4EB232B66D6FE0000CE41 /* ZipFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 54F4EB212B66D6FE0000CE41 /* ZipFile.m */; };
+		54F4EB682B6719310000CE41 /* AppCategories.h in Headers */ = {isa = PBXBuildFile; fileRef = 54F4EB662B6719310000CE41 /* AppCategories.h */; };
+		54F4EB692B6719310000CE41 /* AppCategories.m in Sources */ = {isa = PBXBuildFile; fileRef = 54F4EB672B6719310000CE41 /* AppCategories.m */; };
 		553C6D321879E457002237FC /* blankIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 553C6D311879E457002237FC /* blankIcon.png */; };
 		55424C611870D4AA002F5408 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55424C601870D4AA002F5408 /* AppKit.framework */; };
 		55424C631870D90E002F5408 /* defaultIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 55424C621870D90E002F5408 /* defaultIcon.png */; };
@@ -41,6 +43,8 @@
 		54F4EB0E2B668F7E0000CE41 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = ../../../../../usr/lib/libz.dylib; sourceTree = "<group>"; };
 		54F4EB202B66D6FE0000CE41 /* ZipFile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ZipFile.h; sourceTree = "<group>"; };
 		54F4EB212B66D6FE0000CE41 /* ZipFile.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZipFile.m; sourceTree = "<group>"; };
+		54F4EB662B6719310000CE41 /* AppCategories.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppCategories.h; sourceTree = "<group>"; };
+		54F4EB672B6719310000CE41 /* AppCategories.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppCategories.m; sourceTree = "<group>"; };
 		553C6D311879E457002237FC /* blankIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = blankIcon.png; sourceTree = "<group>"; };
 		55424C601870D4AA002F5408 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		55424C621870D90E002F5408 /* defaultIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = defaultIcon.png; sourceTree = "<group>"; };
@@ -191,6 +195,8 @@
 				555E9511186E2D67001D406A /* Supporting-files */,
 				555E951A186E2DC0001D406A /* Scripts */,
 				555E9518186E2DC0001D406A /* Resources */,
+				54F4EB662B6719310000CE41 /* AppCategories.h */,
+				54F4EB672B6719310000CE41 /* AppCategories.m */,
 				557C842718733828008A2A0C /* Shared.h */,
 				557C842418732599008A2A0C /* Shared.m */,
 				54F4EB202B66D6FE0000CE41 /* ZipFile.h */,
@@ -208,6 +214,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				54F4EB682B6719310000CE41 /* AppCategories.h in Headers */,
 				55424C671870DB2A002F5408 /* NSBezierPath+IOS7RoundedRect.h in Headers */,
 				54F4EB002B6668A50000CE41 /* ZipEntry.h in Headers */,
 				557C842818733828008A2A0C /* Shared.h in Headers */,
@@ -324,6 +331,7 @@
 				54F4EB022B6668A50000CE41 /* pinch.m in Sources */,
 				557C842618732599008A2A0C /* Shared.m in Sources */,
 				55DB728F186E193500CAFEE7 /* GenerateThumbnailForURL.m in Sources */,
+				54F4EB692B6719310000CE41 /* AppCategories.m in Sources */,
 				55DB7291186E193500CAFEE7 /* GeneratePreviewForURL.m in Sources */,
 				54F4EB232B66D6FE0000CE41 /* ZipFile.m in Sources */,
 			);

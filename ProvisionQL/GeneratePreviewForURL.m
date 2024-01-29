@@ -1,4 +1,5 @@
 #import "Shared.h"
+#import "AppCategories.h"
 
 // makro to stop further processing
 #define ALLOW_EXIT if (QLPreviewRequestIsCancelled(preview)) { return noErr; }
@@ -160,6 +161,10 @@ NSDate *parseDate(id value) {
 	[dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss Z"];
 	NSDate *rv = [dateFormatter dateFromString:dateStr];
 	if (!rv) {
+		[dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZ"];
+		rv = [dateFormatter dateFromString:dateStr];
+	}
+	if (!rv) {
 		NSLog(@"ERROR formatting date: %@", dateStr);
 	}
 	return rv;
@@ -295,6 +300,63 @@ NSDictionary * _Nonnull procAppInfo(NSDictionary *appPlist) {
 		@"DTSDKName": appPlist[@"DTSDKName"] ?: @"",
 		@"MinimumOSVersion": appPlist[@"MinimumOSVersion"] ?: @"",
 		@"AppTransportSecurityFormatted": formattedAppTransportSecurity(appPlist),
+	};
+}
+
+
+// MARK: - iTunes Purchase Information
+
+/// Concatenate all (sub)genres into a comma separated list.
+NSString *formattedGenres(NSDictionary *itunesPlist) {
+	NSDictionary *categories = getAppCategories();
+	NSMutableArray *genres = [NSMutableArray array];
+	NSString *mainGenre = categories[itunesPlist[@"genreId"] ?: @0] ?: itunesPlist[@"genre"];
+	if (mainGenre) {
+		[genres addObject:mainGenre];
+	}
+	for (NSDictionary *item in itunesPlist[@"subgenres"]) {
+		NSString *subgenre = categories[item[@"genreId"] ?: @0] ?: item[@"genre"];
+		if (subgenre) {
+			[genres addObject:subgenre];
+		}
+	}
+	return [genres componentsJoinedByString:@", "];
+}
+
+/// Process info stored in @c iTunesMetadata.plist
+NSDictionary *parseItunesMeta(NSDictionary *itunesPlist) {
+	if (!itunesPlist) {
+		return @{
+			@"iTunesHidden": @"hiddenDiv",
+		};
+	}
+
+	NSDictionary *downloadInfo = itunesPlist[@"com.apple.iTunesStore.downloadInfo"];
+	NSDictionary *accountInfo = downloadInfo[@"accountInfo"];
+
+	NSDate *purchaseDate = parseDate(downloadInfo[@"purchaseDate"] ?: itunesPlist[@"purchaseDate"]);
+	NSDate *releaseDate = parseDate(downloadInfo[@"releaseDate"] ?: itunesPlist[@"releaseDate"]);
+	// AppleId & purchaser name
+	NSString *appleId = accountInfo[@"AppleID"] ?: itunesPlist[@"appleId"];
+	NSString *firstName = accountInfo[@"FirstName"];
+	NSString *lastName = accountInfo[@"LastName"];
+	NSString *name;
+	if (firstName || lastName) {
+		name = [NSString stringWithFormat:@"%@ %@ (%@)", firstName, lastName, appleId];
+	} else {
+		name = appleId;
+	}
+
+	return @{
+		@"iTunesHidden": @"",
+		@"iTunesId": [itunesPlist[@"itemId"] description] ?: @"",
+		@"iTunesName": itunesPlist[@"itemName"] ?: @"",
+		@"iTunesGenres": formattedGenres(itunesPlist),
+		@"iTunesReleaseDate": releaseDate ? formattedDate(releaseDate) : @"",
+
+		@"iTunesAppleId": name ?: @"",
+		@"iTunesPurchaseDate": purchaseDate ? formattedDate(purchaseDate) : @"",
+		@"iTunesPrice": itunesPlist[@"priceDisplay"] ?: @"",
 	};
 }
 
@@ -636,6 +698,10 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 		// App Info
 		NSDictionary *plistApp = readPlistApp(meta);
 		[infoLayer addEntriesFromDictionary:procAppInfo(plistApp)];
+		ALLOW_EXIT
+
+		NSDictionary *plistItunes = readPlistItunes(meta);
+		[infoLayer addEntriesFromDictionary:parseItunesMeta(plistItunes)];
 		ALLOW_EXIT
 
 		// Provisioning
