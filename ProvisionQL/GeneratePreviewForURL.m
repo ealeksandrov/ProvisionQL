@@ -267,10 +267,6 @@ NSDictionary * _Nonnull procAppInfo(NSDictionary *appPlist) {
 		};
 	}
 
-	NSString *bundleName = appPlist[@"CFBundleDisplayName"];
-	if (!bundleName) {
-		bundleName = appPlist[@"CFBundleName"];
-	}
 	NSString *extensionType = appPlist[@"NSExtension"][@"NSExtensionPointIdentifier"];
 
 	NSMutableArray *platforms = [NSMutableArray array];
@@ -369,7 +365,7 @@ NSDate * _Nullable getCertificateInvalidityDate(SecCertificateRef certificateRef
 	NSDate *invalidityDate = nil;
 	CFErrorRef error = nil;
 	CFDictionaryRef outerDictRef = SecCertificateCopyValues(certificateRef, (__bridge CFArrayRef)@[(__bridge NSString*)kSecOIDInvalidityDate], &error);
-	if (outerDictRef && !error) {
+	if (outerDictRef) {
 		CFDictionaryRef innerDictRef = CFDictionaryGetValue(outerDictRef, kSecOIDInvalidityDate);
 		if (innerDictRef) {
 			// NOTE: the invalidity date type of kSecPropertyTypeDate is documented as a CFStringRef in the "Certificate, Key, and Trust Services Reference".
