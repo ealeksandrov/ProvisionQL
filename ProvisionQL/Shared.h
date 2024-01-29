@@ -41,6 +41,7 @@ QuickLookInfo initQLInfo(_Nonnull CFStringRef contentTypeUTI, _Nonnull CFURLRef 
 // Plist
 NSDictionary * _Nullable readPlistApp(QuickLookInfo meta);
 NSDictionary * _Nullable readPlistProvision(QuickLookInfo meta);
+NSDictionary * _Nullable readPlistItunes(QuickLookInfo meta);
 
 // Other helper
 typedef NS_ENUM(NSUInteger, ExpirationStatus) {

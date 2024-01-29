@@ -95,6 +95,13 @@ NSDictionary * _Nullable readPlistProvision(QuickLookInfo meta) {
 	return asPlistOrNil(data);
 }
 
+/// Read @c iTunesMetadata.plist if available
+NSDictionary * _Nullable readPlistItunes(QuickLookInfo meta) {
+	if (meta.type == FileTypeIPA) {
+		return asPlistOrNil([meta.zipFile unzipFile:@"iTunesMetadata.plist"]);
+	}
+	return nil;
+}
 
 // MARK: - Other helper
 
