@@ -146,6 +146,25 @@ NSString * _Nonnull formattedDate(NSDate *date) {
 	return [formatter stringFromDate:date];
 }
 
+/// Parse date from plist regardless if it has @c NSDate or @c NSString type.
+NSDate *parseDate(id value) {
+	if (!value) {
+		return nil;
+	}
+	if ([value isKindOfClass:[NSDate class]]) {
+		return value;
+	}
+	// parse the date from a string
+	NSString *dateStr = [value description];
+	NSDateFormatter *dateFormatter = [NSDateFormatter new];
+	[dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss Z"];
+	NSDate *rv = [dateFormatter dateFromString:dateStr];
+	if (!rv) {
+		NSLog(@"ERROR formatting date: %@", dateStr);
+	}
+	return rv;
+}
+
 /// @return Relative distance to today. E.g., "Expired today"
 NSString * _Nullable relativeExpirationDateString(NSDate *date) {
 	if (!date) {
@@ -295,14 +314,7 @@ NSDate * _Nullable getCertificateInvalidityDate(SecCertificateRef certificateRef
 			// In reality, it's a __NSTaggedDate (presumably a tagged pointer representing an NSDate.) But to sure, we'll check:
 			id value = CFBridgingRelease(CFDictionaryGetValue(innerDictRef, kSecPropertyKeyValue));
 			if (value) {
-				if ([value isKindOfClass:[NSDate class]]) {
-					invalidityDate = value;
-				} else {
-					// parse the date from a string
-					NSDateFormatter *dateFormatter = [NSDateFormatter new];
-					[dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss Z"];
-					invalidityDate = [dateFormatter dateFromString:[value description]];
-				}
+				invalidityDate = parseDate(value);
 			} else {
 				NSLog(@"No invalidity date in '%@' certificate, dictionary = %@", subject, innerDictRef);
 			}
@@ -606,11 +618,7 @@ NSString *applyHtmlTemplate(NSDictionary *templateValues) {
 		NSString *key = [html substringWithRange:NSMakeRange(start + 2, result.range.length - 4)];
 		[rv appendString:[html substringWithRange:NSMakeRange(prevLoc, start - prevLoc)]];
 		NSString *value = templateValues[key];
-		if (!value) {
-#ifdef DEBUG
-			 NSLog(@"WARN: unused key %@", key);
-#endif
-		} else {
+		if (value) {
 			[rv appendString:value];
 		}
 		prevLoc = start + result.range.length;
