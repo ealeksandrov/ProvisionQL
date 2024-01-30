@@ -462,7 +462,7 @@ NSArray<TableRow*> * _Nonnull getDeviceList(NSDictionary *provisionPlist) {
 NSDictionary * _Nonnull procProvision(NSDictionary *provisionPlist, BOOL isOSX) {
 	if (!provisionPlist) {
 		return @{
-			@"ProvisionInfo": @"hiddenDiv",
+			@"ProvisionHidden": @"hiddenDiv",
 		};
 	}
 
@@ -471,7 +471,7 @@ NSDictionary * _Nonnull procProvision(NSDictionary *provisionPlist, BOOL isOSX) 
 	NSArray<TableRow*>* devices = getDeviceList(provisionPlist);
 
 	return @{
-		@"ProvisionInfo": @"",
+		@"ProvisionHidden": @"",
 		@"ProfileName": provisionPlist[@"Name"] ?: @"",
 		@"ProfileUUID": provisionPlist[@"UUID"] ?: @"",
 		@"TeamName": provisionPlist[@"TeamName"] ?: @"<em>Team name not available</em>",
