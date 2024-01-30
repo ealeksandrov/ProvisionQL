@@ -4,6 +4,7 @@
 
 * New: show iTunes Metadata & purchase information
 * New: use higher resolution app icon if available (try `iTunesArtwork`)
+* New: show entitlements regardless of provisioning plist if available
 * Performance: unzip with zlib instead of sys-call
 * Performance: parse html template tags with regex
 * Performance: use `SecCodeSigning` instead of `codesign` sys-call

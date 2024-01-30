@@ -1,5 +1,26 @@
 #import "AppCategories.h"
 
+/*
+ #!/usr/bin/env python3
+ # download: https://itunes.apple.com/WebObjects/MZStoreServices.woa/ws/genres
+ import json
+ ids = {}
+
+ def fn(data):
+	 for k, v in data.items():
+		 ids[k] = v['name']
+		 if 'subgenres' in v:
+			 fn(v['subgenres'])
+
+ with open('genres.json', 'r') as fp:
+	 for cat in json.load(fp).values():
+		 if 'App Store' in cat['name']:
+			 fn(cat['subgenres'])
+
+ print(',\n'.join(f'@{k}: @"{v}"' for k, v in ids.items()))
+ print(len(ids))
+ */
+
 NSDictionary *getAppCategories() {
 	static NSDictionary* categories = nil;
 	static dispatch_once_t onceToken;
