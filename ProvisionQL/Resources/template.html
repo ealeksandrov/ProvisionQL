@@ -138,15 +138,15 @@ tr:nth-child(even) {
 </style>
 </head>
 	<body>
-		<div class="app __AppInfo__">
+		<div class="app __AppInfoHidden__">
 			<h1>__AppInfoTitle__</h1>
 			<div class="floatLeft icon"><img alt="App icon" src="data:image/png;base64,__AppIcon__"/></div>
 			<div class="floatLeft info">
 				Name: <strong>__CFBundleName__</strong><br />
 				Version: __CFBundleShortVersionString__ (__CFBundleVersion__)<br />
 				BundleId: __CFBundleIdentifier__<br />
-				<div class="__ExtensionInfo__">
-					Extension type: __NSExtensionPointIdentifier__<br />
+				<div class="__ExtensionTypeHidden__">
+					Extension type: __ExtensionType__<br />
 				</div>
 				DeviceFamily: __UIDeviceFamily__<br />
 				SDK: __DTSDKName__<br />
@@ -158,11 +158,11 @@ tr:nth-child(even) {
 		</div>
 
 		<div class="__ProvisionHidden__">
-			<div class="__AppInfo__">
+			<div class="__AppInfoHidden__">
 				<h2>Provisioning</h2>
 				Profile name: <strong>__ProfileName__</strong><br />
 			</div>
-			<div class="__ProvisionAsSubheader__">
+			<div class="__ProvisionTitleHidden__">
 				<h1><span class="__ExpStatus__">__ProfileName__</span></h1>
 			</div>
 
@@ -175,7 +175,7 @@ tr:nth-child(even) {
 
 		<div>
 			<h2>Entitlements</h2>
-			<div class="__EntitlementsWarning__ warning">
+			<div class="__EntitlementsWarningHidden__ warning">
 				<strong>Entitlements extraction failed.</strong>
 			</div>
 			__EntitlementsFormatted__

@@ -221,8 +221,8 @@ NSString * _Nonnull formattedAppTransportSecurity(NSDictionary *appPlist) {
 NSDictionary * _Nonnull procAppInfo(NSDictionary *appPlist) {
 	if (!appPlist) {
 		return @{
-			@"AppInfo": @"hiddenDiv",
-			@"ProvisionAsSubheader": @"",
+			@"AppInfoHidden": @"hiddenDiv",
+			@"ProvisionTitleHidden": @"",
 		};
 	}
 
@@ -240,16 +240,16 @@ NSDictionary * _Nonnull procAppInfo(NSDictionary *appPlist) {
 	}
 
 	return @{
-		@"AppInfo": @"",
-		@"ProvisionAsSubheader": @"hiddenDiv",
+		@"AppInfoHidden": @"",
+		@"ProvisionTitleHidden": @"hiddenDiv",
 
 		@"CFBundleName": appPlist[@"CFBundleDisplayName"] ?: appPlist[@"CFBundleName"] ?: @"",
 		@"CFBundleShortVersionString": appPlist[@"CFBundleShortVersionString"] ?: @"",
 		@"CFBundleVersion": appPlist[@"CFBundleVersion"] ?: @"",
 		@"CFBundleIdentifier": appPlist[@"CFBundleIdentifier"] ?: @"",
 
-		@"ExtensionInfo": extensionType ? @"" : @"hiddenDiv",
-		@"NSExtensionPointIdentifier": extensionType ?: @"",
+		@"ExtensionTypeHidden": extensionType ? @"" : @"hiddenDiv",
+		@"ExtensionType": extensionType ?: @"",
 
 		@"UIDeviceFamily": [platforms componentsJoinedByString:@", "],
 		@"DTSDKName": appPlist[@"DTSDKName"] ?: @"",
@@ -490,8 +490,8 @@ NSDictionary * _Nonnull procEntitlements(QuickLookInfo meta, NSDictionary *appPl
 	[entitlements applyFallbackIfNeeded:provisionPlist[@"Entitlements"]];
 
 	return @{
+		@"EntitlementsWarningHidden": entitlements.hasError ? @"" : @"hiddenDiv",
 		@"EntitlementsFormatted": entitlements.html ?: @"No Entitlements",
-		@"EntitlementsWarning": entitlements.hasError ? @"" : @"hiddenDiv",
 	};
 }
 
