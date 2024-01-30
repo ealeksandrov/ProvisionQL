@@ -1,5 +1,6 @@
 #import "Shared.h"
 #import "AppCategories.h"
+#import "Entitlements.h"
 
 // makro to stop further processing
 #define ALLOW_EXIT if (QLPreviewRequestIsCancelled(preview)) { return noErr; }
@@ -30,48 +31,6 @@ NSString * _Nonnull formatAsTable(TableRow * _Nullable header, NSArray<TableRow*
 	}
 	[table appendString:@"</table>\n"];
 	return table;
-}
-
-/// Print recursive tree of key-value mappings.
-void recursiveKeyValue(NSUInteger level, NSString *key, id value, NSMutableString *output) {
-	int indent = (int)(level * 4);
-
-	if ([value isKindOfClass:[NSDictionary class]]) {
-		if (key) {
-			[output appendFormat:@"%*s%@ = {\n", indent, "", key];
-		} else if (level != 0) {
-			[output appendFormat:@"%*s{\n", indent, ""];
-		}
-		NSDictionary *dictionary = (NSDictionary *)value;
-		NSArray *keys = [[dictionary allKeys] sortedArrayUsingSelector:@selector(compare:)];
-		for (NSString *subKey in keys) {
-			NSUInteger subLevel = (key == nil && level == 0) ? 0 : level + 1;
-			recursiveKeyValue(subLevel, subKey, [dictionary valueForKey:subKey], output);
-		}
-		if (level != 0) {
-			[output appendFormat:@"%*s}\n", indent, ""];
-		}
-	} else if ([value isKindOfClass:[NSArray class]]) {
-		[output appendFormat:@"%*s%@ = (\n", indent, "", key];
-		NSArray *array = (NSArray *)value;
-		for (id value in array) {
-			recursiveKeyValue(level + 1, nil, value, output);
-		}
-		[output appendFormat:@"%*s)\n", indent, ""];
-	} else if ([value isKindOfClass:[NSData class]]) {
-		NSData *data = (NSData *)value;
-		if (key) {
-			[output appendFormat:@"%*s%@ = %zd bytes of data\n", indent, "", key, [data length]];
-		} else {
-			[output appendFormat:@"%*s%zd bytes of data\n", indent, "", [data length]];
-		}
-	} else {
-		if (key) {
-			[output appendFormat:@"%*s%@ = %@\n", indent, "", key, value];
-		} else {
-			[output appendFormat:@"%*s%@\n", indent, "", value];
-		}
-	}
 }
 
 /// Print recursive tree of key-value mappings.
@@ -493,45 +452,20 @@ NSDictionary * _Nonnull procProvision(NSDictionary *provisionPlist, BOOL isOSX) 
 
 // MARK: - Entitlements
 
-/// run:  @c codesign -d <AppBinary> --entitlements - --xml
-NSData *runCodeSign(NSString *binaryPath) {
-	NSTask *codesignTask = [NSTask new];
-	[codesignTask setLaunchPath:@"/usr/bin/codesign"];
-	[codesignTask setStandardOutput:[NSPipe pipe]];
-	[codesignTask setStandardError:[NSPipe pipe]];
-	if (@available(macOS 11, *)) {
-		[codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @"-", @"--xml"]];
-	} else {
-		[codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @":-"]];
-	}
-	[codesignTask launch];
-
-#ifdef DEBUG
-	NSLog(@"[sys-call] codesign %@", [[codesignTask arguments] componentsJoinedByString:@" "]);
-#endif
-
-	NSData *outputData = [[[codesignTask standardOutput] fileHandleForReading] readDataToEndOfFile];
-	NSData *errorData = [[[codesignTask standardError] fileHandleForReading] readDataToEndOfFile];
-	[codesignTask waitUntilExit];
-
-	if (outputData.length == 0) {
-		return errorData;
-	}
-	return outputData;
-}
-
 /// Search for app binary and run @c codesign on it.
-NSData *getCodeSignEntitlements(QuickLookInfo meta, NSString *bundleExecutable) {
-	NSFileManager *fileManager = [NSFileManager defaultManager];
+Entitlements *readEntitlements(QuickLookInfo meta, NSString *bundleExecutable) {
+	if (!bundleExecutable) {
+		return [Entitlements withoutBinary];
+	}
 	NSString *tempDirFolder = [NSTemporaryDirectory() stringByAppendingPathComponent:kPluginBundleId];
-	NSString *currentTempDirFolder = [tempDirFolder stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
-
+	NSString *currentTempDirFolder = nil;
 	NSString *basePath = nil;
 	switch (meta.type) {
 		case FileTypeIPA:
-			basePath = currentTempDirFolder;
-			[fileManager createDirectoryAtPath:currentTempDirFolder withIntermediateDirectories:YES attributes:nil error:nil];
+			currentTempDirFolder = [tempDirFolder stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
+			[[NSFileManager defaultManager] createDirectoryAtPath:currentTempDirFolder withIntermediateDirectories:YES attributes:nil error:nil];
 			[meta.zipFile unzipFile:[@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable] toDir:currentTempDirFolder];
+			basePath = currentTempDirFolder;
 			break;
 		case FileTypeArchive:
 			basePath = meta.effectiveUrl.path;
@@ -543,51 +477,21 @@ NSData *getCodeSignEntitlements(QuickLookInfo meta, NSString *bundleExecutable) 
 			return nil;
 	}
 
-	NSData *data = runCodeSign([basePath stringByAppendingPathComponent:bundleExecutable]);
-	[fileManager removeItemAtPath:currentTempDirFolder error:nil];
-	return data;
-}
-
-/// Print formatted plist in a @c \<pre> tag
-NSString * _Nonnull formattedPlist(NSDictionary *dict) {
-	NSMutableString *output = [NSMutableString string];
-	recursiveKeyValue(0, nil, dict, output);
-	return [NSString stringWithFormat:@"<pre>%@</pre>", output];
-}
-
-/// First, try to extract real entitlements by running codesign.
-/// If that fails, fallback to entitlements provided by provision plist.
-NSDictionary * _Nonnull procEntitlements(NSData *codeSignData, NSDictionary *provisionPlist) {
-	BOOL showEntitlementsWarning = false;
-	NSString *formattedOutput = nil;
-	if (codeSignData != nil) {
-		NSDictionary *plist = [NSPropertyListSerialization propertyListWithData:codeSignData options:0 format:NULL error:NULL];
-		if (plist != nil) {
-			formattedOutput = formattedPlist(plist);
-		} else {
-			showEntitlementsWarning = true;
-			NSString *output = [[NSString alloc] initWithData:codeSignData encoding:NSUTF8StringEncoding];
-			if ([output hasPrefix:@"Executable="]) {
-				// remove first line with long temporary path to the executable
-				NSArray *allLines = [output componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-				formattedOutput = [[allLines subarrayWithRange:NSMakeRange(1, allLines.count - 1)] componentsJoinedByString:@"<br />"];
-			} else {
-				formattedOutput = output;
-			}
-		}
-	} else {
-		// read the entitlements from the provisioning profile instead
-		NSDictionary *value = provisionPlist[@"Entitlements"];
-		if ([value isKindOfClass:[NSDictionary class]]) {
-			formattedOutput = formattedPlist(value);
-		} else {
-			formattedOutput = @"No Entitlements";
-		}
+	Entitlements *rv = [Entitlements withBinary:[basePath stringByAppendingPathComponent:bundleExecutable]];
+	if (currentTempDirFolder) {
+		[[NSFileManager defaultManager] removeItemAtPath:currentTempDirFolder error:nil];
 	}
+	return rv;
+}
+
+/// Process compiled binary and provision plist to extract @c Entitlements
+NSDictionary * _Nonnull procEntitlements(QuickLookInfo meta, NSDictionary *appPlist, NSDictionary *provisionPlist) {
+	Entitlements *entitlements = readEntitlements(meta, appPlist[@"CFBundleExecutable"]);
+	[entitlements applyFallbackIfNeeded:provisionPlist[@"Entitlements"]];
 
 	return @{
-		@"EntitlementsFormatted": formattedOutput ?: @"",
-		@"EntitlementsWarning": showEntitlementsWarning ? @"" : @"hiddenDiv",
+		@"EntitlementsFormatted": entitlements.html ?: @"No Entitlements",
+		@"EntitlementsWarning": entitlements.hasError ? @"" : @"hiddenDiv",
 	};
 }
 
@@ -715,9 +619,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 		ALLOW_EXIT
 
 		// Entitlements
-		NSString *bundleExecutable = plistApp[@"CFBundleExecutable"];
-		NSData *codeSignData = getCodeSignEntitlements(meta, bundleExecutable);
-		[infoLayer addEntriesFromDictionary:procEntitlements(codeSignData, plistProvision)];
+		[infoLayer addEntriesFromDictionary:procEntitlements(meta, plistApp, plistProvision)];
 		ALLOW_EXIT
 
 		// File Info
