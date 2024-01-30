@@ -6,6 +6,7 @@
 * New: use higher resolution app icon if available (try `iTunesArtwork`)
 * Performance: unzip with zlib instead of sys-call
 * Performance: parse html template tags with regex
+* Performance: use `SecCodeSigning` instead of `codesign` sys-call
 * Fix codesign unkown param on <10.15 (`--xml` flag)
 * Fix crash if a plist key is not present (e.g. `CFBundleShortVersionString` for some old iOS 3.2 ipa)
 * Fix fixed-width size for  preview of app-icon  (consistency)
