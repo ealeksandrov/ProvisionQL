@@ -6,8 +6,6 @@
 #import <Cocoa/Cocoa.h>
 #import <Security/Security.h>
 
-#import <NSBezierPath+IOS7RoundedRect.h>
-
 #import "ZipFile.h"
 
 static NSString * _Nonnull const kPluginBundleId = @"com.ealeksandrov.ProvisionQL";
@@ -39,6 +37,7 @@ typedef struct QuickLookMeta {
 QuickLookInfo initQLInfo(_Nonnull CFStringRef contentTypeUTI, _Nonnull CFURLRef url);
 
 // Plist
+NSData * _Nullable readPayloadFile(QuickLookInfo meta, NSString * _Nonnull filename);
 NSDictionary * _Nullable readPlistApp(QuickLookInfo meta);
 NSDictionary * _Nullable readPlistProvision(QuickLookInfo meta);
 NSDictionary * _Nullable readPlistItunes(QuickLookInfo meta);
@@ -52,7 +51,3 @@ typedef NS_ENUM(NSUInteger, ExpirationStatus) {
 ExpirationStatus expirationStatus(NSDate * _Nullable date);
 NSDate * _Nullable dateOrNil(NSDate * _Nullable value);
 NSArray * _Nullable arrayOrNil(NSArray * _Nullable value);
-
-// App Icon
-NSImage * _Nonnull roundCorners(NSImage * _Nonnull image);
-NSImage * _Nonnull imageFromApp(QuickLookInfo meta, NSDictionary * _Nullable appPlist);

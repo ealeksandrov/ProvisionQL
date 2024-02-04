@@ -25,6 +25,14 @@
 
 // MARK: - public methods
 
+- (NSArray<ZipEntry*> * _Nullable)filesMatching:(NSString * _Nonnull)path {
+	if (self.centralDirectory) {
+		NSPredicate *pred = [NSPredicate predicateWithFormat:@"filepath LIKE %@", path];
+		return [self.centralDirectory filteredArrayUsingPredicate:pred];
+	}
+	return nil;
+}
+
 /// Unzip file directly into memory.
 /// @param filePath File path inside zip file.
 - (NSData * _Nullable)unzipFile:(NSString *)filePath {

@@ -5,6 +5,7 @@
 * New: show iTunes Metadata & purchase information
 * New: use higher resolution app icon if available (try `iTunesArtwork`)
 * New: show entitlements regardless of provisioning plist if available
+* New: load icon from `Assets.car`
 * Performance: unzip with zlib instead of sys-call
 * Performance: parse html template tags with regex
 * Performance: use `SecCodeSigning` instead of `codesign` sys-call
@@ -12,6 +13,7 @@
 * Fix crash if a plist key is not present (e.g. `CFBundleShortVersionString` for some old iOS 3.2 ipa)
 * Fix fixed-width size for  preview of app-icon  (consistency)
 * Fix `IconFlavor` attribute for thumbnail drawing in 10.15+
+* Fix prefer icons without "small" siffix
 * Minor html template improvements
 * Some refactoring to reduce duplicate code 
 
