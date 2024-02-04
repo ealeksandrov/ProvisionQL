@@ -1,5 +1,6 @@
 #import "Shared.h"
 #import "AppCategories.h"
+#import "AppIcon.h"
 #import "Entitlements.h"
 
 // makro to stop further processing
@@ -70,15 +71,6 @@ NSString *escapedXML(NSString *stringToEscape) {
 		stringToEscape = [stringToEscape stringByReplacingOccurrencesOfString:key withString:replacement];
 	}
 	return stringToEscape;
-}
-
-/// Convert image to PNG and encode with base64 to be embeded in html output.
-NSString * _Nonnull iconAsBase64(NSImage *appIcon) {
-	appIcon = roundCorners(appIcon);
-	NSData *imageData = [appIcon TIFFRepresentation];
-	NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
-	imageData = [imageRep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
-	return [imageData base64EncodedStringWithOptions:0];
 }
 
 
@@ -618,10 +610,6 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 		[infoLayer addEntriesFromDictionary:procProvision(plistProvision, meta.isOSX)];
 		ALLOW_EXIT
 
-		// App Icon
-		infoLayer[@"AppIcon"] = iconAsBase64(imageFromApp(meta, plistApp));
-		ALLOW_EXIT
-
 		// Entitlements
 		[infoLayer addEntriesFromDictionary:procEntitlements(meta, plistApp, plistProvision)];
 		ALLOW_EXIT
@@ -632,6 +620,13 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
 		// Footer Info
 		[infoLayer addEntriesFromDictionary:procFooterInfo()];
 		ALLOW_EXIT
+
+		// App Icon (last, because the image uses a lot of memory)
+		AppIcon *icon = [AppIcon load:meta];
+		if (icon.canExtractImage) {
+			infoLayer[@"AppIcon"] = [[[icon extractImage:plistApp] withRoundCorners] asBase64];
+			ALLOW_EXIT
+		}
 
 		// prepare html, replace values
 		NSString *html = applyHtmlTemplate(infoLayer);

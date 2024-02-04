@@ -1,4 +1,5 @@
 #import "Shared.h"
+#import "AppIcon.h"
 
 // makro to stop further processing
 #define ALLOW_EXIT if (QLThumbnailRequestIsCancelled(thumbnail)) { return noErr; }
@@ -30,17 +31,10 @@ void CancelThumbnailGeneration(void *thisInterface, QLThumbnailRequestRef thumbn
 // MARK: .ipa .xcarchive
 
 OSStatus renderAppIcon(QuickLookInfo meta, QLThumbnailRequestRef thumbnail) {
-	NSImage *appIcon = imageFromApp(meta, nil);
-	ALLOW_EXIT
-
-	// if downscale, then this should respect retina resolution
-//	CGSize maxSize = QLThumbnailRequestGetMaximumSize(thumbnail);
-//	if (appIcon.size.width > maxSize.width && appIcon.size.height > maxSize.height) {
-//		[appIcon setSize:maxSize];
-//	}
-
-	appIcon = roundCorners(appIcon);
-	ALLOW_EXIT
+	AppIcon *icon = [AppIcon load:meta];
+	if (!icon.canExtractImage) {
+		return noErr;
+	}
 
 	// set magic flag to draw icon without additional markers
 	static const NSString *IconFlavor;
@@ -57,6 +51,9 @@ OSStatus renderAppIcon(QuickLookInfo meta, QLThumbnailRequestRef thumbnail) {
 	} else {
 		propertiesDict = @{IconFlavor : @(0)}; // no border, no anything
 	}
+
+	NSImage *appIcon = [[icon extractImage:nil] withRoundCorners];
+	ALLOW_EXIT
 
 	// image-only icons can be drawn efficiently by calling `SetImage` directly.
 	QLThumbnailRequestSetImageWithData(thumbnail, (__bridge CFDataRef)[appIcon TIFFRepresentation], (__bridge CFDictionaryRef)propertiesDict);
@@ -147,12 +144,12 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
 	@autoreleasepool {
 		QuickLookInfo meta = initQLInfo(contentTypeUTI, url);
 
-		if (meta.type == FileTypeIPA || meta.type == FileTypeArchive) {
-			return renderAppIcon(meta, thumbnail);
-		} else if (meta.type == FileTypeProvision) {
+		if (meta.type == FileTypeProvision) {
 			NSDictionary *optionsDict = (__bridge NSDictionary *)options;
 			BOOL iconMode = ([optionsDict objectForKey:(NSString *)kQLThumbnailOptionIconModeKey]) ? YES : NO;
 			return renderProvision(meta, thumbnail, iconMode);
+		} else {
+			return renderAppIcon(meta, thumbnail);
 		}
 	}
 	return noErr;
