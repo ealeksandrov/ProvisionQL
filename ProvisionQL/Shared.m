@@ -48,6 +48,7 @@ NSData * _Nullable readPayloadFile(QuickLookInfo meta, NSString *filename) {
 		case FileTypeExtension: return [NSData dataWithContentsOfURL:[meta.url URLByAppendingPathComponent:filename]];
 		case FileTypeProvision: return nil;
 	}
+	return nil;
 }
 
 // MARK: - Plist
@@ -55,7 +56,13 @@ NSData * _Nullable readPayloadFile(QuickLookInfo meta, NSString *filename) {
 /// Helper for optional chaining.
 NSDictionary * _Nullable asPlistOrNil(NSData * _Nullable data) {
 	if (!data) { return nil; }
-	return [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:NULL];
+	NSError *err;
+	NSDictionary *dict = [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:&err];
+	if (err) {
+		NSLog(@"ERROR reading plist %@", err);
+		return nil;
+	}
+	return dict;
 }
 
 /// Read app default @c Info.plist.
@@ -69,6 +76,7 @@ NSDictionary * _Nullable readPlistApp(QuickLookInfo meta) {
 		case FileTypeProvision:
 			return nil;
 	}
+	return nil;
 }
 
 /// Read @c embedded.mobileprovision file and decode with CMS decoder.

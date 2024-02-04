@@ -27,7 +27,7 @@ void CancelThumbnailGeneration(void *thisInterface, QLThumbnailRequestRef thumbn
  This function's job is to create thumbnail for designated file as fast as possible
  ----------------------------------------------------------------------------- */
 
-// MARK: .ipa .xarchive
+// MARK: .ipa .xcarchive
 
 OSStatus renderAppIcon(QuickLookInfo meta, QLThumbnailRequestRef thumbnail) {
 	NSImage *appIcon = imageFromApp(meta, nil);
