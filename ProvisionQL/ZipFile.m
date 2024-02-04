@@ -25,6 +25,8 @@
 
 // MARK: - public methods
 
+/// Unzip file directly into memory.
+/// @param filePath File path inside zip file.
 - (NSData * _Nullable)unzipFile:(NSString *)filePath {
 	if (self.centralDirectory) {
 		ZipEntry *matchingFile = [self.centralDirectory zipEntryWithPath:filePath];
@@ -49,6 +51,9 @@
 	return [self sysUnzipFile:filePath];
 }
 
+/// Unzip file to filesystem.
+/// @param filePath File path inside zip file.
+/// @param targetDir Directory in which to unzip the file.
 - (void)unzipFile:(NSString *)filePath toDir:(NSString *)targetDir {
 	if (self.centralDirectory) {
 		NSData *data = [self unzipFile:filePath];

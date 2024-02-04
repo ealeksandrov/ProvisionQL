@@ -506,6 +506,7 @@ NSString * _Nullable stringForFileType(QuickLookInfo meta) {
 		case FileTypeExtension: return @"App extension info";
 		case FileTypeProvision: return nil;
 	}
+	return nil;
 }
 
 /// Calculate file / folder size.
@@ -592,6 +593,9 @@ NSString *applyHtmlTemplate(NSDictionary *templateValues) {
 OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview, CFURLRef url, CFStringRef contentTypeUTI, CFDictionaryRef options) {
 	@autoreleasepool {
 		QuickLookInfo meta = initQLInfo(contentTypeUTI, url);
+		if (!meta.type) {
+			return noErr;
+		}
 		NSMutableDictionary* infoLayer = [NSMutableDictionary dictionary];
 		infoLayer[@"AppInfoTitle"] = stringForFileType(meta);
 
