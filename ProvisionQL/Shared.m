@@ -1,144 +1,136 @@
 #import "Shared.h"
+#import "ZipFile.h"
 
-NSImage *roundCorners(NSImage *image) {
-    NSImage *existingImage = image;
-    NSSize existingSize = [existingImage size];
-    NSImage *composedImage = [[NSImage alloc] initWithSize:existingSize];
+// MARK: - Meta data for QuickLook
 
-    [composedImage lockFocus];
-    [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
-
-    NSRect imageFrame = NSRectFromCGRect(CGRectMake(0, 0, existingSize.width, existingSize.height));
-    NSBezierPath *clipPath = [NSBezierPath bezierPathWithIOS7RoundedRect:imageFrame cornerRadius:existingSize.width * 0.225];
-    [clipPath setWindingRule:NSWindingRuleEvenOdd];
-    [clipPath addClip];
-
-    [image drawAtPoint:NSZeroPoint fromRect:NSMakeRect(0, 0, existingSize.width, existingSize.height) operation:NSCompositingOperationSourceOver fraction:1];
-
-    [composedImage unlockFocus];
-
-    return composedImage;
-}
-
-int expirationStatus(NSDate *date, NSCalendar *calendar) {
-	int result = 0;
-
-	if (date) {
-        NSDateComponents *dateComponents = [calendar components:NSCalendarUnitDay fromDate:[NSDate date] toDate:date options:0];
-        if ([date compare:[NSDate date]] == NSOrderedAscending) {
-            // expired
-			result = 0;
-		} else if (dateComponents.day < 30) {
-            // expiring
-			result = 1;
-		} else {
-            // valid
-			result = 2;
+/// Search an archive for the .app or .ipa bundle.
+NSURL * _Nullable appPathForArchive(NSURL *url) {
+	NSURL *appsDir = [url URLByAppendingPathComponent:@"Products/Applications/"];
+	if (appsDir != nil) {
+		NSArray *dirFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appsDir.path error:nil];
+		if (dirFiles.count > 0) {
+			return [appsDir URLByAppendingPathComponent:dirFiles[0] isDirectory:YES];
 		}
 	}
-
-	return result;
+	return nil;
 }
 
-NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
-    NSImage *appIcon = nil;
+/// Use file url and UTI type to generate an info object to pass around.
+QuickLookInfo initQLInfo(CFStringRef contentTypeUTI, CFURLRef url) {
+	QuickLookInfo data = {};
+	data.UTI = (__bridge NSString *)contentTypeUTI;
+	data.url = (__bridge NSURL *)url;
 
-    if ([dataType isEqualToString:kDataType_xcode_archive]) {
-        // get the embedded icon for the iOS app
-        NSURL *appsDir = [URL URLByAppendingPathComponent:@"Products/Applications/"];
-        if (!appsDir) {
-            return nil;
-        }
-
-        NSArray *dirFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appsDir.path error:nil];
-        NSString *appName = dirFiles.firstObject;
-        if (!appName) {
-            return nil;
-        }
-
-        NSURL *appURL = [appsDir URLByAppendingPathComponent:appName];
-        NSArray *appContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:appURL.path error:nil];
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains %@", fileName];
-        NSString *appIconFullName = [appContents filteredArrayUsingPredicate:predicate].lastObject;
-        if (!appIconFullName) {
-            return nil;
-        }
-
-        NSURL *appIconFullURL = [appURL URLByAppendingPathComponent:appIconFullName];
-        appIcon = [[NSImage alloc] initWithContentsOfURL:appIconFullURL];
-    } else if([dataType isEqualToString:kDataType_ipa]) {
-        // get the embedded icon from an app arcive using: unzip -p <URL> 'Payload/*.app/<fileName>' (piped to standard output)
-        NSTask *unzipTask = [NSTask new];
-        [unzipTask setLaunchPath:@"/usr/bin/unzip"];
-        [unzipTask setStandardOutput:[NSPipe pipe]];
-        [unzipTask setArguments:@[@"-p", [URL path], [NSString stringWithFormat:@"Payload/*.app/%@*", fileName], @"-x", @"*/*/*/*"]];
-        [unzipTask launch];
-
-        NSData *pipeData = [[[unzipTask standardOutput] fileHandleForReading] readDataToEndOfFile];
-        [unzipTask waitUntilExit];
-
-        appIcon = [[NSImage alloc] initWithData:pipeData];
-    }
-
-    return appIcon;
+	if ([data.UTI isEqualToString:kDataType_ipa]
+		// for now, treat .tipa as if it were a normal .ipa file.
+		|| [data.UTI isEqualToString:kDataType_trollstore_ipa] || [data.UTI isEqualToString:kDataType_trollstore_ipa_dyn])
+	{
+		data.type = FileTypeIPA;
+		data.zipFile = [ZipFile open:data.url.path];
+	} else if ([data.UTI isEqualToString:kDataType_xcode_archive]) {
+		data.type = FileTypeArchive;
+		data.effectiveUrl = appPathForArchive(data.url);
+	} else if ([data.UTI isEqualToString:kDataType_app_extension]) {
+		data.type = FileTypeExtension;
+	} else if ([data.UTI isEqualToString:kDataType_ios_provision]) {
+		data.type = FileTypeProvision;
+	} else if ([data.UTI isEqualToString:kDataType_ios_provision_old]) {
+		data.type = FileTypeProvision;
+	} else if ([data.UTI isEqualToString:kDataType_osx_provision]) {
+		data.type = FileTypeProvision;
+		data.isOSX = YES;
+	}
+	return data;
 }
 
-NSArray *iconsListForDictionary(NSDictionary *iconsDict) {
-    if ([iconsDict isKindOfClass:[NSDictionary class]]) {
-        id primaryIconDict = [iconsDict objectForKey:@"CFBundlePrimaryIcon"];
-        if ([primaryIconDict isKindOfClass:[NSDictionary class]]) {
-            id tempIcons = [primaryIconDict objectForKey:@"CFBundleIconFiles"];
-            if ([tempIcons isKindOfClass:[NSArray class]]) {
-                return tempIcons;
-            }
-        }
-    }
-
-    return nil;
+/// Load a file from bundle into memory. Either by file path or via unzip.
+NSData * _Nullable readPayloadFile(QuickLookInfo meta, NSString *filename) {
+	switch (meta.type) {
+		case FileTypeIPA: return [meta.zipFile unzipFile:[@"Payload/*.app/" stringByAppendingString:filename]];
+		case FileTypeArchive: return [NSData dataWithContentsOfURL:[meta.effectiveUrl URLByAppendingPathComponent:filename]];
+		case FileTypeExtension: return [NSData dataWithContentsOfURL:[meta.url URLByAppendingPathComponent:filename]];
+		case FileTypeProvision: return nil;
+	}
+	return nil;
 }
 
-NSString *mainIconNameForApp(NSDictionary *appPropertyList) {
-    NSArray *icons;
-    NSString *iconName;
+// MARK: - Plist
 
-    //Check for CFBundleIcons (since 5.0)
-    icons = iconsListForDictionary([appPropertyList objectForKey:@"CFBundleIcons"]);
-    if (!icons) {
-        icons = iconsListForDictionary([appPropertyList objectForKey:@"CFBundleIcons~ipad"]);
-    }
+/// Helper for optional chaining.
+NSDictionary * _Nullable asPlistOrNil(NSData * _Nullable data) {
+	if (!data) { return nil; }
+	NSError *err;
+	NSDictionary *dict = [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:&err];
+	if (err) {
+		NSLog(@"ERROR reading plist %@", err);
+		return nil;
+	}
+	return dict;
+}
 
-    if (!icons) {
-        //Check for CFBundleIconFiles (since 3.2)
-        id tempIcons = [appPropertyList objectForKey:@"CFBundleIconFiles"];
-        if ([tempIcons isKindOfClass:[NSArray class]]) {
-            icons = tempIcons;
-        }
-    }
+/// Read app default @c Info.plist.
+NSDictionary * _Nullable readPlistApp(QuickLookInfo meta) {
+	switch (meta.type) {
+		case FileTypeIPA:
+		case FileTypeArchive:
+		case FileTypeExtension: {
+			return asPlistOrNil(readPayloadFile(meta, @"Info.plist"));
+		}
+		case FileTypeProvision:
+			return nil;
+	}
+	return nil;
+}
 
-    if (icons) {
-        //Search some patterns for primary app icon (120x120)
-        NSArray *matches = @[@"120",@"60"];
+/// Read @c embedded.mobileprovision file and decode with CMS decoder.
+NSDictionary * _Nullable readPlistProvision(QuickLookInfo meta) {
+	NSData *provisionData;
+	if (meta.type == FileTypeProvision) {
+		provisionData = [NSData dataWithContentsOfURL:meta.url]; // the target file itself
+	} else {
+		provisionData = readPayloadFile(meta, @"embedded.mobileprovision");
+	}
+	if (!provisionData) {
+		NSLog(@"No provisionData for %@", meta.url);
+		return nil;
+	}
 
-        for (NSString *match in matches) {
-            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains[c] %@",match];
-            NSArray *results = [icons filteredArrayUsingPredicate:predicate];
-            if ([results count]) {
-                iconName = [results firstObject];
-                break;
-            }
-        }
+	CMSDecoderRef decoder = NULL;
+	CMSDecoderCreate(&decoder);
+	CMSDecoderUpdateMessage(decoder, provisionData.bytes, provisionData.length);
+	CMSDecoderFinalizeMessage(decoder);
+	CFDataRef dataRef = NULL;
+	CMSDecoderCopyContent(decoder, &dataRef);
+	NSData *data = (NSData *)CFBridgingRelease(dataRef);
+	CFRelease(decoder);
+	return asPlistOrNil(data);
+}
 
-        //If no one matches any pattern, just take last item
-        if (!iconName) {
-            iconName = [icons lastObject];
-        }
-    } else {
-        //Check for CFBundleIconFile (legacy, before 3.2)
-        NSString *legacyIcon = [appPropertyList objectForKey:@"CFBundleIconFile"];
-        if ([legacyIcon length]) {
-            iconName = legacyIcon;
-        }
-    }
+/// Read @c iTunesMetadata.plist if available
+NSDictionary * _Nullable readPlistItunes(QuickLookInfo meta) {
+	if (meta.type == FileTypeIPA) {
+		return asPlistOrNil([meta.zipFile unzipFile:@"iTunesMetadata.plist"]);
+	}
+	return nil;
+}
 
-    return iconName;
+// MARK: - Other helper
+
+/// Check time between date and now. Set Expiring if less than 30 days until expiration
+ExpirationStatus expirationStatus(NSDate *date) {
+	if (!date || [date compare:[NSDate date]] == NSOrderedAscending) {
+		return ExpirationStatusExpired;
+	}
+	NSDateComponents *dateComponents = [[NSCalendar currentCalendar] components:NSCalendarUnitDay fromDate:[NSDate date] toDate:date options:0];
+	return dateComponents.day < 30 ? ExpirationStatusExpiring : ExpirationStatusValid;
+}
+
+/// Ensures the value is of type @c NSDate
+inline NSDate * _Nullable dateOrNil(NSDate * _Nullable value) {
+	return [value isKindOfClass:[NSDate class]] ? value : nil;
+}
+
+/// Ensures the value is of type @c NSArray
+inline NSArray * _Nullable arrayOrNil(NSArray * _Nullable value) {
+	return [value isKindOfClass:[NSArray class]] ? value : nil;
 }

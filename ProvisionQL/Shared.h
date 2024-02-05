@@ -6,17 +6,52 @@
 #import <Cocoa/Cocoa.h>
 #import <Security/Security.h>
 
-#import <NSBezierPath+IOS7RoundedRect.h>
+#import "ZipFile.h"
 
-static NSString * const kPluginBundleId = @"com.ealeksandrov.ProvisionQL";
-static NSString * const kDataType_ipa               = @"com.apple.itunes.ipa";
-static NSString * const kDataType_ios_provision     = @"com.apple.mobileprovision";
-static NSString * const kDataType_ios_provision_old = @"com.apple.iphone.mobileprovision";
-static NSString * const kDataType_osx_provision     = @"com.apple.provisionprofile";
-static NSString * const kDataType_xcode_archive     = @"com.apple.xcode.archive";
-static NSString * const kDataType_app_extension     = @"com.apple.application-and-system-extension";
+static NSString * _Nonnull const kPluginBundleId = @"com.ealeksandrov.ProvisionQL";
+static NSString * _Nonnull const kDataType_ipa               = @"com.apple.itunes.ipa";
+static NSString * _Nonnull const kDataType_ios_provision     = @"com.apple.mobileprovision";
+static NSString * _Nonnull const kDataType_ios_provision_old = @"com.apple.iphone.mobileprovision";
+static NSString * _Nonnull const kDataType_osx_provision     = @"com.apple.provisionprofile";
+static NSString * _Nonnull const kDataType_xcode_archive     = @"com.apple.xcode.archive";
+static NSString * _Nonnull const kDataType_app_extension     = @"com.apple.application-and-system-extension";
 
-NSImage *roundCorners(NSImage *image);
-NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName);
-NSString *mainIconNameForApp(NSDictionary *appPropertyList);
-int expirationStatus(NSDate *date, NSCalendar *calendar);
+// 3rd party ipa-like file extensions
+static NSString * _Nonnull const kDataType_trollstore_ipa     = @"com.opa334.trollstore.tipa";
+static NSString * _Nonnull const kDataType_trollstore_ipa_dyn = @"dyn.ah62d4rv4ge81k4puqe";
+
+// Init QuickLook Type
+typedef NS_ENUM(NSUInteger, FileType) {
+	FileTypeIPA = 1,
+	FileTypeArchive,
+	FileTypeExtension,
+	FileTypeProvision,
+};
+
+typedef struct QuickLookMeta {
+	NSString * _Nonnull UTI;
+	NSURL * _Nonnull url;
+	NSURL * _Nullable effectiveUrl; // if set, will point to the app inside of an archive
+
+	FileType type;
+	BOOL isOSX;
+	ZipFile * _Nullable zipFile; // only set for zipped file types
+} QuickLookInfo;
+
+QuickLookInfo initQLInfo(_Nonnull CFStringRef contentTypeUTI, _Nonnull CFURLRef url);
+
+// Plist
+NSData * _Nullable readPayloadFile(QuickLookInfo meta, NSString * _Nonnull filename);
+NSDictionary * _Nullable readPlistApp(QuickLookInfo meta);
+NSDictionary * _Nullable readPlistProvision(QuickLookInfo meta);
+NSDictionary * _Nullable readPlistItunes(QuickLookInfo meta);
+
+// Other helper
+typedef NS_ENUM(NSUInteger, ExpirationStatus) {
+	ExpirationStatusExpired = 0,
+	ExpirationStatusExpiring = 1,
+	ExpirationStatusValid = 2,
+};
+ExpirationStatus expirationStatus(NSDate * _Nullable date);
+NSDate * _Nullable dateOrNil(NSDate * _Nullable value);
+NSArray * _Nullable arrayOrNil(NSArray * _Nullable value);

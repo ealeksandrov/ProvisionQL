@@ -17,6 +17,8 @@
 				<string>com.apple.provisionprofile</string>
 				<string>com.apple.application-and-system-extension</string>
 				<string>com.apple.xcode.archive</string>
+				<string>com.opa334.trollstore.tipa</string>
+				<string>dyn.ah62d4rv4ge81k4puqe</string>
 			</array>
 		</dict>
 	</array>
@@ -62,5 +64,27 @@
 	<false/>
 	<key>QLThumbnailMinimumSize</key>
 	<integer>16</integer>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.opa334.trollstore.tipa</string>
+			<key>UTTypeDescription</key>
+			<string>AirDrop friendly iOS app</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>tipa</string>
+				</array>
+				<key>public.mime-type</key>
+				<string>application/trollstore-ipa</string>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>
