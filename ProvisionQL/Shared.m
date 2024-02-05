@@ -21,7 +21,10 @@ QuickLookInfo initQLInfo(CFStringRef contentTypeUTI, CFURLRef url) {
 	data.UTI = (__bridge NSString *)contentTypeUTI;
 	data.url = (__bridge NSURL *)url;
 
-	if ([data.UTI isEqualToString:kDataType_ipa]) {
+	if ([data.UTI isEqualToString:kDataType_ipa]
+		// for now, treat .tipa as if it were a normal .ipa file.
+		|| [data.UTI isEqualToString:kDataType_trollstore_ipa] || [data.UTI isEqualToString:kDataType_trollstore_ipa_dyn])
+	{
 		data.type = FileTypeIPA;
 		data.zipFile = [ZipFile open:data.url.path];
 	} else if ([data.UTI isEqualToString:kDataType_xcode_archive]) {

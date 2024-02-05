@@ -16,6 +16,10 @@ static NSString * _Nonnull const kDataType_osx_provision     = @"com.apple.provi
 static NSString * _Nonnull const kDataType_xcode_archive     = @"com.apple.xcode.archive";
 static NSString * _Nonnull const kDataType_app_extension     = @"com.apple.application-and-system-extension";
 
+// 3rd party ipa-like file extensions
+static NSString * _Nonnull const kDataType_trollstore_ipa     = @"com.opa334.trollstore.tipa";
+static NSString * _Nonnull const kDataType_trollstore_ipa_dyn = @"dyn.ah62d4rv4ge81k4puqe";
+
 // Init QuickLook Type
 typedef NS_ENUM(NSUInteger, FileType) {
 	FileTypeIPA = 1,
