@@ -84,7 +84,7 @@
 	NSTask *task = [NSTask new];
 	[task setLaunchPath:@"/usr/bin/unzip"];
 	[task setStandardOutput:[NSPipe pipe]];
-	[task setArguments:@[@"-p", self.pathToZipFile, filePath]]; // @"-x", @"*/*/*/*"
+	[task setArguments:@[@"-p", self.pathToZipFile, filePath, @"-x", @"*/*/*/*"]];
 	[task launch];
 
 #ifdef DEBUG
@@ -102,7 +102,7 @@
 - (void)sysUnzipFile:(NSString *)filePath toDir:(NSString *)targetDir {
 	NSTask *task = [NSTask new];
 	[task setLaunchPath:@"/usr/bin/unzip"];
-	[task setArguments:@[@"-u", @"-j", @"-d", targetDir, self.pathToZipFile, filePath]]; // @"-x", @"*/*/*/*"
+	[task setArguments:@[@"-u", @"-j", @"-d", targetDir, self.pathToZipFile, filePath, @"-x", @"*/*/*/*"]];
 	[task launch];
 
 #ifdef DEBUG
