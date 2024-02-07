@@ -28,6 +28,10 @@ void recursiveKeyValue(NSUInteger level, NSString *key, id value, NSMutableStrin
 - (instancetype)initWithBinaryPath:(NSString * _Nonnull)path {
 	self = [super init];
 	if (self) {
+		if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+			NSLog(@"WARN: provided binary '%@' does not exist (unzip error?).", [path lastPathComponent]);
+			return self;
+		}
 		_binaryPath = path;
 		_plist = [self getSecCodeEntitlements];
 		if (!_plist) {
