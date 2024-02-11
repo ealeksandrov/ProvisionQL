@@ -231,6 +231,13 @@ NSDictionary * _Nonnull procAppInfo(NSDictionary *appPlist) {
 		}
 	}
 
+	NSString *minVersion = appPlist[@"MinimumOSVersion"];
+	if (platforms.count == 0) {
+		if ([minVersion hasPrefix:@"1."] || [minVersion hasPrefix:@"2."] || [minVersion hasPrefix:@"3."]) {
+			[platforms addObject:@"iPhone"];
+		}
+	}
+
 	return @{
 		@"AppInfoHidden": @"",
 		@"ProvisionTitleHidden": @"hiddenDiv",
@@ -245,7 +252,7 @@ NSDictionary * _Nonnull procAppInfo(NSDictionary *appPlist) {
 
 		@"UIDeviceFamily": [platforms componentsJoinedByString:@", "],
 		@"DTSDKName": appPlist[@"DTSDKName"] ?: @"",
-		@"MinimumOSVersion": appPlist[@"MinimumOSVersion"] ?: @"",
+		@"MinimumOSVersion": minVersion ?: @"",
 		@"AppTransportSecurityFormatted": formattedAppTransportSecurity(appPlist),
 	};
 }
