@@ -1,5 +1,28 @@
 #import "Shared.h"
 
+NSData *unzipFile(NSURL *url, NSString *filePath) {
+    NSTask *task = [NSTask new];
+    [task setLaunchPath:@"/usr/bin/unzip"];
+    [task setStandardOutput:[NSPipe pipe]];
+    [task setArguments:@[@"-p", [url path], filePath]]; // @"-x", @"*/*/*/*"
+    [task launch];
+
+    NSData *pipeData = [[[task standardOutput] fileHandleForReading] readDataToEndOfFile];
+    [task waitUntilExit];
+    if (pipeData.length == 0) {
+        return nil;
+    }
+    return pipeData;
+}
+
+void unzipFileToDir(NSURL *url, NSString *targetDir, NSString *filePath) {
+    NSTask *task = [NSTask new];
+    [task setLaunchPath:@"/usr/bin/unzip"];
+    [task setArguments:@[@"-u", @"-j", @"-d", targetDir, [url path], filePath]]; // @"-x", @"*/*/*/*"
+    [task launch];
+    [task waitUntilExit];
+}
+
 NSImage *roundCorners(NSImage *image) {
     NSImage *existingImage = image;
     NSSize existingSize = [existingImage size];
@@ -21,23 +44,23 @@ NSImage *roundCorners(NSImage *image) {
 }
 
 int expirationStatus(NSDate *date, NSCalendar *calendar) {
-	int result = 0;
+    int result = 0;
 
-	if (date) {
+    if (date) {
         NSDateComponents *dateComponents = [calendar components:NSCalendarUnitDay fromDate:[NSDate date] toDate:date options:0];
         if ([date compare:[NSDate date]] == NSOrderedAscending) {
             // expired
-			result = 0;
-		} else if (dateComponents.day < 30) {
+            result = 0;
+        } else if (dateComponents.day < 30) {
             // expiring
-			result = 1;
-		} else {
+            result = 1;
+        } else {
             // valid
-			result = 2;
-		}
-	}
+            result = 2;
+        }
+    }
 
-	return result;
+    return result;
 }
 
 NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
@@ -67,17 +90,13 @@ NSImage *imageFromApp(NSURL *URL, NSString *dataType, NSString *fileName) {
         NSURL *appIconFullURL = [appURL URLByAppendingPathComponent:appIconFullName];
         appIcon = [[NSImage alloc] initWithContentsOfURL:appIconFullURL];
     } else if([dataType isEqualToString:kDataType_ipa]) {
-        // get the embedded icon from an app arcive using: unzip -p <URL> 'Payload/*.app/<fileName>' (piped to standard output)
-        NSTask *unzipTask = [NSTask new];
-        [unzipTask setLaunchPath:@"/usr/bin/unzip"];
-        [unzipTask setStandardOutput:[NSPipe pipe]];
-        [unzipTask setArguments:@[@"-p", [URL path], [NSString stringWithFormat:@"Payload/*.app/%@*", fileName], @"-x", @"*/*/*/*"]];
-        [unzipTask launch];
-
-        NSData *pipeData = [[[unzipTask standardOutput] fileHandleForReading] readDataToEndOfFile];
-        [unzipTask waitUntilExit];
-
-        appIcon = [[NSImage alloc] initWithData:pipeData];
+        NSData *data = unzipFile(URL, @"iTunesArtwork");
+        if (!data && fileName.length > 0) {
+            data = unzipFile(URL, [NSString stringWithFormat:@"Payload/*.app/%@*", fileName]);
+        }
+        if (data != nil) {
+            appIcon = [[NSImage alloc] initWithData:data];
+        }
     }
 
     return appIcon;
