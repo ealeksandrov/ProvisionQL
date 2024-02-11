@@ -10,50 +10,50 @@ void CancelPreviewGeneration(void *thisInterface, QLPreviewRequestRef preview);
  ----------------------------------------------------------------------------- */
 
 void displayKeyAndValue(NSUInteger level, NSString *key, id value, NSMutableString *output) {
-	int indent = (int)(level * 4);
+    int indent = (int)(level * 4);
 
-	if ([value isKindOfClass:[NSDictionary class]]) {
-		if (key) {
-			[output appendFormat:@"%*s%@ = {\n", indent, "", key];
-		} else if (level != 0) {
-			[output appendFormat:@"%*s{\n", indent, ""];
-		}
-		NSDictionary *dictionary = (NSDictionary *)value;
-		NSArray *keys = [[dictionary allKeys] sortedArrayUsingSelector:@selector(compare:)];
-		for (NSString *subKey in keys) {
+    if ([value isKindOfClass:[NSDictionary class]]) {
+        if (key) {
+            [output appendFormat:@"%*s%@ = {\n", indent, "", key];
+        } else if (level != 0) {
+            [output appendFormat:@"%*s{\n", indent, ""];
+        }
+        NSDictionary *dictionary = (NSDictionary *)value;
+        NSArray *keys = [[dictionary allKeys] sortedArrayUsingSelector:@selector(compare:)];
+        for (NSString *subKey in keys) {
             NSUInteger subLevel = (key == nil && level == 0) ? 0 : level + 1;
-			displayKeyAndValue(subLevel, subKey, [dictionary valueForKey:subKey], output);
-		}
+            displayKeyAndValue(subLevel, subKey, [dictionary valueForKey:subKey], output);
+        }
         if (level != 0) {
             [output appendFormat:@"%*s}\n", indent, ""];
         }
-	} else if ([value isKindOfClass:[NSArray class]]) {
-		[output appendFormat:@"%*s%@ = (\n", indent, "", key];
-		NSArray *array = (NSArray *)value;
-		for (id value in array) {
-			displayKeyAndValue(level + 1, nil, value, output);
-		}
-		[output appendFormat:@"%*s)\n", indent, ""];
-	} else if ([value isKindOfClass:[NSData class]]) {
-		NSData *data = (NSData *)value;
-		if (key) {
-			[output appendFormat:@"%*s%@ = %zd bytes of data\n", indent, "", key, [data length]];
-		} else {
-			[output appendFormat:@"%*s%zd bytes of data\n", indent, "", [data length]];
-		}
-	} else {
-		if (key) {
-			[output appendFormat:@"%*s%@ = %@\n", indent, "", key, value];
-		} else {
-			[output appendFormat:@"%*s%@\n", indent, "", value];
-		}
-	}
+    } else if ([value isKindOfClass:[NSArray class]]) {
+        [output appendFormat:@"%*s%@ = (\n", indent, "", key];
+        NSArray *array = (NSArray *)value;
+        for (id value in array) {
+            displayKeyAndValue(level + 1, nil, value, output);
+        }
+        [output appendFormat:@"%*s)\n", indent, ""];
+    } else if ([value isKindOfClass:[NSData class]]) {
+        NSData *data = (NSData *)value;
+        if (key) {
+            [output appendFormat:@"%*s%@ = %zd bytes of data\n", indent, "", key, [data length]];
+        } else {
+            [output appendFormat:@"%*s%zd bytes of data\n", indent, "", [data length]];
+        }
+    } else {
+        if (key) {
+            [output appendFormat:@"%*s%@ = %@\n", indent, "", key, value];
+        } else {
+            [output appendFormat:@"%*s%@\n", indent, "", value];
+        }
+    }
 }
 
 NSString *expirationStringForDateInCalendar(NSDate *date, NSCalendar *calendar) {
-	NSString *result = nil;
+    NSString *result = nil;
 
-	if (date) {
+    if (date) {
         NSDateComponentsFormatter *formatter = [[NSDateComponentsFormatter alloc] init];
         formatter.unitsStyle = NSDateComponentsFormatterUnitsStyleFull;
         formatter.maximumUnitCount = 1;
@@ -82,9 +82,9 @@ NSString *expirationStringForDateInCalendar(NSDate *date, NSCalendar *calendar) 
             }
         }
 
-	}
+    }
 
-	return result;
+    return result;
 }
 
 NSString *formattedStringForCertificates(NSArray *value) {
@@ -252,11 +252,11 @@ NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePat
     [codesignTask setLaunchPath:@"/usr/bin/codesign"];
     [codesignTask setStandardOutput:[NSPipe pipe]];
     [codesignTask setStandardError:[NSPipe pipe]];
-	if (@available(macOS 11, *)) {
-		[codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @"-", @"--xml"]];
-	} else {
-		[codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @":-"]];
-	}
+    if (@available(macOS 11, *)) {
+        [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @"-", @"--xml"]];
+    } else {
+        [codesignTask setArguments:@[@"-d", binaryPath, @"--entitlements", @":-"]];
+    }
     [codesignTask launch];
 
     NSData *outputData = [[[codesignTask standardOutput] fileHandleForReading] readDataToEndOfFile];
@@ -271,21 +271,21 @@ NSData *codesignEntitlementsDataFromApp(NSData *infoPlistData, NSString *basePat
 }
 
 NSString *iconAsBase64(NSImage *appIcon) {
-	if (!appIcon) {
-		NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"defaultIcon" withExtension:@"png"];
-		appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
-	}
-	appIcon = roundCorners(appIcon);
-	NSData *imageData = [appIcon TIFFRepresentation];
-	NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
-	imageData = [imageRep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
-	return [imageData base64EncodedStringWithOptions:0];
+    if (!appIcon) {
+        NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"defaultIcon" withExtension:@"png"];
+        appIcon = [[NSImage alloc] initWithContentsOfURL:iconURL];
+    }
+    appIcon = roundCorners(appIcon);
+    NSData *imageData = [appIcon TIFFRepresentation];
+    NSBitmapImageRep *imageRep = [NSBitmapImageRep imageRepWithData:imageData];
+    imageData = [imageRep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+    return [imageData base64EncodedStringWithOptions:0];
 }
 
 OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview, CFURLRef url, CFStringRef contentTypeUTI, CFDictionaryRef options) {
     @autoreleasepool {
         // create temp directory
-		NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSFileManager *fileManager = [NSFileManager defaultManager];
         NSString *tempDirFolder = [NSTemporaryDirectory() stringByAppendingPathComponent:kPluginBundleId];
         NSString *currentTempDirFolder = [tempDirFolder stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
         [fileManager createDirectoryAtPath:currentTempDirFolder withIntermediateDirectories:YES attributes:nil error:nil];
@@ -298,14 +298,14 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         NSImage *appIcon = nil;
 
         if ([dataType isEqualToString:kDataType_ipa]) {
-			provisionData = unzipFile(URL, @"Payload/*.app/embedded.mobileprovision");
-			appPlist = unzipFile(URL, @"Payload/*.app/Info.plist");
+            provisionData = unzipFile(URL, @"Payload/*.app/embedded.mobileprovision");
+            appPlist = unzipFile(URL, @"Payload/*.app/Info.plist");
 
             // read codesigning entitlements from application binary (extract it first)
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
             NSString *bundleExecutable = [appPropertyList objectForKey:@"CFBundleExecutable"];
 
-			unzipFileToDir(URL, currentTempDirFolder, [@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable]);
+            unzipFileToDir(URL, currentTempDirFolder, [@"Payload/*.app/" stringByAppendingPathComponent:bundleExecutable]);
 
             codesignEntitlementsData = codesignEntitlementsDataFromApp(appPlist, currentTempDirFolder);
 
@@ -355,14 +355,14 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         }
 
         if (!provisionData) {
-			NSLog(@"No provisionData for %@", URL);
+            NSLog(@"No provisionData for %@", URL);
 
             if (appPlist != nil) {
                 [synthesizedInfo setObject:@"hiddenDiv" forKey:@"ProvisionInfo"];
             } else {
                 return noErr;
             }
-		} else {
+        } else {
             [synthesizedInfo setObject:@"" forKey:@"ProvisionInfo"];
         }
 
@@ -371,9 +371,9 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         if (appPlist != nil) {
             NSDictionary *appPropertyList = [NSPropertyListSerialization propertyListWithData:appPlist options:0 format:NULL error:NULL];
 
-			NSString *iconName = mainIconNameForApp(appPropertyList);
-			appIcon = imageFromApp(URL, dataType, iconName);
-			[synthesizedInfo setObject:iconAsBase64(appIcon) forKey:@"AppIcon"];
+            NSString *iconName = mainIconNameForApp(appPropertyList);
+            appIcon = imageFromApp(URL, dataType, iconName);
+            [synthesizedInfo setObject:iconAsBase64(appIcon) forKey:@"AppIcon"];
 
             NSString *bundleName = [appPropertyList objectForKey:@"CFBundleDisplayName"];
             if (!bundleName) {
@@ -720,9 +720,9 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
                                      (__bridge NSString *)kQLPreviewPropertyMIMETypeKey : @"text/html" };
 
         QLPreviewRequestSetDataRepresentation(preview, (__bridge CFDataRef)[html dataUsingEncoding:NSUTF8StringEncoding], kUTTypeHTML, (__bridge CFDictionaryRef)properties);
-	}
+    }
 
-	return noErr;
+    return noErr;
 }
 
 void CancelThumbnailGeneration(void *thisInterface, QLThumbnailRequestRef thumbnail) {
