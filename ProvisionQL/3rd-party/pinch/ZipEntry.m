@@ -49,8 +49,8 @@
 @implementation NSArray (ZipEntry)
 
 - (ZipEntry*)zipEntryWithPath:(NSString*)path {
-	NSPredicate *pred = [NSPredicate predicateWithFormat:@"filepath LIKE %@", path];
-	return [self filteredArrayUsingPredicate:pred].firstObject;
+    NSPredicate *pred = [NSPredicate predicateWithFormat:@"filepath LIKE %@", path];
+    return [self filteredArrayUsingPredicate:pred].firstObject;
 }
 
 @end

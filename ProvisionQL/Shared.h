@@ -18,20 +18,20 @@ static NSString * _Nonnull const kDataType_app_extension     = @"com.apple.appli
 
 // Init QuickLook Type
 typedef NS_ENUM(NSUInteger, FileType) {
-	FileTypeIPA = 1,
-	FileTypeArchive,
-	FileTypeExtension,
-	FileTypeProvision,
+    FileTypeIPA = 1,
+    FileTypeArchive,
+    FileTypeExtension,
+    FileTypeProvision,
 };
 
 typedef struct QuickLookMeta {
-	NSString * _Nonnull UTI;
-	NSURL * _Nonnull url;
-	NSURL * _Nullable effectiveUrl; // if set, will point to the app inside of an archive
-
-	FileType type;
-	BOOL isOSX;
-	ZipFile * _Nullable zipFile; // only set for zipped file types
+    NSString * _Nonnull UTI;
+    NSURL * _Nonnull url;
+    NSURL * _Nullable effectiveUrl; // if set, will point to the app inside of an archive
+    
+    FileType type;
+    BOOL isOSX;
+    ZipFile * _Nullable zipFile; // only set for zipped file types
 } QuickLookInfo;
 
 QuickLookInfo initQLInfo(_Nonnull CFStringRef contentTypeUTI, _Nonnull CFURLRef url);
@@ -44,9 +44,9 @@ NSDictionary * _Nullable readPlistItunes(QuickLookInfo meta);
 
 // Other helper
 typedef NS_ENUM(NSUInteger, ExpirationStatus) {
-	ExpirationStatusExpired = 0,
-	ExpirationStatusExpiring = 1,
-	ExpirationStatusValid = 2,
+    ExpirationStatusExpired = 0,
+    ExpirationStatusExpiring = 1,
+    ExpirationStatusValid = 2,
 };
 ExpirationStatus expirationStatus(NSDate * _Nullable date);
 NSDate * _Nullable dateOrNil(NSDate * _Nullable value);
