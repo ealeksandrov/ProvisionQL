@@ -55,7 +55,7 @@ NSData * _Nullable readPayloadFile(QuickLookInfo meta, NSString *filename) {
 
 /// Helper for optional chaining.
 NSDictionary * _Nullable asPlistOrNil(NSData * _Nullable data) {
-    if (!data) { return nil; }
+    if (!data.length) { return nil; }
     NSError *err;
     NSDictionary *dict = [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:&err];
     if (err) {
