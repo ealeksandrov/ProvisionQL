@@ -298,7 +298,6 @@ idx += sizeof(dir_record._field)
                                                       length:dir_record.fileNameLength
                                                     encoding:NSUTF8StringEncoding];
         ZipEntry *entry = [[ZipEntry alloc] init];
-        entry.url = @""; //url
         entry.filepath = filename;
         entry.method = dir_record.compressionMethod;
         entry.sizeCompressed = dir_record.compressedSize;

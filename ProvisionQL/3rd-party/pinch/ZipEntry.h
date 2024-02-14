@@ -31,34 +31,17 @@
 #import <Foundation/Foundation.h>
 
 
-@interface ZipEntry : NSObject {
-    NSString *url;
-    NSString *filepath;
-    int offset;
-    int method;
-    int sizeCompressed;
-    int sizeUncompressed;
-    unsigned int crc32;
-    int filenameLength;
-    int extraFieldLength;
-    NSData *data;
-}
-
-@property (nonatomic, retain) NSString *url;
+@interface ZipEntry : NSObject
 @property (nonatomic, retain) NSString *filepath;
-@property (nonatomic, assign) int offset;
-@property (nonatomic, assign) int method;
-@property (nonatomic, assign) int sizeCompressed;
-@property (nonatomic, assign) int sizeUncompressed;
-@property (nonatomic, assign) unsigned int crc32;
-@property (nonatomic, assign) int filenameLength;
-@property (nonatomic, assign) int extraFieldLength;
-@property (nonatomic, retain) NSData *data;
-
+@property (nonatomic, assign) unsigned int offset;
+@property (nonatomic, assign) unsigned int method;
+@property (nonatomic, assign) unsigned int sizeCompressed;
+@property (nonatomic, assign) unsigned int sizeUncompressed;
+@property (nonatomic, assign) unsigned int filenameLength;
+@property (nonatomic, assign) unsigned int extraFieldLength;
 @end
 
+
 @interface NSArray (ZipEntry)
-
 - (ZipEntry*)zipEntryWithPath:(NSString*)path;
-
 @end

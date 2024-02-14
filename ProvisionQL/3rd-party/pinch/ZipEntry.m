@@ -32,17 +32,13 @@
 
 
 @implementation ZipEntry
-
-@synthesize url;
 @synthesize filepath;
 @synthesize offset;
 @synthesize method;
 @synthesize sizeCompressed;
 @synthesize sizeUncompressed;
-@synthesize crc32;
 @synthesize filenameLength;
 @synthesize extraFieldLength;
-@synthesize data;
 
 @end
 
