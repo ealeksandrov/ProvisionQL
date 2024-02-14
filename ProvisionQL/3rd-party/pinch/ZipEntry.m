@@ -40,13 +40,26 @@
 @synthesize filenameLength;
 @synthesize extraFieldLength;
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<ZipEntry path=\"%@\" size=%u>", filepath, sizeUncompressed];
+}
+
 @end
 
 @implementation NSArray (ZipEntry)
 
+/// Find filename matching pattern and return shortest possible path (thus ignoring deeper nested files).
 - (ZipEntry*)zipEntryWithPath:(NSString*)path {
     NSPredicate *pred = [NSPredicate predicateWithFormat:@"filepath LIKE %@", path];
-    return [self filteredArrayUsingPredicate:pred].firstObject;
+    NSUInteger shortest = 99999;
+    ZipEntry *bestMatch = nil;
+    for (ZipEntry *entry in [self filteredArrayUsingPredicate:pred]) {
+        if (shortest > entry.filepath.length) {
+            shortest = entry.filepath.length;
+            bestMatch = entry;
+        }
+    }
+    return bestMatch;
 }
 
 @end
