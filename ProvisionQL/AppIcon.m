@@ -67,33 +67,35 @@
 #ifdef DEBUG
     NSLog(@"[icon] icon name: %@", plistImgName);
 #endif
-    if (plistImgName) {
-        // First, try if an image file with that name exists.
-        NSString *actualName = [self expandImageName:plistImgName];
-        if (actualName) {
-#ifdef DEBUG
-            NSLog(@"[icon] using plist with key %@ and image file %@", plistImgName, actualName);
-#endif
-            if (_meta.type == FileTypeIPA) {
-                NSData *data = [_meta.zipFile unzipFile:[@"Payload/*.app/" stringByAppendingString:actualName]];
-                return [[NSImage alloc] initWithData:data];
-            }
-            NSURL *basePath = _meta.effectiveUrl ?: _meta.url;
-            return [[NSImage alloc] initWithContentsOfURL:[basePath URLByAppendingPathComponent:actualName]];
-        }
 
-        // Else: try Assets.car
-#ifdef CUI_ENABLED
-        @try {
-            NSImage *img = [self imageFromAssetsCar:plistImgName];
-            if (img) {
-                return img;
-            }
-        } @catch (NSException *exception) {
-            NSLog(@"ERROR: unknown private framework issue: %@", exception);
-        }
-#endif
+    // First, try if an image file with that name exists.
+    NSString *actualName = [self expandImageName:plistImgName ?: @"Icon"];
+    if (!actualName) {
+        actualName = [self expandImageName:@"icon"];
     }
+    if (actualName) {
+#ifdef DEBUG
+        NSLog(@"[icon] using plist with key %@ and image file %@", plistImgName, actualName);
+#endif
+        if (_meta.type == FileTypeIPA) {
+            NSData *data = [_meta.zipFile unzipFile:[@"Payload/*.app/" stringByAppendingString:actualName]];
+            return [[NSImage alloc] initWithData:data];
+        }
+        NSURL *basePath = _meta.effectiveUrl ?: _meta.url;
+        return [[NSImage alloc] initWithContentsOfURL:[basePath URLByAppendingPathComponent:actualName]];
+    }
+
+#ifdef CUI_ENABLED
+    // Else: try Assets.car
+    @try {
+        NSImage *img = [self imageFromAssetsCar:plistImgName];
+        if (img) {
+            return img;
+        }
+    } @catch (NSException *exception) {
+        NSLog(@"ERROR: unknown private framework issue: %@", exception);
+    }
+#endif
 
     // Fallback to default icon
     NSURL *iconURL = [[NSBundle bundleWithIdentifier:kPluginBundleId] URLForResource:@"defaultIcon" withExtension:@"png"];
