@@ -53,7 +53,7 @@
 - (NSImage * _Nonnull)extractImage:(NSDictionary * _Nullable)appPlist {
     // no need to unwrap the plist, and most .ipa should include the Artwork anyway
     if (_meta.type == FileTypeIPA) {
-        NSData *data = [_meta.zipFile unzipFile:@"iTunesArtwork"];
+        NSData *data = [_meta.zipFile unzipFile:@"iTunesArtwork" isExactMatch:YES];
         if (data) {
 #ifdef DEBUG
             NSLog(@"[icon] using iTunesArtwork.");
@@ -78,11 +78,10 @@
         NSLog(@"[icon] using plist image file %@", actualName);
 #endif
         if (_meta.type == FileTypeIPA) {
-            NSData *data = [_meta.zipFile unzipFile:[@"Payload/*.app/" stringByAppendingString:actualName]];
+            NSData *data = [_meta.zipFile unzipFile:actualName isExactMatch:YES];
             return [[NSImage alloc] initWithData:data];
         }
-        NSURL *basePath = _meta.effectiveUrl ?: _meta.url;
-        return [[NSImage alloc] initWithContentsOfURL:[basePath URLByAppendingPathComponent:actualName]];
+        return [[NSImage alloc] initWithContentsOfURL:[NSURL fileURLWithPath:actualName isDirectory:NO]];
     }
 
 #ifdef CUI_ENABLED
@@ -231,13 +230,13 @@
     if (_meta.type == FileTypeIPA) {
         if (!_meta.zipFile) {
             // in case unzip in memory is not available, fallback to pattern matching with dynamic suffix
-            return [[iconList firstObject] stringByAppendingString:@"*"];
+            return [NSString stringWithFormat:@"Payload/*.app/%@*", iconList.firstObject];
         }
-        for (NSString *fileName in iconList) {
-            NSString *zipPath = [NSString stringWithFormat:@"Payload/*.app/%@*", fileName];
+        for (NSString *iconPath in iconList) {
+            NSString *zipPath = [NSString stringWithFormat:@"Payload/*.app/%@*", iconPath];
             for (ZipEntry *zip in [_meta.zipFile filesMatching:zipPath]) {
                 if (zip.sizeUncompressed > 0) {
-                    [matches addObject:[zip.filepath lastPathComponent]];
+                    [matches addObject:zip.filepath];
                 }
             }
             if (matches.count > 0) {
@@ -247,13 +246,15 @@
     } else if (_meta.type == FileTypeArchive || _meta.type == FileTypeExtension) {
         NSURL *basePath = _meta.effectiveUrl ?: _meta.url;
         NSFileManager *fileManager = [NSFileManager defaultManager];
-        NSArray<NSString *> *appContents = [fileManager contentsOfDirectoryAtPath:basePath.path error:nil];
-        for (NSString *fileName in iconList) {
-            for (NSString *file in appContents) {
+        for (NSString *iconPath in iconList) {
+            NSString *fileName = [iconPath lastPathComponent];
+            NSString *basename = [basePath URLByAppendingPathComponent:iconPath isDirectory:NO].path;
+            NSString *parentDir = [basename stringByDeletingLastPathComponent];
+            for (NSString *file in [fileManager contentsOfDirectoryAtPath:parentDir error:nil]) {
                 if ([file hasPrefix:fileName]) {
-                    NSString *fullPath = [basePath URLByAppendingPathComponent:file isDirectory:NO].path;
+                    NSString *fullPath = [parentDir stringByAppendingPathComponent:file];
                     if ([fileManager attributesOfItemAtPath:fullPath error:nil].fileSize > 0) {
-                        [matches addObject:file];
+                        [matches addObject:fullPath];
                     }
                 }
             }
@@ -303,8 +304,8 @@
 /// Given a list of filenames, order them highest resolution first.
 - (NSArray<NSString *> *)sortedByResolution:(NSArray<NSString *> *)icons {
     return [icons sortedArrayUsingComparator:^NSComparisonResult(NSString *obj1, NSString *obj2) {
-        NSInteger i1 = [self resolutionIndex:obj1];
-        NSInteger i2 = [self resolutionIndex:obj2];
+        NSInteger i1 = [self resolutionIndex:[obj1 lastPathComponent]];
+        NSInteger i2 = [self resolutionIndex:[obj2 lastPathComponent]];
         return i1 < i2 ? NSOrderedAscending : i1 > i2? NSOrderedDescending : NSOrderedSame;
     }];
 }

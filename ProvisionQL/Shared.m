@@ -43,7 +43,7 @@ QuickLookInfo initQLInfo(CFStringRef contentTypeUTI, CFURLRef url) {
 /// Load a file from bundle into memory. Either by file path or via unzip.
 NSData * _Nullable readPayloadFile(QuickLookInfo meta, NSString *filename) {
     switch (meta.type) {
-        case FileTypeIPA: return [meta.zipFile unzipFile:[@"Payload/*.app/" stringByAppendingString:filename]];
+        case FileTypeIPA: return [meta.zipFile unzipFile:[@"Payload/*.app/" stringByAppendingString:filename] isExactMatch:NO];
         case FileTypeArchive: return [NSData dataWithContentsOfURL:[meta.effectiveUrl URLByAppendingPathComponent:filename]];
         case FileTypeExtension: return [NSData dataWithContentsOfURL:[meta.url URLByAppendingPathComponent:filename]];
         case FileTypeProvision: return nil;
@@ -106,7 +106,7 @@ NSDictionary * _Nullable readPlistProvision(QuickLookInfo meta) {
 /// Read @c iTunesMetadata.plist if available
 NSDictionary * _Nullable readPlistItunes(QuickLookInfo meta) {
     if (meta.type == FileTypeIPA) {
-        return asPlistOrNil([meta.zipFile unzipFile:@"iTunesMetadata.plist"]);
+        return asPlistOrNil([meta.zipFile unzipFile:@"iTunesMetadata.plist" isExactMatch:YES]);
     }
     return nil;
 }

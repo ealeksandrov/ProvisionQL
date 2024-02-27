@@ -35,7 +35,7 @@
 
 /// Unzip file directly into memory.
 /// @param filePath File path inside zip file.
-- (NSData * _Nullable)unzipFile:(NSString *)filePath {
+- (NSData * _Nullable)unzipFile:(NSString *)filePath isExactMatch:(BOOL)exact {
     if (self.centralDirectory) {
         ZipEntry *matchingFile = [self.centralDirectory zipEntryWithPath:filePath];
         if (!matchingFile) {
@@ -56,7 +56,7 @@
         }
     }
     // fallback to sys unzip
-    return [self sysUnzipFile:filePath];
+    return [self sysUnzipFile:filePath isExactMatch:exact];
 }
 
 /// Unzip file to filesystem.
@@ -64,7 +64,7 @@
 /// @param targetDir Directory in which to unzip the file.
 - (void)unzipFile:(NSString *)filePath toDir:(NSString *)targetDir {
     if (self.centralDirectory) {
-        NSData *data = [self unzipFile:filePath];
+        NSData *data = [self unzipFile:filePath isExactMatch:NO];
         if (data) {
             NSString *outputPath = [targetDir stringByAppendingPathComponent:[filePath lastPathComponent]];
 #ifdef DEBUG
@@ -80,11 +80,15 @@
 
 // MARK: - fallback to sys call
 
-- (NSData * _Nullable)sysUnzipFile:(NSString *)filePath {
+- (NSData * _Nullable)sysUnzipFile:(NSString *)filePath isExactMatch:(BOOL)exact {
     NSTask *task = [NSTask new];
     [task setLaunchPath:@"/usr/bin/unzip"];
     [task setStandardOutput:[NSPipe pipe]];
-    [task setArguments:@[@"-p", self.pathToZipFile, filePath, @"-x", @"*/*/*/*"]];
+    if (exact) {
+        [task setArguments:@[@"-p", self.pathToZipFile, filePath]];
+    } else {
+        [task setArguments:@[@"-p", self.pathToZipFile, filePath, @"-x", @"*/*/*/*"]];
+    }
     [task launch];
     
 #ifdef DEBUG
