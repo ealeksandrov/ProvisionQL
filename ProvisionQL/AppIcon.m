@@ -286,6 +286,7 @@
     return nil;
 }
 
+/// @return lower index means higher resolution.
 - (NSInteger)resolutionIndex:(NSString *)iconName {
     const NSArray<NSString *> *RESOLUTION_ORDER = @[@"@3x", @"@2x", @"180", @"167", @"152", @"120"];
     for (int i = 0; i < RESOLUTION_ORDER.count; i++) {
@@ -299,6 +300,7 @@
     return 50;
 }
 
+/// Given a list of filenames, order them highest resolution first.
 - (NSArray<NSString *> *)sortedByResolution:(NSArray<NSString *> *)icons {
     return [icons sortedArrayUsingComparator:^NSComparisonResult(NSString *obj1, NSString *obj2) {
         NSInteger i1 = [self resolutionIndex:obj1];
@@ -306,23 +308,6 @@
         return i1 < i2 ? NSOrderedAscending : i1 > i2? NSOrderedDescending : NSOrderedSame;
     }];
 }
-
-/// Given a list of filenames, try to find the one with the highest resolution
-//- (NSString *)findHighestResolutionIconName:(NSArray<NSString *> *)icons {
-//    for (NSString *match in @[@"@3x", @"@2x", @"180", @"167", @"152", @"120"]) {
-//        for (NSString *icon in icons) {
-//            if ([icon containsString:match]) {
-//                return icon;
-//            }
-//        }
-//    }
-//    //If no one matches any pattern, just take last item
-//    NSString *lastName = [icons lastObject];
-//    if ([[lastName lowercaseString] containsString:@"small"]) {
-//        return [icons firstObject];
-//    }
-//    return lastName;
-//}
 
 @end
 
