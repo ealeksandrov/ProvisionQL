@@ -63,19 +63,19 @@
     }
 
     // Extract image name from app plist
-    NSString *plistImgName = [self iconNameFromPlist:appPlist];
+    NSArray<NSString *> *plistImgNames = [self iconNamesFromPlist:appPlist];
 #ifdef DEBUG
-    NSLog(@"[icon] icon name: %@", plistImgName);
+    NSLog(@"[icon] icon names in plist: %@", plistImgNames);
 #endif
 
+    // If no previous filename works (or empty), try default icon names
+    plistImgNames = [plistImgNames arrayByAddingObjectsFromArray:@[@"Icon", @"icon"]];
+
     // First, try if an image file with that name exists.
-    NSString *actualName = [self expandImageName:plistImgName ?: @"Icon"];
-    if (!actualName) {
-        actualName = [self expandImageName:@"icon"];
-    }
+    NSString *actualName = [self expandImageName:plistImgNames];
     if (actualName) {
 #ifdef DEBUG
-        NSLog(@"[icon] using plist with key %@ and image file %@", plistImgName, actualName);
+        NSLog(@"[icon] using plist image file %@", actualName);
 #endif
         if (_meta.type == FileTypeIPA) {
             NSData *data = [_meta.zipFile unzipFile:[@"Payload/*.app/" stringByAppendingString:actualName]];
@@ -88,7 +88,7 @@
 #ifdef CUI_ENABLED
     // Else: try Assets.car
     @try {
-        NSImage *img = [self imageFromAssetsCar:plistImgName];
+        NSImage *img = [self imageFromAssetsCar:plistImgNames.firstObject];
         if (img) {
             return img;
         }
@@ -200,13 +200,13 @@
 
 /// Parse app plist to find the bundle icon filename.
 /// @param appPlist If @c nil, will load plist on the fly (used for thumbnail)
-/// @return Filename which is available in Bundle or Filesystem. This may include @c @2x and an arbitrary file extension.
-- (NSString * _Nullable)iconNameFromPlist:(NSDictionary *)appPlist {
+/// @return Filenames which do not necessarily exist on filesystem. This may include @c @2x and/or no file extension.
+- (NSArray<NSString *> * _Nonnull)iconNamesFromPlist:(NSDictionary *)appPlist {
     if (!appPlist) {
         appPlist = readPlistApp(_meta);
     }
     //Check for CFBundleIcons (since 5.0)
-    NSArray *icons = [self unpackNameListFromPlistDict:appPlist[@"CFBundleIcons"]];
+    NSArray<NSString *> *icons = [self unpackNameListFromPlistDict:appPlist[@"CFBundleIcons"]];
     if (!icons) {
         icons = [self unpackNameListFromPlistDict:appPlist[@"CFBundleIcons~ipad"]];
         if (!icons) {
@@ -216,45 +216,60 @@
                 icons = arrayOrNil(appPlist[@"Icon files"]); // key found on iTunesU app
                 if (!icons) {
                     //Check for CFBundleIconFile (legacy, before 3.2)
-                    return appPlist[@"CFBundleIconFile"]; // may be nil
+                    NSString *icon = appPlist[@"CFBundleIconFile"]; // may be nil
+                    return icon ? @[icon] : @[];
                 }
             }
         }
     }
-    return [self findHighestResolutionIconName:icons];
+    return [self sortedByResolution:icons];
 }
 
 /// Given a filename, search Bundle or Filesystem for files that match. Select the filename with the highest resolution.
-- (NSString * _Nullable)expandImageName:(NSString * _Nullable)fileName {
-    if (!fileName) {
-        return nil;
-    }
-    NSArray *matchingNames = nil;
+- (NSString * _Nullable)expandImageName:(NSArray<NSString *> * _Nonnull)iconList {
+    NSMutableArray *matches = [NSMutableArray array];
     if (_meta.type == FileTypeIPA) {
         if (!_meta.zipFile) {
             // in case unzip in memory is not available, fallback to pattern matching with dynamic suffix
-            return [fileName stringByAppendingString:@"*"];
+            return [[iconList firstObject] stringByAppendingString:@"*"];
         }
-        NSString *zipPath = [NSString stringWithFormat:@"Payload/*.app/%@*", fileName];
-        NSMutableArray *matches = [NSMutableArray array];
-        for (ZipEntry *zip in [_meta.zipFile filesMatching:zipPath]) {
-            [matches addObject:[zip.filepath lastPathComponent]];
+        for (NSString *fileName in iconList) {
+            NSString *zipPath = [NSString stringWithFormat:@"Payload/*.app/%@*", fileName];
+            for (ZipEntry *zip in [_meta.zipFile filesMatching:zipPath]) {
+                if (zip.sizeUncompressed > 0) {
+                    [matches addObject:[zip.filepath lastPathComponent]];
+                }
+            }
+            if (matches.count > 0) {
+                break;
+            }
         }
-        matchingNames = matches;
     } else if (_meta.type == FileTypeArchive || _meta.type == FileTypeExtension) {
         NSURL *basePath = _meta.effectiveUrl ?: _meta.url;
-        NSArray *appContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:basePath.path error:nil];
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF beginswith %@", fileName];
-        matchingNames = [appContents filteredArrayUsingPredicate:predicate];
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSArray<NSString *> *appContents = [fileManager contentsOfDirectoryAtPath:basePath.path error:nil];
+        for (NSString *fileName in iconList) {
+            for (NSString *file in appContents) {
+                if ([file hasPrefix:fileName]) {
+                    NSString *fullPath = [basePath URLByAppendingPathComponent:file isDirectory:NO].path;
+                    if ([fileManager attributesOfItemAtPath:fullPath error:nil].fileSize > 0) {
+                        [matches addObject:file];
+                    }
+                }
+            }
+            if (matches.count > 0) {
+                break;
+            }
+        }
     }
-    if (matchingNames.count > 0) {
-        return [self findHighestResolutionIconName:matchingNames];
+    if (matches.count > 0) {
+        return [self sortedByResolution:matches].firstObject;
     }
     return nil;
 }
 
 /// Deep select icons from plist key @c CFBundleIcons and @c CFBundleIcons~ipad
-- (NSArray * _Nullable)unpackNameListFromPlistDict:(NSDictionary *)bundleDict {
+- (NSArray<NSString *> * _Nullable)unpackNameListFromPlistDict:(NSDictionary *)bundleDict {
     if ([bundleDict isKindOfClass:[NSDictionary class]]) {
         NSDictionary *primaryDict = [bundleDict objectForKey:@"CFBundlePrimaryIcon"];
         if ([primaryDict isKindOfClass:[NSDictionary class]]) {
@@ -271,22 +286,43 @@
     return nil;
 }
 
-/// Given a list of filenames, try to find the one with the highest resolution
-- (NSString *)findHighestResolutionIconName:(NSArray<NSString *> *)icons {
-    for (NSString *match in @[@"@3x", @"@2x", @"180", @"167", @"152", @"120"]) {
-        for (NSString *icon in icons) {
-            if ([icon containsString:match]) {
-                return icon;
-            }
+- (NSInteger)resolutionIndex:(NSString *)iconName {
+    const NSArray<NSString *> *RESOLUTION_ORDER = @[@"@3x", @"@2x", @"180", @"167", @"152", @"120"];
+    for (int i = 0; i < RESOLUTION_ORDER.count; i++) {
+        if ([iconName containsString:RESOLUTION_ORDER[i]]) {
+            return i;
         }
     }
-    //If no one matches any pattern, just take last item
-    NSString *lastName = [icons lastObject];
-    if ([[lastName lowercaseString] containsString:@"small"]) {
-        return [icons firstObject];
+    if ([[iconName lowercaseString] containsString:@"small"]) {
+        return 99;
     }
-    return lastName;
+    return 50;
 }
+
+- (NSArray<NSString *> *)sortedByResolution:(NSArray<NSString *> *)icons {
+    return [icons sortedArrayUsingComparator:^NSComparisonResult(NSString *obj1, NSString *obj2) {
+        NSInteger i1 = [self resolutionIndex:obj1];
+        NSInteger i2 = [self resolutionIndex:obj2];
+        return i1 < i2 ? NSOrderedAscending : i1 > i2? NSOrderedDescending : NSOrderedSame;
+    }];
+}
+
+/// Given a list of filenames, try to find the one with the highest resolution
+//- (NSString *)findHighestResolutionIconName:(NSArray<NSString *> *)icons {
+//    for (NSString *match in @[@"@3x", @"@2x", @"180", @"167", @"152", @"120"]) {
+//        for (NSString *icon in icons) {
+//            if ([icon containsString:match]) {
+//                return icon;
+//            }
+//        }
+//    }
+//    //If no one matches any pattern, just take last item
+//    NSString *lastName = [icons lastObject];
+//    if ([[lastName lowercaseString] containsString:@"small"]) {
+//        return [icons firstObject];
+//    }
+//    return lastName;
+//}
 
 @end
 
