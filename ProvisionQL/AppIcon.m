@@ -289,16 +289,19 @@
 
 /// @return lower index means higher resolution.
 - (NSInteger)resolutionIndex:(NSString *)iconName {
+    NSInteger penalty = 0;
+    if ([[iconName lowercaseString] containsString:@"small"]
+        || [[iconName lowercaseString] hasPrefix:@"default"])  // launch image
+    {
+        penalty = 10;
+    }
     const NSArray<NSString *> *RESOLUTION_ORDER = @[@"@3x", @"@2x", @"180", @"167", @"152", @"120"];
     for (int i = 0; i < RESOLUTION_ORDER.count; i++) {
         if ([iconName containsString:RESOLUTION_ORDER[i]]) {
-            return i;
+            return i + penalty;
         }
     }
-    if ([[iconName lowercaseString] containsString:@"small"]) {
-        return 99;
-    }
-    return 50;
+    return 50 + penalty;
 }
 
 /// Given a list of filenames, order them highest resolution first.
