@@ -293,9 +293,12 @@
     if ([[iconName lowercaseString] containsString:@"small"]
         || [[iconName lowercaseString] hasPrefix:@"default"])  // launch image
     {
-        penalty = 10;
+        penalty = 20;
     }
-    const NSArray<NSString *> *RESOLUTION_ORDER = @[@"@3x", @"@2x", @"180", @"167", @"152", @"120"];
+    const NSArray<NSString *> *RESOLUTION_ORDER = @[
+        @"@3x", @"180", @"167", @"152", @"@2x", @"120", @"144",
+        @"114", @"87", @"80", @"76", @"72", @"58", @"57"
+    ];
     for (int i = 0; i < RESOLUTION_ORDER.count; i++) {
         if ([iconName containsString:RESOLUTION_ORDER[i]]) {
             return i + penalty;
