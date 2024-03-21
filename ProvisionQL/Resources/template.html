@@ -4,150 +4,151 @@
         <meta charset="UTF-8">
             <title></title>
             <style>
-                body {
-                    background: #f7f7f7;
-                    color: #000;
-                    margin: 20px;
-                    font: 13px monospace;
-                    line-height: 1.3;
-                }
+body {
+    background: #f7f7f7;
+    color: #000;
+    margin: 20px;
+    font: 13px monospace;
+    line-height: 1.3;
+}
 
-                .hiddenDiv {
-                    display: none;
-                }
+.hiddenDiv {
+    display: none;
+}
 
-                .app {
-                    margin-bottom: 20px;
-                }
+.app {
+    margin-bottom: 20px;
+}
 
-                .app img {
-                    -webkit-filter: drop-shadow(0px 0px 3px rgba(0,0,0,0.5));
-                    filter: drop-shadow(0px 0px 3px rgba(0,0,0,0.5));
-                    width: 100px;
-                }
+.app img {
+    -webkit-filter: drop-shadow(0px 0px 3px rgba(0,0,0,0.5));
+    filter: drop-shadow(0px 0px 3px rgba(0,0,0,0.5));
+    width: 100px;
+}
 
-                .info .subsection {
-                    display: inline-block;
-                    vertical-align: top;
-                }
+.info .subsection {
+    display: inline-block;
+    vertical-align: top;
+}
 
-                .info .list {
-                    padding-left: 20px;
-                }
-            
-                .icon {
-                    padding-right: 20px;
-                }
+.info .list {
+    padding-left: 20px;
+}
 
-                .info > .list {
-                    display: inline-block;
-                    padding-left: 0px;
-                }
+.icon {
+    padding-right: 20px;
+}
 
-                .floatLeft {
-                    float: left;
-                }
+.info > .list {
+    display: inline-block;
+    padding-left: 0px;
+}
 
-				a         { color: #aaa; }
-				a:hover   { color: #000; }
-				a:visited { color: #aaa; }
+.floatLeft {
+    float: left;
+}
 
-                h1 {
-                    font-size: 18px;
-                }
+a         { color: #aaa; }
+a:hover   { color: #000; }
+a:visited { color: #aaa; }
 
-                h2 {
-                    font-size: 14px;
-                    text-transform: uppercase;
-                }
+h1 {
+    font-size: 18px;
+}
 
-                .expired, .warning {
-                    color: darkred;
-                }
-                .expiring {
-                    color: #996600;
-                }
-                .valid {
-                    color: darkgreen;
-                }
+h2 {
+    font-size: 14px;
+    margin-top: 4ex;
+    text-transform: uppercase;
+}
 
-                .deviceType {
-                    color: #aaa;
-                    font-size: 11px;
-                }
+.expired, .warning {
+    color: darkred;
+}
+.expiring {
+    color: #996600;
+}
+.valid {
+    color: darkgreen;
+}
 
-                .clear {
-                    clear: left;
-                }
+.deviceType {
+    color: #aaa;
+    font-size: 11px;
+}
 
-                table {
-                    width: 600px;
-                }
+.clear {
+    clear: left;
+}
 
-                tr {
-                    line-height: 1.75;
-                }
+table {
+    width: 600px;
+}
 
-                td {
-                    padding-left: 8px;
-                    padding-right: 8px;
-                }
+tr {
+    line-height: 1.75;
+}
 
-                tr:nth-child(odd) {
-                    background-color: #eee;
-                }
+td {
+    padding-left: 8px;
+    padding-right: 8px;
+}
 
-                tr:nth-child(even) {
-                    background-color: #fafafa;
-                }
-                .footer {
-                    margin-top: 20px;
-                    color: #aaa;
-                    font-size: 11px;
-                }
+tr:nth-child(odd) {
+    background-color: #eee;
+}
 
-                @media (prefers-color-scheme: dark) {
-                    body {
-                        background: #323232;
-                        color: #fff;
-                    }
+tr:nth-child(even) {
+    background-color: #fafafa;
+}
+.footer {
+    margin-top: 20px;
+    color: #aaa;
+    font-size: 11px;
+}
 
-                    a         { color: #aaa; }
-                    a:hover   { color: #fff; }
-                    a:visited { color: #aaa; }
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #323232;
+        color: #fff;
+    }
 
-                    .expired, .warning {
-                        color: red;
-                    }
-                    .expiring {
-                        color: orange;
-                    }
-                    .valid {
-                        color: lightgreen;
-                    }
+    a         { color: #aaa; }
+    a:hover   { color: #fff; }
+    a:visited { color: #aaa; }
 
-                    tr:nth-child(odd) {
-                        background-color: #1e1e1e;
-                    }
+    .expired, .warning {
+        color: red;
+    }
+    .expiring {
+        color: orange;
+    }
+    .valid {
+        color: lightgreen;
+    }
 
-                    tr:nth-child(even) {
-                        background-color: #292929;
-                    }
-                }
-                </style>
-            </head>
+    tr:nth-child(odd) {
+        background-color: #1e1e1e;
+    }
+
+    tr:nth-child(even) {
+        background-color: #292929;
+    }
+}
+            </style>
+    </head>
     <body>
-        <div class="app __AppInfo__">
+        <div class="app __AppInfoHidden__">
             <h1>__AppInfoTitle__</h1>
             <div class="floatLeft icon"><img alt="App icon" src="data:image/png;base64,__AppIcon__"/></div>
             <div class="floatLeft info">
-				Name: <strong>__CFBundleName__</strong><br />
-				Version: __CFBundleShortVersionString__ (__CFBundleVersion__)<br />
-				BundleId: __CFBundleIdentifier__<br />
-                <div class="__ExtensionInfo__">
-                    Extension type: __NSExtensionPointIdentifier__<br />
+                Name: <strong>__CFBundleName__</strong><br />
+                Version: __CFBundleShortVersionString__ (__CFBundleVersion__)<br />
+                BundleId: __CFBundleIdentifier__<br />
+                <div class="__ExtensionTypeHidden__">
+                    Extension type: __ExtensionType__<br />
                 </div>
-				DeviceFamily: __UIDeviceFamily__<br />
+                DeviceFamily: __UIDeviceFamily__<br />
                 SDK: __DTSDKName__<br />
                 Minimum OS Version: __MinimumOSVersion__<br />
             </div>
@@ -156,34 +157,52 @@
             __AppTransportSecurityFormatted__
         </div>
 
-        <div class="__ProvisionInfo__">
-            <div class="__AppInfo__">
-                <h1>Provisioning</h1>
-                Profile name: <strong>__Name__</strong><br />
+        <div class="__ProvisionHidden__">
+            <div class="__AppInfoHidden__">
+                <h2>Provisioning</h2>
+                Profile name: <strong>__ProfileName__</strong><br />
             </div>
-            <div class="__ProvisionAsSubheader__">
-                <h1><span class="__ExpStatus__">__Name__</span></h1>
+            <div class="__ProvisionTitleHidden__">
+                <h1><span class="__ExpStatus__">__ProfileName__</span></h1>
             </div>
 
-            Profile UUID: __UUID__<br />
-			Profile Type: __ProfilePlatform__ __ProfileType__<br />
-			Team: __TeamName__ (__TeamIds__)<br />
-			Creation date: __CreationDateFormatted__ (__CreationSummary__)<br />
-			Expiration Date: <strong><span class="__ExpStatus__">__ExpirationDateFormatted__ (__ExpirationSummary__)</span></strong><br />
+            Profile UUID: __ProfileUUID__<br />
+            Profile Type: __ProfilePlatform__ __ProfileType__<br />
+            Team: __TeamName__ (__TeamIds__)<br />
+            Creation date: __CreationDateFormatted__<br />
+            Expiration Date: <strong><span class="__ExpStatus__">__ExpirationDateFormatted__</span></strong><br />
+        </div>
 
+        <div>
             <h2>Entitlements</h2>
-            <div class="__EntitlementsWarning__ warning">
+            <div class="__EntitlementsWarningHidden__ warning">
                 <strong>Entitlements extraction failed.</strong>
             </div>
             __EntitlementsFormatted__
+        </div>
 
-			<h2>Developer Certificates</h2>
-			__DeveloperCertificatesFormatted__
+        <div class="__ProvisionHidden__">
+            <h2>Developer Certificates</h2>
+            __DeveloperCertificatesFormatted__
+        </div>
 
-			<h2>Devices (__ProvisionedDevicesCount__)</h2>
+        <div class="__ProvisionHidden__">
+            <h2>Devices (__ProvisionedDevicesCount__)</h2>
             __ProvisionedDevicesFormatted__
+        </div>
 
-		</div>
+        <div class="__iTunesHidden__">
+            <h2>iTunes Metadata</h2>
+            iTunesId: __iTunesId__<br />
+            Title: __iTunesName__<br />
+            Genres: __iTunesGenres__<br />
+            Released: __iTunesReleaseDate__<br />
+            <br />
+            AppleId: __iTunesAppleId__<br />
+            Purchased: __iTunesPurchaseDate__<br />
+            Price: __iTunesPrice__<br />
+        </div>
+
         <div>
             <h2>File info</h2>
             __FileName__<br />
