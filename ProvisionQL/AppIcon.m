@@ -372,9 +372,20 @@
 
 @implementation NSImage (AppIcon)
 
+/// Because some (PNG) image data will return weird float values
+- (NSSize)bestImageSize {
+    NSInteger w = self.size.width;
+    NSInteger h = self.size.height;
+    for (NSImageRep * imageRep in [self representations]) {
+        w = MAX(w, [imageRep pixelsWide]);
+        h = MAX(h, [imageRep pixelsHigh]);
+    }
+    return NSMakeSize(w, h);
+}
+
 /// Apply rounded corners to image (iOS7 style)
 - (NSImage * _Nonnull)withRoundCorners {
-    NSSize existingSize = [self size];
+    NSSize existingSize = [self bestImageSize];
     NSImage *composedImage = [[NSImage alloc] initWithSize:existingSize];
 
     [composedImage lockFocus];
@@ -385,7 +396,7 @@
     [clipPath setWindingRule:NSWindingRuleEvenOdd];
     [clipPath addClip];
 
-    [self drawAtPoint:NSZeroPoint fromRect:NSMakeRect(0, 0, existingSize.width, existingSize.height) operation:NSCompositingOperationSourceOver fraction:1];
+    [self drawInRect:imageFrame];
     [composedImage unlockFocus];
     return composedImage;
 }
