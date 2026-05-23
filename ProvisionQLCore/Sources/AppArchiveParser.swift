@@ -26,8 +26,7 @@ public enum AppArchiveParser {
 
 private extension AppArchiveParser {
     static func parseIPA(_ url: URL) throws -> AppInfo {
-        let fileData = try Data(contentsOf: url)
-        let archive = try Archive(data: fileData, accessMode: .read)
+        let archive = try Archive(url: url, accessMode: .read)
 
         // Find the app bundle path within the archive
         let appBundlePath = try ArchiveUtilities.findAppBundlePath(in: archive, archiveType: .ipa)
