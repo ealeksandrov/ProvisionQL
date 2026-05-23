@@ -115,6 +115,23 @@ struct AppArchiveTests {
             }
         }
 
+        @Test("Parser handles IPA archives without directory entries")
+        func parserHandlesIPAsWithoutDirectoryEntries() async throws {
+            let tempURL = createTempZipArchive(
+                withFiles: [
+                    "Payload/TestApp.app/Info.plist": createMockInfoPlistData()
+                ],
+                extension: "ipa",
+                includeDirectories: false
+            )
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+
+            let appInfo = try AppArchiveParser.parse(tempURL)
+
+            #expect(appInfo.name == "Test App Display")
+            #expect(appInfo.bundleIdentifier == "com.test.app")
+        }
+
         @Test("Parser handles invalid app bundle structure")
         func parserInvalidBundleStructure() async throws {
             // Create a ZIP without proper app bundle structure
@@ -207,26 +224,36 @@ private func createTempFile(withExtension ext: String, content: Data) -> URL {
 }
 
 private func createTempZipArchive(withFiles files: [String: Data], extension ext: String) -> URL {
+    createTempZipArchive(withFiles: files, extension: ext, includeDirectories: true)
+}
+
+private func createTempZipArchive(
+    withFiles files: [String: Data],
+    extension ext: String,
+    includeDirectories: Bool
+) -> URL {
     let tempURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)
         .appendingPathExtension(ext)
 
     let archive = try! Archive(url: tempURL, accessMode: .create)
 
-    // Create directory structure first
-    var directories = Set<String>()
-    for path in files.keys {
-        let components = path.split(separator: "/")
-        for i in 1 ..< components.count {
-            let dirPath = components.prefix(i).joined(separator: "/") + "/"
-            directories.insert(dirPath)
+    if includeDirectories {
+        // Create directory structure first
+        var directories = Set<String>()
+        for path in files.keys {
+            let components = path.split(separator: "/")
+            for i in 1 ..< components.count {
+                let dirPath = components.prefix(i).joined(separator: "/") + "/"
+                directories.insert(dirPath)
+            }
         }
-    }
 
-    // Add directories
-    for dir in directories.sorted() {
-        try! archive.addEntry(with: dir, type: .directory, uncompressedSize: Int64(0)) { (_: Int64, _: Int) in
-            Data()
+        // Add directories
+        for dir in directories.sorted() {
+            try! archive.addEntry(with: dir, type: .directory, uncompressedSize: Int64(0)) { (_: Int64, _: Int) in
+                Data()
+            }
         }
     }
 

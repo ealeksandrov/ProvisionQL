@@ -78,6 +78,11 @@ enum ArchiveUtilities {
                     return entry.path
                 }
             }
+
+            // Some IPA creators omit directory entries and only include files under Payload/*.app/.
+            if let appBundlePath = findAppBundlePathFlexible(in: archive) {
+                return appBundlePath + "/"
+            }
         case .xcarchive:
             // Look for Products/Applications/*.app/
             for entry in archive {
