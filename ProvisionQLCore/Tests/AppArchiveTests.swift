@@ -93,7 +93,7 @@ struct AppArchiveTests {
     @Suite("AppArchiveParser Mock Tests", .tags(.archiveParser))
     struct AppArchiveParserMockTests {
         @Test("Parser error handling for invalid files")
-        func parserErrorHandling() async {
+        func parserErrorHandling() {
             let tempURL = createTempFile(withExtension: "ipa", content: Data([0x00, 0x01, 0x02]))
             defer { try? FileManager.default.removeItem(at: tempURL) }
 
@@ -103,7 +103,7 @@ struct AppArchiveTests {
         }
 
         @Test("Parser handles missing Info.plist")
-        func parserMissingInfoPlist() async throws {
+        func parserMissingInfoPlist() throws {
             // Create a mock ZIP archive without Info.plist
             let tempURL = createTempZipArchive(withFiles: [
                 "Payload/TestApp.app/SomeFile.txt": Data("test".utf8)
@@ -116,7 +116,7 @@ struct AppArchiveTests {
         }
 
         @Test("Parser handles IPA archives without directory entries")
-        func parserHandlesIPAsWithoutDirectoryEntries() async throws {
+        func parserHandlesIPAsWithoutDirectoryEntries() throws {
             let tempURL = createTempZipArchive(
                 withFiles: [
                     "Payload/TestApp.app/Info.plist": createMockInfoPlistData()
@@ -133,7 +133,7 @@ struct AppArchiveTests {
         }
 
         @Test("Parser handles invalid app bundle structure")
-        func parserInvalidBundleStructure() async throws {
+        func parserInvalidBundleStructure() throws {
             // Create a ZIP without proper app bundle structure
             let tempURL = createTempZipArchive(withFiles: [
                 "RandomFile.txt": Data("test".utf8)
@@ -146,7 +146,7 @@ struct AppArchiveTests {
         }
 
         @Test("Device family and SDK info extraction")
-        func deviceFamilyAndSDKExtraction() async throws {
+        func deviceFamilyAndSDKExtraction() throws {
             // Test IPA file with device family info
             let ipaInfoPlist = createMockInfoPlistData()
             let ipaFiles = ["Payload/TestApp.app/Info.plist": ipaInfoPlist]

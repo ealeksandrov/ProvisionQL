@@ -38,7 +38,7 @@ struct CoreTests {
         }
 
         @Test("BadgeInfo creation from ProvisioningInfo")
-        func badgeInfoFromProvisioningInfo() throws {
+        func badgeInfoFromProvisioningInfo() {
             let mockProfile = RawProfile(
                 UUID: "12345678-1234-1234-1234-123456789ABC",
                 Name: "Test Profile",
@@ -63,7 +63,7 @@ struct CoreTests {
         }
 
         @Test("BadgeInfo with zero devices")
-        func badgeInfoZeroDevices() throws {
+        func badgeInfoZeroDevices() {
             let mockProfile = RawProfile(
                 UUID: "87654321-4321-4321-4321-ABCDEF123456",
                 Name: "App Store Profile",
@@ -90,7 +90,7 @@ struct CoreTests {
     @Suite("ProvisioningInfo Tests", .tags(.provisioningInfo, .models))
     struct ProvisioningInfoTests {
         @Test("ProvisioningInfo initialization from RawProfile")
-        func provisioningInfoInitialization() throws {
+        func provisioningInfoInitialization() {
             let expirationDate = Date().addingTimeInterval(86400 * 45) // 45 days from now
             let creationDate = Date().addingTimeInterval(-86400 * 30) // 30 days ago
 

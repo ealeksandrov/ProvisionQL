@@ -1,5 +1,5 @@
 [tools]
-swiftformat = "0.57.2"
+swiftformat = "0.61.1"
 
 [tasks.lint]
 description = "Run SwiftFormat in lint mode"
