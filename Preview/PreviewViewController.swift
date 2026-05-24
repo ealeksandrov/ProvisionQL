@@ -44,14 +44,21 @@ class PreviewViewController: NSViewController, QLPreviewingController {
                 hostingController?.rootView = AnyView(previewView)
             } else {
                 // Handle provisioning profile files
-                let info = try ProvisioningParser.parse(url)
-                let previewView = ProvisioningPreviewView(info: info, fileURL: url)
-                hostingController?.rootView = AnyView(previewView)
+                showProvisioningProfilePreview(for: url)
             }
         } else {
             // Fallback to provisioning profile parsing
+            showProvisioningProfilePreview(for: url)
+        }
+    }
+
+    private func showProvisioningProfilePreview(for url: URL) {
+        do {
             let info = try ProvisioningParser.parse(url)
             let previewView = ProvisioningPreviewView(info: info, fileURL: url)
+            hostingController?.rootView = AnyView(previewView)
+        } catch {
+            let previewView = FailedProvisioningProfileView(error: error, fileURL: url)
             hostingController?.rootView = AnyView(previewView)
         }
     }

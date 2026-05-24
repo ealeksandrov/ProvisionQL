@@ -24,9 +24,9 @@ struct AppArchiveTests {
     @Suite("AppInfo Tests", .tags(.appInfo, .models))
     struct AppInfoTests {
         @Test("AppInfo initialization with all parameters")
-        func appInfoInitialization() {
+        func appInfoInitialization() throws {
             let mockIcon = NSImage(size: NSSize(width: 64, height: 64))
-            let mockProfile = createMockProvisioningInfo()
+            let mockProfile = try createMockProvisioningInfo()
 
             let appInfo = AppInfo(
                 name: "Test App",
@@ -49,6 +49,7 @@ struct AppArchiveTests {
             #expect(appInfo.deviceFamily == ["iPhone", "iPad"])
             #expect(appInfo.minimumOSVersion == "15.0")
             #expect(appInfo.sdkVersion == "18.0")
+            #expect(appInfo.diagnostics.isEmpty)
         }
 
         @Test("AppInfo display version formatting", arguments: [
@@ -69,8 +70,8 @@ struct AppArchiveTests {
         }
 
         @Test("AppInfo embedded profile detection")
-        func embeddedProfileDetection() {
-            let withProfile = AppInfo(
+        func embeddedProfileDetection() throws {
+            let withProfile = try AppInfo(
                 name: "Test",
                 bundleIdentifier: "com.test",
                 version: "1.0",
@@ -130,6 +131,29 @@ struct AppArchiveTests {
 
             #expect(appInfo.name == "Test App Display")
             #expect(appInfo.bundleIdentifier == "com.test.app")
+            #expect(appInfo.diagnostics.isEmpty)
+        }
+
+        @Test("Parser reports malformed embedded provisioning profile")
+        func parserReportsMalformedEmbeddedProvisioningProfile() throws {
+            let tempURL = createTempZipArchive(
+                withFiles: [
+                    "Payload/TestApp.app/Info.plist": createMockInfoPlistData(),
+                    "Payload/TestApp.app/embedded.mobileprovision": Data("not cms".utf8)
+                ],
+                extension: "ipa"
+            )
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+
+            let appInfo = try AppArchiveParser.parse(tempURL)
+            let diagnostic = try #require(appInfo.diagnostics.first)
+
+            #expect(appInfo.embeddedProvisioningProfile == nil)
+            #expect(appInfo.diagnostics.count == 1)
+            #expect(diagnostic.severity == .warning)
+            #expect(diagnostic.code == .malformedEmbeddedProvisioningProfile)
+            #expect(diagnostic.message.contains("Embedded provisioning profile could not be parsed"))
+            #expect(diagnostic.message.contains("Failed to decode CMS data"))
         }
 
         @Test("Parser handles invalid app bundle structure")
@@ -172,7 +196,7 @@ struct AppArchiveTests {
 
 // MARK: - Test Helpers
 
-private func createMockProvisioningInfo() -> ProvisioningInfo {
+private func createMockProvisioningInfo() throws -> ProvisioningInfo {
     let mockProfile = RawProfile(
         UUID: "12345678-1234-1234-1234-123456789ABC",
         Name: "Test Profile",
@@ -188,7 +212,7 @@ private func createMockProvisioningInfo() -> ProvisioningInfo {
         Platform: ["iOS"]
     )
 
-    return ProvisioningInfo(from: mockProfile)
+    return try ProvisioningInfo(from: mockProfile)
 }
 
 private func createMockInfoPlistData() -> Data {

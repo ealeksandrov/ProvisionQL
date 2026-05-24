@@ -21,6 +21,7 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
     public let entitlements: [String: PlistValue]
     public let profileType: ProfileType
     public let platform: [Platform]
+    public let diagnostics: [ProvisioningDiagnostic]
 
     @frozen
     public enum ProfileType: String, Codable, Sendable {
@@ -90,15 +91,33 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
 }
 
 extension ProvisioningInfo {
-    init(from profile: RawProfile) {
-        uuid = profile.UUID ?? "Unknown UUID"
-        name = profile.Name ?? "Unknown"
-        teamName = profile.TeamName ?? "Unknown Team"
-        teamID = profile.TeamIdentifier?.first ?? "Unknown"
-        appID = profile.AppIDName ?? "Unknown App"
-        expirationDate = profile.ExpirationDate ?? Date.distantFuture
-        creationDate = profile.CreationDate ?? Date.distantPast
+    init(from profile: RawProfile) throws {
+        let missingFields = Self.missingRequiredFields(in: profile)
+        guard
+            missingFields.isEmpty,
+            let uuid = Self.nonEmpty(profile.UUID),
+            let name = Self.nonEmpty(profile.Name),
+            let teamName = Self.nonEmpty(profile.TeamName),
+            let teamID = Self.firstNonEmpty(profile.TeamIdentifier),
+            let appID = Self.nonEmpty(profile.AppIDName),
+            let entitlements = profile.Entitlements,
+            let expirationDate = profile.ExpirationDate,
+            let creationDate = profile.CreationDate
+        else {
+            throw ProvisioningProfileValidationError(missingFields: missingFields)
+        }
+
+        self.uuid = uuid
+        self.name = name
+        self.teamName = teamName
+        self.teamID = teamID
+        self.appID = appID
+        self.expirationDate = expirationDate
+        self.creationDate = creationDate
         devices = profile.ProvisionedDevices
+        self.entitlements = entitlements
+
+        var diagnostics: [ProvisioningDiagnostic] = []
 
         // Process certificates
         var certificateInfos: [CertificateInfo] = []
@@ -106,17 +125,21 @@ extension ProvisioningInfo {
             for data in certData {
                 if let certInfo = CertificateInfo.from(data: data) {
                     certificateInfos.append(certInfo)
+                } else {
+                    diagnostics.append(.init(
+                        severity: .warning,
+                        code: .invalidDeveloperCertificate,
+                        message: "A developer certificate could not be decoded and was skipped."
+                    ))
                 }
             }
         }
         certificates = certificateInfos
 
-        entitlements = profile.Entitlements ?? [:]
-
         // Determine profile type
         let hasDevices = profile.ProvisionedDevices != nil
         let getTaskAllow: Bool = {
-            if case .bool(let value) = profile.Entitlements?["get-task-allow"] {
+            if case .bool(let value) = entitlements["get-task-allow"] {
                 return value
             }
             return false
@@ -141,6 +164,63 @@ extension ProvisioningInfo {
         let platforms = profile.Platform?.compactMap { platformString in
             Platform(rawValue: platformString)
         } ?? []
-        platform = platforms.isEmpty ? [.iOS] : platforms
+        if platforms.isEmpty {
+            diagnostics.append(.init(
+                severity: .warning,
+                code: .missingPlatform,
+                message: "Platform is missing; defaulting to iOS."
+            ))
+            platform = [.iOS]
+        } else {
+            platform = platforms
+        }
+
+        self.diagnostics = diagnostics
+    }
+
+    private static func missingRequiredFields(in profile: RawProfile) -> [String] {
+        var fields: [String] = []
+
+        if nonEmpty(profile.UUID) == nil {
+            fields.append("UUID")
+        }
+        if nonEmpty(profile.Name) == nil {
+            fields.append("Name")
+        }
+        if nonEmpty(profile.TeamName) == nil {
+            fields.append("TeamName")
+        }
+        if firstNonEmpty(profile.TeamIdentifier) == nil {
+            fields.append("TeamIdentifier")
+        }
+        if nonEmpty(profile.AppIDName) == nil {
+            fields.append("AppIDName")
+        }
+        if profile.Entitlements == nil {
+            fields.append("Entitlements")
+        }
+        if profile.ExpirationDate == nil {
+            fields.append("ExpirationDate")
+        }
+        if profile.CreationDate == nil {
+            fields.append("CreationDate")
+        }
+
+        return fields
+    }
+
+    private static func nonEmpty(_ value: String?) -> String? {
+        guard
+            let value,
+            !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            return nil
+        }
+
+        return value
+    }
+
+    private static func firstNonEmpty(_ values: [String]?) -> String? {
+        values?.compactMap(nonEmpty).first
     }
 }

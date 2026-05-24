@@ -17,12 +17,12 @@ enum ProvisioningProfileExtractor {
     /// - Parameters:
     ///   - archive: The ZIP archive
     ///   - appBundlePath: The path to the app bundle within the archive
-    /// - Returns: The provisioning info if found and successfully parsed
-    static func extractFromArchive(_ archive: Archive, appBundlePath: String) -> ProvisioningInfo? {
+    /// - Returns: The extraction result
+    static func extractFromArchive(_ archive: Archive, appBundlePath: String) -> EmbeddedProvisioningProfileExtraction {
         let profilePath = appBundlePath + embeddedProvisioningProfileName
 
         guard let profileData = try? ArchiveUtilities.extractFile(from: archive, path: profilePath) else {
-            return nil
+            return .missing
         }
 
         // Create a temporary file to parse the provisioning profile
@@ -30,12 +30,12 @@ enum ProvisioningProfileExtractor {
 
         do {
             try profileData.write(to: tempURL)
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+
             let provisioningInfo = try ProvisioningParser.parse(tempURL)
-            try FileManager.default.removeItem(at: tempURL)
-            return provisioningInfo
+            return .success(provisioningInfo)
         } catch {
-            try? FileManager.default.removeItem(at: tempURL)
-            return nil
+            return .failure(error)
         }
     }
 
@@ -43,15 +43,20 @@ enum ProvisioningProfileExtractor {
 
     /// Extracts an embedded provisioning profile from a directory
     /// - Parameter directoryURL: The URL to the app bundle directory
-    /// - Returns: The provisioning info if found and successfully parsed
-    static func extractFromDirectory(_ directoryURL: URL) -> ProvisioningInfo? {
+    /// - Returns: The extraction result
+    static func extractFromDirectory(_ directoryURL: URL) -> EmbeddedProvisioningProfileExtraction {
         let profileURL = directoryURL.appendingPathComponent(embeddedProvisioningProfileName)
 
         guard FileManager.default.fileExists(atPath: profileURL.path) else {
-            return nil
+            return .missing
         }
 
-        return try? ProvisioningParser.parse(profileURL)
+        do {
+            let provisioningInfo = try ProvisioningParser.parse(profileURL)
+            return .success(provisioningInfo)
+        } catch {
+            return .failure(error)
+        }
     }
 
     // MARK: - Helper Methods
@@ -61,5 +66,29 @@ enum ProvisioningProfileExtractor {
         URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension("mobileprovision")
+    }
+}
+
+struct EmbeddedProvisioningProfileExtraction {
+    let profile: ProvisioningInfo?
+    let diagnostics: [AppDiagnostic]
+
+    static let missing = Self(profile: nil, diagnostics: [])
+
+    static func success(_ profile: ProvisioningInfo) -> Self {
+        Self(profile: profile, diagnostics: [])
+    }
+
+    static func failure(_ error: Error) -> Self {
+        Self(
+            profile: nil,
+            diagnostics: [
+                AppDiagnostic(
+                    severity: .warning,
+                    code: .malformedEmbeddedProvisioningProfile,
+                    message: "Embedded provisioning profile could not be parsed: \(error.localizedDescription)"
+                )
+            ]
+        )
     }
 }

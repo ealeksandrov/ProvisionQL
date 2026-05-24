@@ -39,7 +39,7 @@ struct CoreTests {
         }
 
         @Test("BadgeInfo creation from ProvisioningInfo")
-        func badgeInfoFromProvisioningInfo() {
+        func badgeInfoFromProvisioningInfo() throws {
             let mockProfile = RawProfile(
                 UUID: "12345678-1234-1234-1234-123456789ABC",
                 Name: "Test Profile",
@@ -55,7 +55,7 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             let badgeInfo = BadgeInfo(from: provisioningInfo)
 
             #expect(badgeInfo.deviceCount == 3)
@@ -64,7 +64,7 @@ struct CoreTests {
         }
 
         @Test("BadgeInfo with zero devices")
-        func badgeInfoZeroDevices() {
+        func badgeInfoZeroDevices() throws {
             let mockProfile = RawProfile(
                 UUID: "87654321-4321-4321-4321-ABCDEF123456",
                 Name: "App Store Profile",
@@ -80,7 +80,7 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             let badgeInfo = BadgeInfo(from: provisioningInfo)
 
             #expect(badgeInfo.deviceCount == 0)
@@ -115,7 +115,7 @@ struct CoreTests {
     @Suite("ProvisioningInfo Tests", .tags(.provisioningInfo, .models))
     struct ProvisioningInfoTests {
         @Test("ProvisioningInfo initialization from RawProfile")
-        func provisioningInfoInitialization() {
+        func provisioningInfoInitialization() throws {
             let expirationDate = Date().addingTimeInterval(86400 * 45) // 45 days from now
             let creationDate = Date().addingTimeInterval(-86400 * 30) // 30 days ago
 
@@ -137,7 +137,7 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
 
             #expect(provisioningInfo.name == "Test Development Profile")
             #expect(provisioningInfo.teamName == "Test Team LLC")
@@ -176,7 +176,7 @@ struct CoreTests {
             getTaskAllow: Bool,
             isEnterprise: Bool,
             expected: ProvisioningInfo.ProfileType
-        ) {
+        ) throws {
             let mockProfile = RawProfile(
                 UUID: "FEDCBA09-8765-4321-FEDC-BA0987654321",
                 Name: "Test Profile",
@@ -192,7 +192,7 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             #expect(provisioningInfo.profileType == expected)
         }
 
@@ -210,7 +210,7 @@ struct CoreTests {
             (platformStrings: ["unknown"], expected: [ProvisioningInfo.Platform.unknown("unknown")]),
             (platformStrings: nil, expected: [ProvisioningInfo.Platform.iOS])
         ])
-        func platformDetection(platformStrings: [String]?, expected: [ProvisioningInfo.Platform]) {
+        func platformDetection(platformStrings: [String]?, expected: [ProvisioningInfo.Platform]) throws {
             let mockProfile = RawProfile(
                 UUID: "11111111-2222-3333-4444-555555555555",
                 Name: "Test Profile",
@@ -226,7 +226,7 @@ struct CoreTests {
                 Platform: platformStrings
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             #expect(provisioningInfo.platform == expected)
         }
 
@@ -249,7 +249,7 @@ struct CoreTests {
             (daysFromNow: 15, expected: ExpirationStatus.expiring), // 15 days from now
             (daysFromNow: 60, expected: ExpirationStatus.valid) // 60 days from now
         ])
-        func expirationStatusCalculation(daysFromNow: Int, expected: ExpirationStatus) {
+        func expirationStatusCalculation(daysFromNow: Int, expected: ExpirationStatus) throws {
             let expirationDate = Date().addingTimeInterval(TimeInterval(daysFromNow * 86400))
 
             let mockProfile = RawProfile(
@@ -267,7 +267,7 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             #expect(provisioningInfo.expirationStatus == expected)
         }
 
@@ -278,7 +278,7 @@ struct CoreTests {
         func expirationStatusUsesFixedDurationThreshold(
             secondsFromNow: TimeInterval,
             expected: ExpirationStatus
-        ) {
+        ) throws {
             let mockProfile = RawProfile(
                 UUID: "99999999-8888-7777-6666-555555555555",
                 Name: "Test Profile",
@@ -294,12 +294,12 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             #expect(provisioningInfo.expirationStatus == expected)
         }
 
-        @Test("Default values for missing fields")
-        func defaultValues() {
+        @Test("Missing required fields throws validation error")
+        func missingRequiredFieldsThrowsValidationError() {
             let mockProfile = RawProfile(
                 UUID: nil,
                 Name: nil,
@@ -315,18 +315,81 @@ struct CoreTests {
                 Platform: nil
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            do {
+                _ = try ProvisioningInfo(from: mockProfile)
+                Issue.record("Expected malformed provisioning profile to throw")
+            } catch let error as ProvisioningProfileValidationError {
+                #expect(error.missingFields == [
+                    "UUID",
+                    "Name",
+                    "TeamName",
+                    "TeamIdentifier",
+                    "AppIDName",
+                    "Entitlements",
+                    "ExpirationDate",
+                    "CreationDate"
+                ])
+            } catch {
+                Issue.record("Unexpected error: \(error)")
+            }
+        }
 
-            #expect(provisioningInfo.name == "Unknown")
-            #expect(provisioningInfo.teamName == "Unknown Team")
-            #expect(provisioningInfo.teamID == "Unknown")
-            #expect(provisioningInfo.appID == "Unknown App")
-            #expect(provisioningInfo.expirationDate == Date.distantFuture)
-            #expect(provisioningInfo.creationDate == Date.distantPast)
-            #expect(provisioningInfo.devices == nil)
-            #expect(provisioningInfo.certificates.isEmpty)
-            #expect(provisioningInfo.entitlements.isEmpty)
+        @Test("Missing platform is reported as a diagnostic")
+        func missingPlatformIsReportedAsDiagnostic() throws {
+            let mockProfile = RawProfile(
+                UUID: "11111111-2222-3333-4444-555555555555",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(86400),
+                CreationDate: Date(),
+                DeveloperCertificates: nil,
+                ProvisionedDevices: ["device1"],
+                ProvisionsAllDevices: false,
+                Platform: nil
+            )
+
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
+
             #expect(provisioningInfo.platform == [.iOS])
+            #expect(provisioningInfo.diagnostics == [
+                ProvisioningDiagnostic(
+                    severity: .warning,
+                    code: .missingPlatform,
+                    message: "Platform is missing; defaulting to iOS."
+                )
+            ])
+        }
+
+        @Test("Invalid developer certificate is reported as a diagnostic")
+        func invalidDeveloperCertificateIsReportedAsDiagnostic() throws {
+            let mockProfile = RawProfile(
+                UUID: "11111111-2222-3333-4444-555555555555",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(86400),
+                CreationDate: Date(),
+                DeveloperCertificates: [Data([0x00, 0x01, 0x02])],
+                ProvisionedDevices: ["device1"],
+                ProvisionsAllDevices: false,
+                Platform: ["iOS"]
+            )
+
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
+
+            #expect(provisioningInfo.certificates.isEmpty)
+            #expect(provisioningInfo.diagnostics == [
+                ProvisioningDiagnostic(
+                    severity: .warning,
+                    code: .invalidDeveloperCertificate,
+                    message: "A developer certificate could not be decoded and was skipped."
+                )
+            ])
         }
     }
 

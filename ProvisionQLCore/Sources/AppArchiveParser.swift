@@ -54,11 +54,12 @@ private extension AppArchiveParser {
             version: appInfo.version,
             buildNumber: appInfo.buildNumber,
             icon: icon,
-            embeddedProvisioningProfile: embeddedProfile,
+            embeddedProvisioningProfile: embeddedProfile.profile,
             entitlements: entitlements,
             deviceFamily: appInfo.deviceFamily,
             minimumOSVersion: appInfo.minimumOSVersion,
-            sdkVersion: appInfo.sdkVersion
+            sdkVersion: appInfo.sdkVersion,
+            diagnostics: embeddedProfile.diagnostics
         )
     }
 
@@ -97,11 +98,12 @@ private extension AppArchiveParser {
             version: appInfo.version,
             buildNumber: appInfo.buildNumber,
             icon: icon,
-            embeddedProvisioningProfile: embeddedProfile,
+            embeddedProvisioningProfile: embeddedProfile.profile,
             entitlements: entitlements,
             deviceFamily: appInfo.deviceFamily,
             minimumOSVersion: appInfo.minimumOSVersion,
-            sdkVersion: appInfo.sdkVersion
+            sdkVersion: appInfo.sdkVersion,
+            diagnostics: embeddedProfile.diagnostics
         )
     }
 
@@ -149,12 +151,13 @@ private extension AppArchiveParser {
             version: appInfo.version,
             buildNumber: appInfo.buildNumber,
             icon: icon,
-            embeddedProvisioningProfile: embeddedProfile,
+            embeddedProvisioningProfile: embeddedProfile.profile,
             entitlements: entitlements,
             deviceFamily: appInfo.deviceFamily,
             minimumOSVersion: appInfo.minimumOSVersion,
             sdkVersion: appInfo.sdkVersion,
-            extensionPointIdentifier: extensionPointIdentifier
+            extensionPointIdentifier: extensionPointIdentifier,
+            diagnostics: embeddedProfile.diagnostics
         )
     }
 
