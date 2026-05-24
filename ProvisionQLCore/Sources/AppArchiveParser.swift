@@ -205,7 +205,7 @@ private extension AppArchiveParser {
         }
     }
 
-    static func extractAppEntitlements(from archive: Archive, appBundlePath: String) -> [String: EntitlementValue] {
+    static func extractAppEntitlements(from archive: Archive, appBundlePath: String) -> [String: PlistValue] {
         // First, try to find the executable name from Info.plist
         let infoPlistPath = appBundlePath + "Info.plist"
         guard let infoPlistData = try? ArchiveUtilities.extractFile(from: archive, path: infoPlistPath),

@@ -303,55 +303,94 @@ struct CoreTests {
         }
     }
 
-    @Suite("EntitlementValue Tests", .tags(.models))
-    struct EntitlementValueTests {
-        @Test("EntitlementValue creation from different types")
-        func entitlementValueCreation() {
-            // Test direct creation
-            let stringValue = EntitlementValue.string("test")
-            let boolValue = EntitlementValue.bool(true)
-            let arrayValue = EntitlementValue.array(["one", "two"])
-            let dictValue = EntitlementValue.dictionary(["key": "value"])
+    @Suite("PlistValue Tests", .tags(.models))
+    struct PlistValueTests {
+        @Test("PlistValue creation from different types")
+        func plistValueCreation() {
+            let stringValue = PlistValue.string("test")
+            let boolValue = PlistValue.bool(true)
+            let integerValue = PlistValue.integer(42)
+            let doubleValue = PlistValue.double(3.14)
+            let arrayValue = PlistValue.array([.string("one"), .integer(2)])
+            let dictValue = PlistValue.dictionary(["key": .string("value")])
 
             #expect(stringValue == .string("test"))
             #expect(boolValue == .bool(true))
-            #expect(arrayValue == .array(["one", "two"]))
-            #expect(dictValue == .dictionary(["key": "value"]))
+            #expect(integerValue == .integer(42))
+            #expect(doubleValue == .double(3.14))
+            #expect(arrayValue == .array([.string("one"), .integer(2)]))
+            #expect(dictValue == .dictionary(["key": .string("value")]))
         }
 
-        @Test("EntitlementValue from Any conversion")
-        func entitlementValueFromAny() {
-            let testCases: [(Any, EntitlementValue?)] = [
+        @Test("PlistValue from Any conversion")
+        func plistValueFromAny() {
+            let testCases: [(Any, PlistValue?)] = [
                 ("test string", .string("test string")),
                 (true, .bool(true)),
-                (42, .string("42")),
-                (3.14, .string("3.14")),
-                (["one", "two"], .array(["one", "two"])),
-                (["key": "value"], .dictionary(["key": "value"])),
-                ([1, 2, 3], .array(["1", "2", "3"])),
-                (["key": 42], .dictionary(["key": "42"]))
+                (42, .integer(42)),
+                (3.14, .double(3.14)),
+                (["one", "two"], .array([.string("one"), .string("two")])),
+                (["key": "value"], .dictionary(["key": .string("value")])),
+                ([1, 2, 3], .array([.integer(1), .integer(2), .integer(3)])),
+                (["key": 42], .dictionary(["key": .integer(42)])),
+                (
+                    ["parent": ["enabled": true, "items": [1, "two"]] as [String: Any]],
+                    .dictionary([
+                        "parent": .dictionary([
+                            "enabled": .bool(true),
+                            "items": .array([.integer(1), .string("two")])
+                        ])
+                    ])
+                )
             ]
 
             for (value, expected) in testCases {
-                let result = EntitlementValue.from(value: value)
+                let result = PlistValue.from(value: value)
                 #expect(result == expected)
             }
         }
 
-        @Test("EntitlementValue Codable conformance")
-        func entitlementValueCodable() throws {
-            let testCases: [EntitlementValue] = [
+        @Test("PlistValue property list Codable conformance")
+        func plistValueCodable() throws {
+            let testCases: [PlistValue] = [
                 .string("test"),
                 .bool(true),
-                .array(["one", "two"]),
-                .dictionary(["key": "value"])
+                .integer(42),
+                .double(3.14),
+                .data(Data([0x01, 0x02, 0x03])),
+                .date(Date(timeIntervalSinceReferenceDate: 123)),
+                .array([.string("one"), .integer(2)]),
+                .dictionary(["key": .array([.bool(true), .string("value")])])
             ]
 
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
+
             for original in testCases {
-                let data = try JSONEncoder().encode(original)
-                let decoded = try JSONDecoder().decode(EntitlementValue.self, from: data)
-                #expect(decoded == original)
+                let data = try encoder.encode(["value": original])
+                let decoded = try PropertyListDecoder().decode([String: PlistValue].self, from: data)
+                #expect(decoded["value"] == original)
             }
+        }
+
+        @Test("PlistValue preserves recursive property list values")
+        func plistValuePropertyListCodable() throws {
+            let original = PlistValue.dictionary([
+                "application-identifier": .string("ABCDE12345.com.example.app"),
+                "config": .dictionary([
+                    "enabled": .bool(true),
+                    "numbers": .array([.integer(1), .double(2.5)]),
+                    "payload": .data(Data([0x01, 0x02, 0x03])),
+                    "timestamp": .date(Date(timeIntervalSinceReferenceDate: 123))
+                ])
+            ])
+
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
+            let data = try encoder.encode(original)
+            let decoded = try PropertyListDecoder().decode(PlistValue.self, from: data)
+
+            #expect(decoded == original)
         }
     }
 
@@ -365,7 +404,14 @@ struct CoreTests {
                 TeamName: "Team",
                 TeamIdentifier: ["ID"],
                 AppIDName: "App",
-                Entitlements: ["bool": .bool(true), "string": .string("value")],
+                Entitlements: [
+                    "bool": .bool(true),
+                    "nested": .dictionary([
+                        "number": .integer(42),
+                        "strings": .array([.string("one"), .string("two")])
+                    ]),
+                    "string": .string("value")
+                ],
                 ExpirationDate: Date(),
                 CreationDate: Date(),
                 DeveloperCertificates: [Data([0x01, 0x02, 0x03])],
@@ -374,13 +420,11 @@ struct CoreTests {
                 Platform: ["iOS", "macOS"]
             )
 
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
             let data = try encoder.encode(originalProfile)
 
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            let decodedProfile = try decoder.decode(RawProfile.self, from: data)
+            let decodedProfile = try PropertyListDecoder().decode(RawProfile.self, from: data)
 
             #expect(decodedProfile.UUID == originalProfile.UUID)
             #expect(decodedProfile.Name == originalProfile.Name)

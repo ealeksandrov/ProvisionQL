@@ -8,14 +8,14 @@ import Foundation
 import Security
 
 public enum EntitlementsExtractor {
-    public static func extractEntitlements(from appBundleURL: URL) -> [String: EntitlementValue] {
+    public static func extractEntitlements(from appBundleURL: URL) -> [String: PlistValue] {
         extractEntitlementsUsingSecCode(from: appBundleURL) ?? [:]
     }
 
     static func extractEntitlementsFromArchive(
         executableData: Data,
         temporaryDirectory: URL
-    ) -> [String: EntitlementValue] {
+    ) -> [String: PlistValue] {
         // Write executable to temporary file
         let tempExecutableURL = temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
@@ -37,7 +37,7 @@ public enum EntitlementsExtractor {
 }
 
 private extension EntitlementsExtractor {
-    static func extractEntitlementsUsingSecCode(from codeURL: URL) -> [String: EntitlementValue]? {
+    static func extractEntitlementsUsingSecCode(from codeURL: URL) -> [String: PlistValue]? {
         var staticCode: SecStaticCode?
         var status = SecStaticCodeCreateWithPath(codeURL as CFURL, [], &staticCode)
 
@@ -59,33 +59,8 @@ private extension EntitlementsExtractor {
             return nil
         }
 
-        var entitlements: [String: EntitlementValue] = [:]
-
-        for (key, value) in entitlementsData {
-            if let stringValue = value as? String {
-                entitlements[key] = .string(stringValue)
-            } else if let boolValue = value as? Bool {
-                entitlements[key] = .bool(boolValue)
-            } else if let arrayValue = value as? [String] {
-                entitlements[key] = .array(arrayValue)
-            } else if let arrayValue = value as? [Any] {
-                // Convert array of any to array of strings
-                let stringArray = arrayValue.compactMap { "\($0)" }
-                if !stringArray.isEmpty {
-                    entitlements[key] = .array(stringArray)
-                }
-            } else if let dictValue = value as? [String: String] {
-                entitlements[key] = .dictionary(dictValue)
-            } else if let dictValue = value as? [String: Any] {
-                // Convert dict values to strings
-                var stringDict: [String: String] = [:]
-                for (k, v) in dictValue {
-                    stringDict[k] = "\(v)"
-                }
-                if !stringDict.isEmpty {
-                    entitlements[key] = .dictionary(stringDict)
-                }
-            }
+        guard case .dictionary(let entitlements) = PlistValue.from(value: entitlementsData) else {
+            return nil
         }
 
         return entitlements

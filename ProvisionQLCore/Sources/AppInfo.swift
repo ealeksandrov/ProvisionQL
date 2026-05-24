@@ -14,7 +14,7 @@ public struct AppInfo {
     public let buildNumber: String
     public let icon: NSImage?
     public let embeddedProvisioningProfile: ProvisioningInfo?
-    public let entitlements: [String: EntitlementValue]
+    public let entitlements: [String: PlistValue]
     public let deviceFamily: [String]
     public let minimumOSVersion: String?
     public let sdkVersion: String?
@@ -27,7 +27,7 @@ public struct AppInfo {
         buildNumber: String,
         icon: NSImage? = nil,
         embeddedProvisioningProfile: ProvisioningInfo? = nil,
-        entitlements: [String: EntitlementValue] = [:],
+        entitlements: [String: PlistValue] = [:],
         deviceFamily: [String] = [],
         minimumOSVersion: String? = nil,
         sdkVersion: String? = nil,

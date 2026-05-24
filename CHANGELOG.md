@@ -3,6 +3,7 @@
 ## Version 2.0.0
 
 * WIP: macOS 15 compatibility
+* Improves entitlements preview for nested property list values
 
 ## Version 1.6.4
 

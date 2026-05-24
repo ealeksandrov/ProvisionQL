@@ -16,7 +16,7 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
     public let creationDate: Date
     public let devices: [String]?
     public let certificates: [CertificateInfo]
-    public let entitlements: [String: EntitlementValue]
+    public let entitlements: [String: PlistValue]
     public let profileType: ProfileType
     public let platform: [Platform]
 
@@ -109,7 +109,6 @@ extension ProvisioningInfo {
         }
         certificates = certificateInfos
 
-        // Process entitlements - now directly using EntitlementValue
         entitlements = profile.Entitlements ?? [:]
 
         // Determine profile type
