@@ -271,6 +271,33 @@ struct CoreTests {
             #expect(provisioningInfo.expirationStatus == expected)
         }
 
+        @Test("Expiration status uses fixed duration threshold", arguments: [
+            (secondsFromNow: TimeInterval(30 * 86400 - 60), expected: ExpirationStatus.expiring),
+            (secondsFromNow: TimeInterval(30 * 86400 + 60), expected: ExpirationStatus.valid)
+        ])
+        func expirationStatusUsesFixedDurationThreshold(
+            secondsFromNow: TimeInterval,
+            expected: ExpirationStatus
+        ) {
+            let mockProfile = RawProfile(
+                UUID: "99999999-8888-7777-6666-555555555555",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(secondsFromNow),
+                CreationDate: Date(),
+                DeveloperCertificates: nil,
+                ProvisionedDevices: ["device1"],
+                ProvisionsAllDevices: false,
+                Platform: ["iOS"]
+            )
+
+            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            #expect(provisioningInfo.expirationStatus == expected)
+        }
+
         @Test("Default values for missing fields")
         func defaultValues() {
             let mockProfile = RawProfile(

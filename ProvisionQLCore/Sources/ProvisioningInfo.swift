@@ -7,6 +7,8 @@
 import Foundation
 
 public struct ProvisioningInfo: Sendable, Codable, Hashable {
+    private static let expiringThreshold: TimeInterval = 30 * 86400
+
     public let uuid: String
     public let name: String
     public let teamName: String
@@ -78,8 +80,8 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
             return .expired
         }
 
-        let daysUntilExpiration = Calendar.current.dateComponents([.day], from: now, to: expirationDate).day ?? 0
-        if daysUntilExpiration < 30 {
+        let secondsUntilExpiration = expirationDate.timeIntervalSince(now)
+        if secondsUntilExpiration < Self.expiringThreshold {
             return .expiring
         }
 
