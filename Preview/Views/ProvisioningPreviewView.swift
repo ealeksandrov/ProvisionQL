@@ -144,7 +144,7 @@ struct DiagnosticsSection: View {
     }
 }
 
-struct FailedProvisioningProfileView: View {
+struct FailedDocumentView: View {
     let error: Error
     let fileURL: URL?
 
