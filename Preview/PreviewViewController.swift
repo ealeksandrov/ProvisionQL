@@ -26,7 +26,13 @@ class PreviewViewController: NSViewController, QLPreviewingController {
     }
 
     func preparePreviewOfFile(at url: URL) async throws {
-        let fileType = try url.resourceValues(forKeys: [.contentTypeKey]).contentType
+        let fileType: UTType?
+        do {
+            fileType = try url.resourceValues(forKeys: [.contentTypeKey]).contentType
+        } catch {
+            showFailure(error, fileURL: url)
+            return
+        }
 
         if let contentType = fileType {
             // Check for IPA files (which conform to data) or xcarchive files (which conform to package)
