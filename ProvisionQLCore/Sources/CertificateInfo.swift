@@ -25,13 +25,17 @@ extension CertificateInfo {
         var error: Unmanaged<CFError>?
         if let values = SecCertificateCopyValues(
             certificate,
-            [kSecOIDInvalidityDate] as CFArray,
+            [kSecOIDX509V1ValidityNotAfter] as CFArray,
             &error
         ) as? [CFString: Any],
-            let invalidityDict = values[kSecOIDInvalidityDate] as? [CFString: Any],
-            let dateValue = invalidityDict[kSecPropertyKeyValue]
+            let validityDict = values[kSecOIDX509V1ValidityNotAfter] as? [CFString: Any],
+            let dateValue = validityDict[kSecPropertyKeyValue]
         {
-            expirationDate = dateValue as? Date
+            if let dateValue = dateValue as? Date {
+                expirationDate = dateValue
+            } else if let timeInterval = dateValue as? NSNumber {
+                expirationDate = Date(timeIntervalSinceReferenceDate: timeInterval.doubleValue)
+            }
         }
 
         return CertificateInfo(

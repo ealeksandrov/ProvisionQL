@@ -27,7 +27,10 @@ let package = Package(
         .testTarget(
             name: "ProvisionQLCoreTests",
             dependencies: ["ProvisionQLCore"],
-            path: "Tests"
+            path: "Tests",
+            resources: [
+                .process("Fixtures")
+            ]
         ),
     ]
 )

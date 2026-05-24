@@ -12,6 +12,7 @@ import Testing
 
 extension Tag {
     @Tag static var badgeInfo: Self
+    @Tag static var certificateInfo: Self
     @Tag static var provisioningInfo: Self
     @Tag static var parser: Self
     @Tag static var models: Self
@@ -84,6 +85,30 @@ struct CoreTests {
 
             #expect(badgeInfo.deviceCount == 0)
             #expect(badgeInfo.profileType == .appStore)
+        }
+    }
+
+    @Suite("CertificateInfo Tests", .tags(.certificateInfo, .models))
+    struct CertificateInfoTests {
+        @Test("Certificate expiration date is read from X.509 validity")
+        func certificateExpirationDate() throws {
+            let fixtureURL = try #require(Bundle.module.url(
+                forResource: "DeveloperCertificate",
+                withExtension: "cer"
+            ))
+            let certificateData = try Data(contentsOf: fixtureURL)
+            let certificateInfo = try #require(CertificateInfo.from(data: certificateData))
+
+            var expectedExpirationDateComponents = DateComponents()
+            expectedExpirationDateComponents.calendar = Calendar(identifier: .gregorian)
+            expectedExpirationDateComponents.timeZone = TimeZone(secondsFromGMT: 0)
+            expectedExpirationDateComponents.year = 2126
+            expectedExpirationDateComponents.month = 5
+            expectedExpirationDateComponents.day = 24
+            let expectedExpirationDate = try #require(expectedExpirationDateComponents.date)
+
+            #expect(certificateInfo.subject == "ProvisionQL Fixture Developer Certificate")
+            #expect(certificateInfo.expirationDate == expectedExpirationDate)
         }
     }
 
