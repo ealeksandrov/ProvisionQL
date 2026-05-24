@@ -29,12 +29,47 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
     }
 
     @frozen
-    public enum Platform: String, Codable, Sendable {
+    public enum Platform: RawRepresentable, Codable, Sendable, Hashable {
         case iOS
         case macOS
         case tvOS
         case watchOS
         case visionOS
+        case unknown(String)
+
+        public var rawValue: String {
+            switch self {
+            case .iOS:
+                "iOS"
+            case .macOS:
+                "macOS"
+            case .tvOS:
+                "tvOS"
+            case .watchOS:
+                "watchOS"
+            case .visionOS:
+                "visionOS"
+            case .unknown(let platform):
+                platform
+            }
+        }
+
+        public init?(rawValue: String) {
+            self = switch rawValue {
+            case "iOS":
+                .iOS
+            case "macOS", "OSX":
+                .macOS
+            case "tvOS":
+                .tvOS
+            case "watchOS":
+                .watchOS
+            case "visionOS":
+                .visionOS
+            default:
+                .unknown(rawValue)
+            }
+        }
     }
 
     public var expirationStatus: ExpirationStatus {

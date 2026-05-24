@@ -199,7 +199,7 @@ struct CoreTests {
         @Test("Platform detection", arguments: [
             (platformStrings: ["iOS"], expected: [ProvisioningInfo.Platform.iOS]),
             (platformStrings: ["macOS"], expected: [ProvisioningInfo.Platform.macOS]),
-            (platformStrings: ["OSX"], expected: [ProvisioningInfo.Platform.iOS]),
+            (platformStrings: ["OSX"], expected: [ProvisioningInfo.Platform.macOS]),
             (platformStrings: ["tvOS"], expected: [ProvisioningInfo.Platform.tvOS]),
             (platformStrings: ["watchOS"], expected: [ProvisioningInfo.Platform.watchOS]),
             (platformStrings: ["visionOS"], expected: [ProvisioningInfo.Platform.visionOS]),
@@ -207,7 +207,7 @@ struct CoreTests {
                 platformStrings: ["iOS", "macOS"],
                 expected: [ProvisioningInfo.Platform.iOS, ProvisioningInfo.Platform.macOS]
             ),
-            (platformStrings: ["unknown"], expected: [ProvisioningInfo.Platform.iOS]),
+            (platformStrings: ["unknown"], expected: [ProvisioningInfo.Platform.unknown("unknown")]),
             (platformStrings: nil, expected: [ProvisioningInfo.Platform.iOS])
         ])
         func platformDetection(platformStrings: [String]?, expected: [ProvisioningInfo.Platform]) {
@@ -228,6 +228,20 @@ struct CoreTests {
 
             let provisioningInfo = ProvisioningInfo(from: mockProfile)
             #expect(provisioningInfo.platform == expected)
+        }
+
+        @Test("Platform Codable preserves raw values", arguments: [
+            (platform: ProvisioningInfo.Platform.iOS, encodedString: "\"iOS\""),
+            (platform: ProvisioningInfo.Platform.macOS, encodedString: "\"macOS\""),
+            (platform: ProvisioningInfo.Platform.unknown("XROS"), encodedString: "\"XROS\"")
+        ])
+        func platformCodable(platform: ProvisioningInfo.Platform, encodedString: String) throws {
+            let data = try JSONEncoder().encode(platform)
+            let jsonString = String(decoding: data, as: UTF8.self)
+            #expect(jsonString == encodedString)
+
+            let decodedPlatform = try JSONDecoder().decode(ProvisioningInfo.Platform.self, from: data)
+            #expect(decodedPlatform == platform)
         }
 
         @Test("Expiration status calculation", arguments: [
