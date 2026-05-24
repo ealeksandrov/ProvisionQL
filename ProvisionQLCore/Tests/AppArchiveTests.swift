@@ -191,6 +191,109 @@ struct AppArchiveTests {
             let xcarchiveInfo = try AppArchiveParser.parse(xcarchiveURL)
             #expect(xcarchiveInfo.deviceFamily == ipaInfo.deviceFamily)
         }
+
+        @Test("Parser handles macOS app layout in xcarchives")
+        func parserHandlesMacOSXCArchiveBundleLayout() throws {
+            let tempURL = createTempXCArchiveDirectory(
+                apps: [
+                    (
+                        name: "MacApp",
+                        infoPlistData: createMockMacInfoPlistData(),
+                        usesMacLayout: true,
+                        extraFiles: [:]
+                    )
+                ],
+                applicationPath: "Applications/MacApp.app"
+            )
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+
+            let appInfo = try AppArchiveParser.parse(tempURL)
+
+            #expect(appInfo.name == "Mac Test App")
+            #expect(appInfo.bundleIdentifier == "com.test.mac")
+            #expect(appInfo.minimumOSVersion == "14.0")
+            #expect(appInfo.sdkVersion == "macosx15.0")
+        }
+
+        @Test("Parser prefers xcarchive ApplicationPath over directory order")
+        func parserPrefersXCArchiveApplicationPath() throws {
+            let tempURL = createTempXCArchiveDirectory(
+                apps: [
+                    (
+                        name: "AFirst",
+                        infoPlistData: createMockInfoPlistData(
+                            displayName: "Wrong App",
+                            bundleIdentifier: "com.test.wrong"
+                        ),
+                        usesMacLayout: false,
+                        extraFiles: [:]
+                    ),
+                    (
+                        name: "Selected",
+                        infoPlistData: createMockInfoPlistData(
+                            displayName: "Selected App",
+                            bundleIdentifier: "com.test.selected"
+                        ),
+                        usesMacLayout: false,
+                        extraFiles: [:]
+                    )
+                ],
+                applicationPath: "Applications/Selected.app"
+            )
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+
+            let appInfo = try AppArchiveParser.parse(tempURL)
+
+            #expect(appInfo.name == "Selected App")
+            #expect(appInfo.bundleIdentifier == "com.test.selected")
+        }
+
+        @Test("Parser handles macOS app extension layout")
+        func parserHandlesMacOSAppExtensionBundleLayout() throws {
+            let tempURL = createTempAppExtensionDirectory(
+                infoPlistData: createMockMacInfoPlistData(
+                    name: "Share Extension",
+                    bundleIdentifier: "com.test.share-extension",
+                    extensionPointIdentifier: "com.apple.share-services"
+                ),
+                usesMacLayout: true
+            )
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+
+            let appInfo = try AppArchiveParser.parse(tempURL)
+
+            #expect(appInfo.name == "Share Extension (Share Extension)")
+            #expect(appInfo.bundleIdentifier == "com.test.share-extension")
+            #expect(appInfo.extensionPointIdentifier == "com.apple.share-services")
+        }
+
+        @Test("Parser reports malformed macOS embedded provisioning profile")
+        func parserReportsMalformedMacOSEmbeddedProvisioningProfile() throws {
+            let tempURL = createTempXCArchiveDirectory(
+                apps: [
+                    (
+                        name: "MacApp",
+                        infoPlistData: createMockMacInfoPlistData(),
+                        usesMacLayout: true,
+                        extraFiles: [
+                            "Contents/embedded.provisionprofile": Data("not cms".utf8)
+                        ]
+                    )
+                ],
+                applicationPath: "Applications/MacApp.app"
+            )
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+
+            let appInfo = try AppArchiveParser.parse(tempURL)
+            let diagnostic = try #require(appInfo.diagnostics.first)
+
+            #expect(appInfo.embeddedProvisioningProfile == nil)
+            #expect(appInfo.diagnostics.count == 1)
+            #expect(diagnostic.severity == .warning)
+            #expect(diagnostic.code == .malformedEmbeddedProvisioningProfile)
+            #expect(diagnostic.message.contains("Embedded provisioning profile could not be parsed"))
+            #expect(diagnostic.message.contains("Failed to decode CMS data"))
+        }
     }
 }
 
@@ -215,11 +318,14 @@ private func createMockProvisioningInfo() throws -> ProvisioningInfo {
     return try ProvisioningInfo(from: mockProfile)
 }
 
-private func createMockInfoPlistData() -> Data {
+private func createMockInfoPlistData(
+    displayName: String = "Test App Display",
+    bundleIdentifier: String = "com.test.app"
+) -> Data {
     let plist: [String: Any] = [
         "CFBundleName": "Test App",
-        "CFBundleDisplayName": "Test App Display",
-        "CFBundleIdentifier": "com.test.app",
+        "CFBundleDisplayName": displayName,
+        "CFBundleIdentifier": bundleIdentifier,
         "CFBundleShortVersionString": "1.0.0",
         "CFBundleVersion": "100",
         "CFBundleIcons": [
@@ -234,6 +340,31 @@ private func createMockInfoPlistData() -> Data {
         "DTPlatformVersion": "18.0",
         "CFBundleSupportedPlatforms": ["iPhoneOS"]
     ]
+
+    return try! PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
+}
+
+private func createMockMacInfoPlistData(
+    name: String = "Mac Test App",
+    bundleIdentifier: String = "com.test.mac",
+    extensionPointIdentifier: String? = nil
+) -> Data {
+    var plist: [String: Any] = [
+        "CFBundleName": name,
+        "CFBundleDisplayName": name,
+        "CFBundleExecutable": name.replacingOccurrences(of: " ", with: ""),
+        "CFBundleIdentifier": bundleIdentifier,
+        "CFBundleShortVersionString": "1.0.0",
+        "CFBundleVersion": "100",
+        "LSMinimumSystemVersion": "14.0",
+        "DTSDKName": "macosx15.0"
+    ]
+
+    if let extensionPointIdentifier {
+        plist["NSExtension"] = [
+            "NSExtensionPointIdentifier": extensionPointIdentifier
+        ]
+    }
 
     return try! PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
 }
@@ -297,16 +428,76 @@ private func createTempZipArchive(
 }
 
 private func createTempXCArchiveDirectory(withInfoPlist infoPlistData: Data) -> URL {
+    createTempXCArchiveDirectory(
+        apps: [
+            (
+                name: "TestApp",
+                infoPlistData: infoPlistData,
+                usesMacLayout: false,
+                extraFiles: [:]
+            )
+        ]
+    )
+}
+
+private func createTempXCArchiveDirectory(
+    apps: [(name: String, infoPlistData: Data, usesMacLayout: Bool, extraFiles: [String: Data])],
+    applicationPath: String? = nil
+) -> URL {
     let tempURL = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString)
         .appendingPathExtension("xcarchive")
 
-    // Create the xcarchive directory structure
     let productsPath = tempURL.appendingPathComponent("Products/Applications")
-    let appBundlePath = productsPath.appendingPathComponent("TestApp.app")
-    let infoPlistPath = appBundlePath.appendingPathComponent("Info.plist")
 
-    try! FileManager.default.createDirectory(at: appBundlePath, withIntermediateDirectories: true)
+    for app in apps {
+        let appBundlePath = productsPath.appendingPathComponent("\(app.name).app")
+        let infoPlistDirectory = app.usesMacLayout
+            ? appBundlePath.appendingPathComponent("Contents")
+            : appBundlePath
+        let infoPlistPath = infoPlistDirectory.appendingPathComponent("Info.plist")
+
+        try! FileManager.default.createDirectory(at: infoPlistDirectory, withIntermediateDirectories: true)
+        try! app.infoPlistData.write(to: infoPlistPath)
+
+        for (relativePath, data) in app.extraFiles {
+            let fileURL = appBundlePath.appendingPathComponent(relativePath)
+            try! FileManager.default.createDirectory(
+                at: fileURL.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            try! data.write(to: fileURL)
+        }
+    }
+
+    if let applicationPath {
+        let archiveInfoPlist: [String: Any] = [
+            "ApplicationProperties": [
+                "ApplicationPath": applicationPath
+            ]
+        ]
+        let archiveInfoPlistData = try! PropertyListSerialization.data(
+            fromPropertyList: archiveInfoPlist,
+            format: .xml,
+            options: 0
+        )
+        try! archiveInfoPlistData.write(to: tempURL.appendingPathComponent("Info.plist"))
+    }
+
+    return tempURL
+}
+
+private func createTempAppExtensionDirectory(infoPlistData: Data, usesMacLayout: Bool) -> URL {
+    let tempURL = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathExtension("appex")
+
+    let infoPlistDirectory = usesMacLayout
+        ? tempURL.appendingPathComponent("Contents")
+        : tempURL
+    let infoPlistPath = infoPlistDirectory.appendingPathComponent("Info.plist")
+
+    try! FileManager.default.createDirectory(at: infoPlistDirectory, withIntermediateDirectories: true)
     try! infoPlistData.write(to: infoPlistPath)
 
     return tempURL

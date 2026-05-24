@@ -71,16 +71,8 @@ private extension AppArchiveParser {
             throw ParsingError.invalidArchiveFormat
         }
 
-        // Find the app bundle in Products/Applications/
-        let productsPath = url.appendingPathComponent("Products/Applications")
-        let appBundles = try FileManager.default.contentsOfDirectory(at: productsPath, includingPropertiesForKeys: nil)
-            .filter { $0.pathExtension == "app" }
-
-        guard let appBundleURL = appBundles.first else {
-            throw ParsingError.invalidAppBundle
-        }
-
-        let infoPlistURL = appBundleURL.appendingPathComponent("Info.plist")
+        let appBundleURL = try findAppBundleInXCArchive(at: url)
+        let infoPlistURL = try infoPlistURL(for: appBundleURL)
         let plist = try PlistParser.parse(url: infoPlistURL)
 
         let appInfo = PlistParser.extractAppInfo(from: plist)
@@ -115,8 +107,7 @@ private extension AppArchiveParser {
             throw ParsingError.invalidArchiveFormat
         }
 
-        // Read Info.plist from the extension bundle
-        let infoPlistURL = url.appendingPathComponent("Info.plist")
+        let infoPlistURL = try infoPlistURL(for: url)
         let plist = try PlistParser.parse(url: infoPlistURL)
 
         let appInfo = PlistParser.extractAppInfo(from: plist)
@@ -206,6 +197,69 @@ private extension AppArchiveParser {
         default:
             "App Extension"
         }
+    }
+
+    static func findAppBundleInXCArchive(at archiveURL: URL) throws -> URL {
+        let productsPath = archiveURL.appendingPathComponent("Products", isDirectory: true)
+
+        if let applicationPath = applicationPathInXCArchive(at: archiveURL) {
+            let normalizedPath = applicationPath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            let candidates = [
+                productsPath.appendingPathComponent(normalizedPath, isDirectory: true),
+                archiveURL.appendingPathComponent(normalizedPath, isDirectory: true)
+            ]
+
+            for candidate in candidates where isAppBundle(candidate) {
+                return candidate
+            }
+        }
+
+        let applicationsPath = productsPath.appendingPathComponent("Applications", isDirectory: true)
+        let appBundles = try FileManager.default.contentsOfDirectory(at: applicationsPath, includingPropertiesForKeys: nil)
+            .filter(isAppBundle)
+            .sorted { lhs, rhs in
+                lhs.lastPathComponent.localizedStandardCompare(rhs.lastPathComponent) == .orderedAscending
+            }
+
+        guard let appBundleURL = appBundles.first else {
+            throw ParsingError.invalidAppBundle
+        }
+
+        return appBundleURL
+    }
+
+    static func applicationPathInXCArchive(at archiveURL: URL) -> String? {
+        let infoPlistURL = archiveURL.appendingPathComponent("Info.plist")
+        guard
+            let plist = try? PlistParser.parse(url: infoPlistURL),
+            let applicationProperties = plist["ApplicationProperties"] as? [String: Any],
+            let applicationPath = applicationProperties["ApplicationPath"] as? String,
+            !applicationPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            return nil
+        }
+
+        return applicationPath
+    }
+
+    static func infoPlistURL(for bundleURL: URL) throws -> URL {
+        let candidates = [
+            bundleURL.appendingPathComponent("Contents/Info.plist"),
+            bundleURL.appendingPathComponent("Info.plist")
+        ]
+
+        for candidate in candidates where FileManager.default.fileExists(atPath: candidate.path) {
+            return candidate
+        }
+
+        throw ParsingError.missingInfoPlist
+    }
+
+    static func isAppBundle(_ url: URL) -> Bool {
+        var isDirectory: ObjCBool = false
+        return url.pathExtension == "app"
+            && FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+            && isDirectory.boolValue
     }
 
     static func extractAppEntitlements(from archive: Archive, appBundlePath: String) -> [String: PlistValue] {
