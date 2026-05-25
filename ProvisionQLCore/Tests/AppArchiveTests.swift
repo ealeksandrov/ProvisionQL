@@ -138,7 +138,7 @@ struct AppArchiveTests {
                 ],
                 extension: "ipa"
             )
-            let tipaURL = createTempFile(withExtension: "tipa", content: try Data(contentsOf: ipaURL))
+            let tipaURL = try createTempFile(withExtension: "tipa", content: Data(contentsOf: ipaURL))
             defer {
                 try? FileManager.default.removeItem(at: ipaURL)
                 try? FileManager.default.removeItem(at: tipaURL)
