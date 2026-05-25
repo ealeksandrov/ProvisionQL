@@ -66,9 +66,15 @@ private extension MachOEntitlementsReader {
         }
 
         let entrySize = isFat64 ? 32 : 20
+        let architectureCountInt = Int(architectureCount)
+        let maximumArchitectureCount = (data.count - 8) / entrySize
+        guard architectureCountInt <= maximumArchitectureCount else {
+            return nil
+        }
+
         var slices: [Range<Int>] = []
 
-        for index in 0 ..< Int(architectureCount) {
+        for index in 0 ..< architectureCountInt {
             let entryOffset = 8 + index * entrySize
             let offset: UInt64?
             let size: UInt64?
@@ -101,6 +107,8 @@ private extension MachOEntitlementsReader {
 
     static func extractEntitlements(from data: Data, slice: Range<Int>) -> [String: PlistValue]? {
         guard
+            data.bounds.contains(slice.lowerBound),
+            slice.upperBound <= data.count,
             let (endianness, is64Bit) = machHeader(in: data, slice: slice),
             let loadCommandCount = data.uint32(at: slice.lowerBound + 16, endianness: endianness)
         else {
@@ -109,9 +117,18 @@ private extension MachOEntitlementsReader {
 
         let headerSize = is64Bit ? 32 : 28
         var commandOffset = slice.lowerBound + headerSize
+        guard commandOffset <= slice.upperBound else {
+            return nil
+        }
+
+        let maximumLoadCommandCount = (slice.upperBound - commandOffset) / 8
+        guard Int(loadCommandCount) <= maximumLoadCommandCount else {
+            return nil
+        }
 
         for _ in 0 ..< Int(loadCommandCount) {
             guard
+                commandOffset + 8 <= slice.upperBound,
                 let command = data.uint32(at: commandOffset, endianness: endianness),
                 let commandSize = data.uint32(at: commandOffset + 4, endianness: endianness),
                 commandSize >= 8
@@ -119,23 +136,32 @@ private extension MachOEntitlementsReader {
                 return nil
             }
 
-            if command == lcCodeSignature,
-               let signatureOffset = data.uint32(at: commandOffset + 8, endianness: endianness),
-               let signatureSize = data.uint32(at: commandOffset + 12, endianness: endianness)
-            {
-                let lowerBound = slice.lowerBound + Int(signatureOffset)
-                let upperBound = lowerBound + Int(signatureSize)
-                guard lowerBound >= slice.lowerBound, upperBound <= slice.upperBound else {
+            let commandSizeInt = Int(commandSize)
+            guard commandSizeInt <= slice.upperBound - commandOffset else {
+                return nil
+            }
+
+            if command == lcCodeSignature {
+                guard commandSizeInt >= 16,
+                      let signatureOffset = data.uint32(at: commandOffset + 8, endianness: endianness),
+                      let signatureSize = data.uint32(at: commandOffset + 12, endianness: endianness)
+                else {
                     return nil
                 }
 
+                let sliceSize = UInt64(slice.upperBound - slice.lowerBound)
+                guard UInt64(signatureOffset) <= sliceSize,
+                      UInt64(signatureSize) <= sliceSize - UInt64(signatureOffset)
+                else {
+                    return nil
+                }
+
+                let lowerBound = slice.lowerBound + Int(signatureOffset)
+                let upperBound = lowerBound + Int(signatureSize)
                 return extractEntitlements(fromCodeSignature: data, range: lowerBound ..< upperBound)
             }
 
-            commandOffset += Int(commandSize)
-            guard commandOffset <= slice.upperBound else {
-                return nil
-            }
+            commandOffset += commandSizeInt
         }
 
         return nil

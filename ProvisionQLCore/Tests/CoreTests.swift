@@ -503,6 +503,25 @@ struct CoreTests {
             #expect(entitlements["application-identifier"] == .string("ABCDE12345.com.example.app"))
             #expect(entitlements["get-task-allow"] == .bool(true))
         }
+
+        @Test("Rejects fat headers with impossible architecture counts")
+        func rejectsImpossibleFatArchitectureCount() {
+            var data = Data()
+            data.appendBigEndianUInt32(0xCAFE_BABE)
+            data.appendBigEndianUInt32(UInt32.max)
+
+            #expect(MachOEntitlementsReader.extractEntitlements(from: data) == nil)
+        }
+
+        @Test("Rejects short code signature load commands")
+        func rejectsShortCodeSignatureLoadCommand() {
+            var data = createMachOHeader(loadCommandCount: 1, loadCommandsSize: 12)
+            data.appendLittleEndianUInt32(0x1D)
+            data.appendLittleEndianUInt32(12)
+            data.appendLittleEndianUInt32(0)
+
+            #expect(MachOEntitlementsReader.extractEntitlements(from: data) == nil)
+        }
     }
 
     @Suite("RawProfile Tests", .tags(.models))
@@ -549,6 +568,19 @@ struct CoreTests {
     }
 }
 
+private func createMachOHeader(loadCommandCount: UInt32, loadCommandsSize: UInt32) -> Data {
+    var executable = Data()
+    executable.appendLittleEndianUInt32(0xFEED_FACF)
+    executable.appendLittleEndianUInt32(0x0100_000C)
+    executable.appendLittleEndianUInt32(0)
+    executable.appendLittleEndianUInt32(2)
+    executable.appendLittleEndianUInt32(loadCommandCount)
+    executable.appendLittleEndianUInt32(loadCommandsSize)
+    executable.appendLittleEndianUInt32(0)
+    executable.appendLittleEndianUInt32(0)
+    return executable
+}
+
 private func createMachOExecutableData(entitlements: [String: Any]) throws -> Data {
     let plistData = try PropertyListSerialization.data(
         fromPropertyList: entitlements,
@@ -571,15 +603,7 @@ private func createMachOExecutableData(entitlements: [String: Any]) throws -> Da
 
     let codeSignatureOffset: UInt32 = 48
 
-    var executable = Data()
-    executable.appendLittleEndianUInt32(0xFEED_FACF)
-    executable.appendLittleEndianUInt32(0x0100_000C)
-    executable.appendLittleEndianUInt32(0)
-    executable.appendLittleEndianUInt32(2)
-    executable.appendLittleEndianUInt32(1)
-    executable.appendLittleEndianUInt32(16)
-    executable.appendLittleEndianUInt32(0)
-    executable.appendLittleEndianUInt32(0)
+    var executable = createMachOHeader(loadCommandCount: 1, loadCommandsSize: 16)
     executable.appendLittleEndianUInt32(0x1D)
     executable.appendLittleEndianUInt32(16)
     executable.appendLittleEndianUInt32(codeSignatureOffset)
