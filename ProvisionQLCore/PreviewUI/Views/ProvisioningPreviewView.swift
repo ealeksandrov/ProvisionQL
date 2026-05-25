@@ -30,13 +30,13 @@ struct ProvisioningPreviewView: View {
             }
 
             if !info.certificates.isEmpty {
-                PreviewSection(title: "Certificates (\(info.certificates.count))") {
+                CollapsiblePreviewSection(title: "Certificates (\(info.certificates.count))") {
                     CertificatesSection(certificates: info.certificates)
                 }
             }
 
             if let devices = info.devices, !devices.isEmpty {
-                PreviewSection(title: "Devices (\(devices.count))") {
+                CollapsiblePreviewSection(title: "Devices (\(devices.count))", isExpanded: devices.count <= 20) {
                     DevicesSection(devices: devices)
                 }
             }

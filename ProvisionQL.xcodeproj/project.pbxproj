@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		17BD43CB3FB44CC1B2DDB0CB /* PreviewUI in Frameworks */ = {isa = PBXBuildFile; productRef = B9B0A43209104350B4BEC618 /* PreviewUI */; };
 		55465FD02E0401D70008C983 /* ProvisionQLCore in Frameworks */ = {isa = PBXBuildFile; productRef = 55465FCF2E0401D70008C983 /* ProvisionQLCore */; };
 		55465FD22E0402510008C983 /* ProvisionQLCore in Frameworks */ = {isa = PBXBuildFile; productRef = 55465FD12E0402510008C983 /* ProvisionQLCore */; };
 		55BC97352DFF0870008F9F5D /* QuickLookThumbnailing.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55BC97342DFF0870008F9F5D /* QuickLookThumbnailing.framework */; };
@@ -14,6 +15,7 @@
 		55BC973F2DFF0870008F9F5D /* Thumbnail.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 55BC97322DFF0870008F9F5D /* Thumbnail.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		55C1053B2E0032FE00037993 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55BC97362DFF0870008F9F5D /* Quartz.framework */; };
 		55C105482E0032FE00037993 /* Preview.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 55C1053A2E0032FE00037993 /* Preview.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B10C7051CEF744F1A6A4B63C /* PreviewUI in Frameworks */ = {isa = PBXBuildFile; productRef = 086EBD95A68C4764A0D134C8 /* PreviewUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +59,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7627198E3E3449C285D7FBBB /* Exceptions for "ProvisionQL" folder in "ProvisionQL" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 55BC96F92DFF06C6008F9F5D /* ProvisionQL */;
+		};
 		55BC97402DFF0870008F9F5D /* Exceptions for "Thumbnail" folder in "Thumbnail" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -76,6 +85,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		55BC96FC2DFF06C6008F9F5D /* ProvisionQL */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7627198E3E3449C285D7FBBB /* Exceptions for "ProvisionQL" folder in "ProvisionQL" target */,
+			);
 			path = ProvisionQL;
 			sourceTree = "<group>";
 		};
@@ -102,6 +114,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B10C7051CEF744F1A6A4B63C /* PreviewUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,6 +132,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				17BD43CB3FB44CC1B2DDB0CB /* PreviewUI in Frameworks */,
 				55465FD22E0402510008C983 /* ProvisionQLCore in Frameworks */,
 				55C1053B2E0032FE00037993 /* Quartz.framework in Frameworks */,
 			);
@@ -181,6 +195,7 @@
 			);
 			name = ProvisionQL;
 			packageProductDependencies = (
+				086EBD95A68C4764A0D134C8 /* PreviewUI */,
 			);
 			productName = ProvisionQL;
 			productReference = 55BC96FA2DFF06C6008F9F5D /* ProvisionQL.app */;
@@ -229,6 +244,7 @@
 			name = Preview;
 			packageProductDependencies = (
 				55465FD12E0402510008C983 /* ProvisionQLCore */,
+				B9B0A43209104350B4BEC618 /* PreviewUI */,
 			);
 			productName = Preview;
 			productReference = 55C1053A2E0032FE00037993 /* Preview.appex */;
@@ -549,6 +565,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ProvisionQL/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -573,6 +590,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ProvisionQL/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -721,6 +739,11 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		086EBD95A68C4764A0D134C8 /* PreviewUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 55465FC52E0401670008C983 /* XCLocalSwiftPackageReference "ProvisionQLCore" */;
+			productName = PreviewUI;
+		};
 		55465FCF2E0401D70008C983 /* ProvisionQLCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 55465FC52E0401670008C983 /* XCLocalSwiftPackageReference "ProvisionQLCore" */;
@@ -730,6 +753,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 55465FC52E0401670008C983 /* XCLocalSwiftPackageReference "ProvisionQLCore" */;
 			productName = ProvisionQLCore;
+		};
+		B9B0A43209104350B4BEC618 /* PreviewUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 55465FC52E0401670008C983 /* XCLocalSwiftPackageReference "ProvisionQLCore" */;
+			productName = PreviewUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

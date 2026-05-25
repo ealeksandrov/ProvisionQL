@@ -9,6 +9,7 @@
 * Shows explicit provisioning profile type and signature status
 * Fixes parsing for macOS `.xcarchive` and `.appex` bundles
 * Shows archive parsing failures in the preview
+* Adds a host app file inspector for opening and dropping supported files
 
 ## Version 1.6.4
 
