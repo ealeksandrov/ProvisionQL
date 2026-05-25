@@ -16,13 +16,34 @@ struct CollapsiblePreviewSection<Content: View>: View {
     }
 
     var body: some View {
-        DisclosureGroup(isExpanded: $isExpanded) {
-            content
-                .padding(.top, UIConstants.Padding.medium)
-        } label: {
-            Text(title)
-                .fontWeight(.semibold)
-                .font(.title2)
+        VStack(alignment: .leading, spacing: 0) {
+            Button(action: toggleExpanded) {
+                HStack(spacing: UIConstants.Padding.medium) {
+                    Image(systemName: "chevron.right")
+                        .font(.headline)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        .animation(.easeInOut(duration: 0.15), value: isExpanded)
+
+                    Text(title)
+                        .fontWeight(.semibold)
+                        .font(.title2)
+
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                content
+                    .padding(.top, UIConstants.Padding.medium)
+            }
+        }
+    }
+
+    private func toggleExpanded() {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            isExpanded.toggle()
         }
     }
 }
