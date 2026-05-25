@@ -17,28 +17,12 @@ enum ProvisioningProfileExtractor {
     // MARK: - Helper Methods
 
     static func extract(from profileData: Data) -> EmbeddedProvisioningProfileExtraction {
-        parseProfileData(profileData)
-    }
-
-    private static func parseProfileData(_ profileData: Data) -> EmbeddedProvisioningProfileExtraction {
-        let tempURL = createTemporaryURL()
-
         do {
-            try profileData.write(to: tempURL)
-            defer { try? FileManager.default.removeItem(at: tempURL) }
-
-            let provisioningInfo = try ProvisioningParser.parse(tempURL)
+            let provisioningInfo = try ProvisioningParser.parse(profileData)
             return .success(provisioningInfo)
         } catch {
             return .failure(error)
         }
-    }
-
-    /// Creates a temporary URL for storing provisioning profile data
-    private static func createTemporaryURL() -> URL {
-        URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("mobileprovision")
     }
 }
 

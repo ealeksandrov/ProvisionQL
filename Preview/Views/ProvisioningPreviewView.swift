@@ -97,6 +97,20 @@ extension ProvisioningInfo.ProfileType {
         case .adHoc: .purple
         case .appStore: UIConstants.Color.validGreen
         case .enterprise: .orange
+        case .developerID: .indigo
+        case .directDistribution: .indigo
+        }
+    }
+}
+
+extension ProvisioningInfo.SignerStatus {
+    var color: Color {
+        switch self {
+        case .signedByAppleWWDR: UIConstants.Color.validGreen
+        case .signed: .indigo
+        case .unsigned: .orange
+        case .invalidSignature, .invalidCertificate: .red
+        case .needsDetachedContent, .unknown: .secondary
         }
     }
 }

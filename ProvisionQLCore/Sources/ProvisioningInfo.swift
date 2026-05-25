@@ -20,8 +20,26 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
     public let certificates: [CertificateInfo]
     public let entitlements: [String: PlistValue]
     public let profileType: ProfileType
+    public let signerStatus: SignerStatus
     public let platform: [Platform]
     public let diagnostics: [ProvisioningDiagnostic]
+
+    private enum CodingKeys: String, CodingKey {
+        case uuid
+        case name
+        case teamName
+        case teamID
+        case appID
+        case expirationDate
+        case creationDate
+        case devices
+        case certificates
+        case entitlements
+        case profileType
+        case signerStatus
+        case platform
+        case diagnostics
+    }
 
     @frozen
     public enum ProfileType: String, Codable, Sendable {
@@ -29,6 +47,19 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
         case adHoc = "Distribution (Ad Hoc)"
         case appStore = "Distribution (App Store)"
         case enterprise = "Enterprise"
+        case developerID = "Developer ID"
+        case directDistribution = "Direct Distribution"
+    }
+
+    @frozen
+    public enum SignerStatus: String, Codable, Sendable, Hashable {
+        case signedByAppleWWDR = "Signed by Apple WWDR"
+        case signed = "Signed"
+        case unsigned = "Unsigned"
+        case invalidSignature = "Invalid Signature"
+        case invalidCertificate = "Invalid Certificate"
+        case needsDetachedContent = "Needs Detached Content"
+        case unknown = "Signature Unknown"
     }
 
     @frozen
@@ -88,10 +119,29 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
 
         return .valid
     }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        uuid = try container.decode(String.self, forKey: .uuid)
+        name = try container.decode(String.self, forKey: .name)
+        teamName = try container.decode(String.self, forKey: .teamName)
+        teamID = try container.decode(String.self, forKey: .teamID)
+        appID = try container.decode(String.self, forKey: .appID)
+        expirationDate = try container.decode(Date.self, forKey: .expirationDate)
+        creationDate = try container.decode(Date.self, forKey: .creationDate)
+        devices = try container.decodeIfPresent([String].self, forKey: .devices)
+        certificates = try container.decode([CertificateInfo].self, forKey: .certificates)
+        entitlements = try container.decode([String: PlistValue].self, forKey: .entitlements)
+        profileType = try container.decode(ProfileType.self, forKey: .profileType)
+        signerStatus = try container.decodeIfPresent(SignerStatus.self, forKey: .signerStatus) ?? .unknown
+        platform = try container.decode([Platform].self, forKey: .platform)
+        diagnostics = try container.decode([ProvisioningDiagnostic].self, forKey: .diagnostics)
+    }
 }
 
 extension ProvisioningInfo {
-    init(from profile: RawProfile) throws {
+    init(from profile: RawProfile, signerStatus: SignerStatus = .unknown) throws {
         let missingFields = Self.missingRequiredFields(in: profile)
         guard
             missingFields.isEmpty,
@@ -112,6 +162,7 @@ extension ProvisioningInfo {
         self.teamName = teamName
         self.teamID = teamID
         self.appID = appID
+        self.signerStatus = signerStatus
         self.expirationDate = expirationDate
         self.creationDate = creationDate
         devices = profile.ProvisionedDevices
@@ -136,29 +187,7 @@ extension ProvisioningInfo {
         }
         certificates = certificateInfos
 
-        // Determine profile type
-        let hasDevices = profile.ProvisionedDevices != nil
-        let getTaskAllow: Bool = {
-            if case .bool(let value) = entitlements["get-task-allow"] {
-                return value
-            }
-            return false
-        }()
-        let isEnterprise = profile.ProvisionsAllDevices ?? false
-
-        if hasDevices {
-            if getTaskAllow {
-                profileType = .development
-            } else {
-                profileType = .adHoc
-            }
-        } else {
-            if isEnterprise {
-                profileType = .enterprise
-            } else {
-                profileType = .appStore
-            }
-        }
+        profileType = Self.profileType(for: profile, entitlements: entitlements)
 
         // Determine platform
         let platforms = profile.Platform?.compactMap { platformString in
@@ -222,5 +251,53 @@ extension ProvisioningInfo {
 
     private static func firstNonEmpty(_ values: [String]?) -> String? {
         values?.compactMap(nonEmpty).first
+    }
+
+    private static func profileType(for profile: RawProfile, entitlements: [String: PlistValue]) -> ProfileType {
+        if let explicitType = ProfileType(profile.ProfileType) {
+            return explicitType
+        }
+
+        let hasDevices = profile.ProvisionedDevices != nil
+        let getTaskAllow: Bool = {
+            if case .bool(let value) = entitlements["get-task-allow"] {
+                return value
+            }
+            return false
+        }()
+        let isEnterprise = profile.ProvisionsAllDevices ?? false
+
+        if hasDevices {
+            return getTaskAllow ? .development : .adHoc
+        } else {
+            return isEnterprise ? .enterprise : .appStore
+        }
+    }
+}
+
+private extension ProvisioningInfo.ProfileType {
+    init?(_ profileType: String?) {
+        guard let profileType else {
+            return nil
+        }
+
+        switch profileType.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() {
+        case "IOS_APP_DEVELOPMENT", "MAC_APP_DEVELOPMENT", "TVOS_APP_DEVELOPMENT", "VISIONOS_APP_DEVELOPMENT",
+             "WATCHOS_APP_DEVELOPMENT",
+             "MAC_CATALYST_APP_DEVELOPMENT":
+            self = .development
+        case "IOS_APP_ADHOC", "TVOS_APP_ADHOC", "VISIONOS_APP_ADHOC":
+            self = .adHoc
+        case "IOS_APP_STORE", "MAC_APP_STORE", "TVOS_APP_STORE", "VISIONOS_APP_STORE", "MAC_CATALYST_APP_STORE":
+            self = .appStore
+        case "IOS_APP_INHOUSE", "TVOS_APP_INHOUSE":
+            self = .enterprise
+        case "DEVELOPER_ID", "MAC_APP_DEVELOPER_ID":
+            self = .developerID
+        case "MAC_APP_DIRECT", "MAC_CATALYST_APP_DIRECT", "DIRECT_DISTRIBUTION", "MAC_APP_DIRECT_DISTRIBUTION":
+            self = .directDistribution
+        default:
+            return nil
+        }
     }
 }

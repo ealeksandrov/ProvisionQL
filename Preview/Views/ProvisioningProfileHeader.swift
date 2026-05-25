@@ -40,6 +40,13 @@ struct ProvisioningProfileHeader: View {
                     color: profile.expirationStatus.color
                 )
 
+                if profile.signerStatus != .unknown {
+                    StatusBadge(
+                        text: profile.signerStatus.rawValue,
+                        color: profile.signerStatus.color
+                    )
+                }
+
                 if !profile.certificates.isEmpty {
                     StatusBadge(
                         text: "\(profile.certificates.count) certs",

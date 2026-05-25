@@ -147,6 +147,7 @@ struct CoreTests {
             #expect(provisioningInfo.creationDate == creationDate)
             #expect(provisioningInfo.devices?.count == 2)
             #expect(provisioningInfo.profileType == .development)
+            #expect(provisioningInfo.signerStatus == .unknown)
             #expect(provisioningInfo.platform == [.iOS])
         }
 
@@ -194,6 +195,99 @@ struct CoreTests {
 
             let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             #expect(provisioningInfo.profileType == expected)
+        }
+
+        @Test("Explicit profile type is preferred over device heuristic", arguments: [
+            (profileType: "IOS_APP_DEVELOPMENT", expected: ProvisioningInfo.ProfileType.development),
+            (profileType: "IOS_APP_ADHOC", expected: ProvisioningInfo.ProfileType.adHoc),
+            (profileType: "IOS_APP_STORE", expected: ProvisioningInfo.ProfileType.appStore),
+            (profileType: "IOS_APP_INHOUSE", expected: ProvisioningInfo.ProfileType.enterprise),
+            (profileType: "MAC_APP_DEVELOPMENT", expected: ProvisioningInfo.ProfileType.development),
+            (profileType: "MAC_APP_STORE", expected: ProvisioningInfo.ProfileType.appStore),
+            (profileType: "MAC_APP_DIRECT", expected: ProvisioningInfo.ProfileType.directDistribution),
+            (profileType: "MAC_CATALYST_APP_DIRECT", expected: ProvisioningInfo.ProfileType.directDistribution),
+            (profileType: "VISIONOS_APP_DEVELOPMENT", expected: ProvisioningInfo.ProfileType.development),
+            (profileType: "VISIONOS_APP_ADHOC", expected: ProvisioningInfo.ProfileType.adHoc),
+            (profileType: "VISIONOS_APP_STORE", expected: ProvisioningInfo.ProfileType.appStore),
+            (profileType: "WATCHOS_APP_DEVELOPMENT", expected: ProvisioningInfo.ProfileType.development),
+            (profileType: "DEVELOPER_ID", expected: ProvisioningInfo.ProfileType.developerID),
+            (profileType: "DIRECT_DISTRIBUTION", expected: ProvisioningInfo.ProfileType.directDistribution)
+        ])
+        func explicitProfileTypeIsPreferredOverDeviceHeuristic(
+            profileType: String,
+            expected: ProvisioningInfo.ProfileType
+        ) throws {
+            let mockProfile = RawProfile(
+                UUID: "FEDCBA09-8765-4321-FEDC-BA0987654321",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(86400),
+                CreationDate: Date(),
+                DeveloperCertificates: nil,
+                ProvisionedDevices: nil,
+                ProvisionsAllDevices: false,
+                Platform: ["macOS"],
+                ProfileType: profileType
+            )
+
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
+            #expect(provisioningInfo.profileType == expected)
+        }
+
+        @Test("Signer status is stored on provisioning info")
+        func signerStatusIsStoredOnProvisioningInfo() throws {
+            let mockProfile = RawProfile(
+                UUID: "FEDCBA09-8765-4321-FEDC-BA0987654321",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(86400),
+                CreationDate: Date(),
+                DeveloperCertificates: nil,
+                ProvisionedDevices: nil,
+                ProvisionsAllDevices: false,
+                Platform: ["iOS"]
+            )
+
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile, signerStatus: .signedByAppleWWDR)
+            #expect(provisioningInfo.signerStatus == .signedByAppleWWDR)
+        }
+
+        @Test("Missing signer status decodes as unknown")
+        func missingSignerStatusDecodesAsUnknown() throws {
+            let mockProfile = RawProfile(
+                UUID: "FEDCBA09-8765-4321-FEDC-BA0987654321",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(86400),
+                CreationDate: Date(),
+                DeveloperCertificates: nil,
+                ProvisionedDevices: nil,
+                ProvisionsAllDevices: false,
+                Platform: ["iOS"]
+            )
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile, signerStatus: .signedByAppleWWDR)
+
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
+            let data = try encoder.encode(provisioningInfo)
+            var plist = try #require(
+                PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any]
+            )
+            plist.removeValue(forKey: "signerStatus")
+
+            let legacyData = try PropertyListSerialization.data(fromPropertyList: plist, format: .binary, options: 0)
+            let decoded = try PropertyListDecoder().decode(ProvisioningInfo.self, from: legacyData)
+
+            #expect(decoded.signerStatus == .unknown)
         }
 
         @Test("Platform detection", arguments: [
@@ -547,7 +641,8 @@ struct CoreTests {
                 DeveloperCertificates: [Data([0x01, 0x02, 0x03])],
                 ProvisionedDevices: ["device"],
                 ProvisionsAllDevices: true,
-                Platform: ["iOS", "macOS"]
+                Platform: ["iOS", "macOS"],
+                ProfileType: "MAC_APP_DIRECT"
             )
 
             let encoder = PropertyListEncoder()
@@ -564,6 +659,7 @@ struct CoreTests {
             #expect(decodedProfile.ProvisionedDevices == originalProfile.ProvisionedDevices)
             #expect(decodedProfile.ProvisionsAllDevices == originalProfile.ProvisionsAllDevices)
             #expect(decodedProfile.Platform == originalProfile.Platform)
+            #expect(decodedProfile.ProfileType == originalProfile.ProfileType)
         }
     }
 }
