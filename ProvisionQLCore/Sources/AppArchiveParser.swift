@@ -215,11 +215,14 @@ private extension AppArchiveParser {
         }
 
         let applicationsPath = productsPath.appendingPathComponent("Applications", isDirectory: true)
-        let appBundles = try FileManager.default.contentsOfDirectory(at: applicationsPath, includingPropertiesForKeys: nil)
-            .filter(isAppBundle)
-            .sorted { lhs, rhs in
-                lhs.lastPathComponent.localizedStandardCompare(rhs.lastPathComponent) == .orderedAscending
-            }
+        let appBundles = try FileManager.default.contentsOfDirectory(
+            at: applicationsPath,
+            includingPropertiesForKeys: nil
+        )
+        .filter(isAppBundle)
+        .sorted { lhs, rhs in
+            lhs.lastPathComponent.localizedStandardCompare(rhs.lastPathComponent) == .orderedAscending
+        }
 
         guard let appBundleURL = appBundles.first else {
             throw ParsingError.invalidAppBundle
