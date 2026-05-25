@@ -42,7 +42,7 @@ final class PreviewModel {
             content = try await Self.loadContent(for: url)
         } catch {
             let fileInfo = await Self.fileInfo(for: url)
-            content = .failed(PreviewFailure(error), fileInfo)
+            content = .failed(PreviewFailure(error: error), fileInfo)
         }
     }
 }

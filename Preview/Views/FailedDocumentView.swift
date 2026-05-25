@@ -6,7 +6,7 @@ struct PreviewFailure: Hashable {
     let message: String
     let missingFields: [String]
 
-    init(_ error: Error) {
+    init(error: Error) {
         message = error.localizedDescription
 
         if let error = error as? ProvisioningProfileValidationError {
