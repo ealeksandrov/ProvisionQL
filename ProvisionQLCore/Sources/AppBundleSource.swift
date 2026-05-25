@@ -204,8 +204,24 @@ struct DirectoryAppBundleSource: AppBundleSource {
         try Data(contentsOf: infoPlistURL)
     }
 
-    func extractEntitlements(infoPlist _: [String: Any]) -> [String: PlistValue] {
-        EntitlementsExtractor.extractEntitlements(from: bundleURL)
+    func extractEntitlements(infoPlist: [String: Any]) -> [String: PlistValue] {
+        guard let executableName = PlistParser.extractExecutableName(from: infoPlist) else {
+            return EntitlementsExtractor.extractEntitlements(from: bundleURL)
+        }
+
+        let executablePath = switch bundleStyle {
+        case .iOS:
+            executableName
+        case .macOS:
+            "Contents/MacOS/\(executableName)"
+        }
+        let executableURL = url(for: executablePath, relativeToBundle: true)
+
+        guard FileManager.default.fileExists(atPath: executableURL.path) else {
+            return EntitlementsExtractor.extractEntitlements(from: bundleURL)
+        }
+
+        return EntitlementsExtractor.extractEntitlements(fromCodeAt: executableURL)
     }
 
     static func findAppBundleInXCArchive(at archiveURL: URL) throws -> URL {

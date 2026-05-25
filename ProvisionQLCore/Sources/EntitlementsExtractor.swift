@@ -13,7 +13,9 @@ public enum EntitlementsExtractor {
     }
 
     static func extractEntitlements(fromCodeAt codeURL: URL) -> [String: PlistValue] {
-        extractEntitlementsUsingSecCode(from: codeURL) ?? [:]
+        MachOEntitlementsReader.extractEntitlements(from: codeURL)
+            ?? extractEntitlementsUsingSecCode(from: codeURL)
+            ?? [:]
     }
 }
 
