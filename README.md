@@ -14,6 +14,7 @@ Open or drop a supported file into the app for the full inspector, or use Finder
 | File | Description |
 | --- | --- |
 | `.ipa` | Packaged iOS, tvOS, watchOS, or visionOS app |
+| `.tipa` | TrollStore IPA |
 | `.xcarchive` | Xcode archive, including macOS archive layouts |
 | `.appex` | App extension bundle |
 | `.mobileprovision` | iOS provisioning profile |

@@ -15,7 +15,7 @@ public enum AppArchiveParser {
         let fileExtension = url.pathExtension.lowercased()
 
         switch fileExtension {
-        case "ipa":
+        case "ipa", "tipa":
             return try parseIPA(url)
         case "xcarchive":
             return try parseXCArchive(url)

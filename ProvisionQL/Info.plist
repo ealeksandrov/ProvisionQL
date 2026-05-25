@@ -12,6 +12,8 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>com.apple.itunes.ipa</string>
+				<string>com.opa334.trollstore.tipa</string>
+				<string>dyn.ah62d4rv4ge81k4puqe</string>
 				<string>com.apple.xcode.archive</string>
 				<string>com.apple.application-and-system-extension</string>
 				<string>com.apple.mobileprovision</string>
@@ -37,6 +39,24 @@
 				<key>public.filename-extension</key>
 				<array>
 					<string>mobileprovision</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>com.apple.itunes.ipa</string>
+				<string>public.zip-archive</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>TrollStore IPA</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.opa334.trollstore.tipa</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>tipa</string>
 				</array>
 			</dict>
 		</dict>

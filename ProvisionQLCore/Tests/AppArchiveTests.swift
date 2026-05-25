@@ -130,6 +130,43 @@ struct AppArchiveTests {
             #expect(appInfo.diagnostics.isEmpty)
         }
 
+        @Test("Parser treats TIPA archives as IPAs")
+        func parserTreatsTIPAArchivesAsIPAs() throws {
+            let ipaURL = createTempZipArchive(
+                withFiles: [
+                    "Payload/TestApp.app/Info.plist": createMockInfoPlistData()
+                ],
+                extension: "ipa"
+            )
+            let tipaURL = try createTempFile(withExtension: "tipa", content: Data(contentsOf: ipaURL))
+            defer {
+                try? FileManager.default.removeItem(at: ipaURL)
+                try? FileManager.default.removeItem(at: tipaURL)
+            }
+
+            let ipaInfo = try AppArchiveParser.parse(ipaURL)
+            let tipaInfo = try AppArchiveParser.parse(tipaURL)
+
+            #expect(tipaInfo == ipaInfo)
+        }
+
+        @Test("Icon extractor treats TIPA archives as IPAs")
+        func iconExtractorTreatsTIPAArchivesAsIPAs() throws {
+            let artworkData = Data("mock artwork".utf8)
+            let tempURL = createTempZipArchive(
+                withFiles: [
+                    "iTunesArtwork": artworkData,
+                    "Payload/TestApp.app/Info.plist": createMockInfoPlistData()
+                ],
+                extension: "tipa"
+            )
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+
+            let iconSource = try IconExtractor.extractIconSource(from: tempURL)
+
+            #expect(iconSource?.data == artworkData)
+        }
+
         @Test("Parser reports malformed embedded provisioning profile")
         func parserReportsMalformedEmbeddedProvisioningProfile() throws {
             let tempURL = createTempZipArchive(
