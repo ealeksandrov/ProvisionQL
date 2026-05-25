@@ -9,15 +9,11 @@ import Quartz
 import SwiftUI
 
 struct ProvisioningPreviewView: View {
-    let info: ProvisioningInfo?
-    let fileURL: URL?
+    let info: ProvisioningInfo
+    let fileInfo: FileInfo
 
     var body: some View {
-        if let info {
-            documentContent(for: info)
-        } else {
-            ProgressView()
-        }
+        documentContent(for: info)
     }
 }
 
@@ -53,10 +49,8 @@ private extension ProvisioningPreviewView {
                     }
                 }
 
-                if let fileURL {
-                    section(title: "File Info") {
-                        FileInfoSection(fileURL: fileURL)
-                    }
+                section(title: "File Info") {
+                    FileInfoSection(fileInfo: fileInfo)
                 }
 
                 footer()
@@ -146,12 +140,12 @@ struct DiagnosticsSection: View {
 
 struct FailedDocumentView: View {
     let error: Error
-    let fileURL: URL?
+    let fileInfo: FileInfo
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: UIConstants.Padding.standard) {
-                Text("\(fileURL?.lastPathComponent ?? "Profile") could not be parsed")
+                Text("\(fileInfo.fileName) could not be parsed")
                     .font(.title)
                     .fontWeight(.bold)
 
@@ -168,10 +162,8 @@ struct FailedDocumentView: View {
                     }
                 }
 
-                if let fileURL {
-                    section(title: "File Info") {
-                        FileInfoSection(fileURL: fileURL)
-                    }
+                section(title: "File Info") {
+                    FileInfoSection(fileInfo: fileInfo)
                 }
 
                 footer()

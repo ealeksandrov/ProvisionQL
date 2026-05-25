@@ -57,7 +57,6 @@ enum PlistParser {
             bundleIdentifier: bundleIdentifier,
             version: version,
             buildNumber: buildNumber,
-            icon: nil,
             embeddedProvisioningProfile: nil,
             entitlements: [:],
             deviceFamily: deviceFamily,

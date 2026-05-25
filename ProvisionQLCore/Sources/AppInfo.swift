@@ -4,15 +4,13 @@
 //
 //  Created by Evgeny Aleksandrov
 
-import AppKit
 import Foundation
 
-public struct AppInfo {
+public struct AppInfo: Sendable, Codable, Hashable {
     public let name: String
     public let bundleIdentifier: String
     public let version: String
     public let buildNumber: String
-    public let icon: NSImage?
     public let embeddedProvisioningProfile: ProvisioningInfo?
     public let entitlements: [String: PlistValue]
     public let deviceFamily: [String]
@@ -26,7 +24,6 @@ public struct AppInfo {
         bundleIdentifier: String,
         version: String,
         buildNumber: String,
-        icon: NSImage? = nil,
         embeddedProvisioningProfile: ProvisioningInfo? = nil,
         entitlements: [String: PlistValue] = [:],
         deviceFamily: [String] = [],
@@ -39,7 +36,6 @@ public struct AppInfo {
         self.bundleIdentifier = bundleIdentifier
         self.version = version
         self.buildNumber = buildNumber
-        self.icon = icon
         self.embeddedProvisioningProfile = embeddedProvisioningProfile
         self.entitlements = entitlements
         self.deviceFamily = deviceFamily

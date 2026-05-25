@@ -25,19 +25,26 @@ enum ArchiveUtilities {
         return try extractData(from: entry, in: archive)
     }
 
-    /// Extracts data from a specific file in the archive with case-insensitive search
+    /// Extracts data from a specific file in the archive if present.
     /// - Parameters:
     ///   - archive: The ZIP archive
     ///   - path: The path to the file within the archive
+    ///   - caseInsensitive: Whether to fall back to a case-insensitive entry search
     /// - Returns: The extracted data if found, nil otherwise
     /// - Throws: Error if extraction fails
-    static func extractFileOptional(from archive: Archive, path: String) throws -> Data? {
-        // Try exact match first
+    static func extractFileIfPresent(
+        from archive: Archive,
+        path: String,
+        caseInsensitive: Bool = false
+    ) throws -> Data? {
         if let entry = archive[path] {
             return try extractData(from: entry, in: archive)
         }
 
-        // Try case-insensitive search
+        guard caseInsensitive else {
+            return nil
+        }
+
         for entry in archive {
             if entry.path.lowercased() == path.lowercased() {
                 return try extractData(from: entry, in: archive)
@@ -45,6 +52,39 @@ enum ArchiveUtilities {
         }
 
         return nil
+    }
+
+    /// Extracts a specific file to disk if present.
+    /// - Parameters:
+    ///   - archive: The ZIP archive
+    ///   - path: The path to the file within the archive
+    ///   - destinationURL: The destination file URL
+    ///   - caseInsensitive: Whether to fall back to a case-insensitive entry search
+    /// - Returns: `true` if the file was found and extracted, otherwise `false`
+    /// - Throws: Error if extraction fails
+    static func extractFileIfPresent(
+        from archive: Archive,
+        path: String,
+        to destinationURL: URL,
+        caseInsensitive: Bool = false
+    ) throws -> Bool {
+        if let entry = archive[path] {
+            try extract(entry, from: archive, to: destinationURL)
+            return true
+        }
+
+        guard caseInsensitive else {
+            return false
+        }
+
+        for entry in archive {
+            if entry.path.lowercased() == path.lowercased() {
+                try extract(entry, from: archive, to: destinationURL)
+                return true
+            }
+        }
+
+        return false
     }
 
     /// Extracts data from an archive entry
@@ -59,6 +99,14 @@ enum ArchiveUtilities {
             data.append(chunk)
         }
         return data
+    }
+
+    private static func extract(_ entry: Entry, from archive: Archive, to destinationURL: URL) throws {
+        try FileManager.default.createDirectory(
+            at: destinationURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        _ = try archive.extract(entry, to: destinationURL)
     }
 
     // MARK: - App Bundle Path Finding

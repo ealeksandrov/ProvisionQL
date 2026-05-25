@@ -9,7 +9,8 @@ import SwiftUI
 
 struct AppArchivePreviewView: View {
     let appInfo: AppInfo
-    let fileURL: URL?
+    let icon: NSImage?
+    let fileInfo: FileInfo
 
     var body: some View {
         ScrollView {
@@ -58,10 +59,8 @@ struct AppArchivePreviewView: View {
                     embeddedProfileSection(profile: profile)
                 }
 
-                if let fileURL {
-                    section(title: "File Info") {
-                        FileInfoSection(fileURL: fileURL)
-                    }
+                section(title: "File Info") {
+                    FileInfoSection(fileInfo: fileInfo)
                 }
 
                 footer()
@@ -75,7 +74,7 @@ struct AppArchivePreviewView: View {
 private extension AppArchivePreviewView {
     func appHeader() -> some View {
         HStack(alignment: .top, spacing: UIConstants.Padding.large) {
-            if let icon = appInfo.icon {
+            if let icon {
                 Image(nsImage: icon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -172,8 +171,7 @@ private extension AppArchivePreviewView {
     }
 
     var isAppExtension: Bool {
-        guard let fileURL else { return false }
-        return fileURL.pathExtension.lowercased() == "appex"
+        appInfo.extensionPointIdentifier != nil || fileInfo.fileName.lowercased().hasSuffix(".appex")
     }
 }
 

@@ -484,6 +484,46 @@ struct CoreTests {
         }
     }
 
+    @Suite("Mach-O Entitlements Tests")
+    struct MachOEntitlementsTests {
+        @Test("Extracts embedded entitlements from code signature")
+        func extractsEmbeddedEntitlements() throws {
+            let executableData = try createMachOExecutableData(entitlements: [
+                "application-identifier": "ABCDE12345.com.example.app",
+                "get-task-allow": true
+            ])
+            let executableURL = URL(fileURLWithPath: NSTemporaryDirectory())
+                .appendingPathComponent(UUID().uuidString)
+            defer { try? FileManager.default.removeItem(at: executableURL) }
+
+            try executableData.write(to: executableURL)
+
+            let entitlements = EntitlementsExtractor.extractEntitlements(fromCodeAt: executableURL)
+
+            #expect(entitlements["application-identifier"] == .string("ABCDE12345.com.example.app"))
+            #expect(entitlements["get-task-allow"] == .bool(true))
+        }
+
+        @Test("Rejects fat headers with impossible architecture counts")
+        func rejectsImpossibleFatArchitectureCount() {
+            var data = Data()
+            data.appendBigEndianUInt32(0xCAFE_BABE)
+            data.appendBigEndianUInt32(UInt32.max)
+
+            #expect(MachOEntitlementsReader.extractEntitlements(from: data) == nil)
+        }
+
+        @Test("Rejects short code signature load commands")
+        func rejectsShortCodeSignatureLoadCommand() {
+            var data = createMachOHeader(loadCommandCount: 1, loadCommandsSize: 12)
+            data.appendLittleEndianUInt32(0x1D)
+            data.appendLittleEndianUInt32(12)
+            data.appendLittleEndianUInt32(0)
+
+            #expect(MachOEntitlementsReader.extractEntitlements(from: data) == nil)
+        }
+    }
+
     @Suite("RawProfile Tests", .tags(.models))
     struct RawProfileTests {
         @Test("RawProfile Codable conformance")
@@ -524,6 +564,67 @@ struct CoreTests {
             #expect(decodedProfile.ProvisionedDevices == originalProfile.ProvisionedDevices)
             #expect(decodedProfile.ProvisionsAllDevices == originalProfile.ProvisionsAllDevices)
             #expect(decodedProfile.Platform == originalProfile.Platform)
+        }
+    }
+}
+
+private func createMachOHeader(loadCommandCount: UInt32, loadCommandsSize: UInt32) -> Data {
+    var executable = Data()
+    executable.appendLittleEndianUInt32(0xFEED_FACF)
+    executable.appendLittleEndianUInt32(0x0100_000C)
+    executable.appendLittleEndianUInt32(0)
+    executable.appendLittleEndianUInt32(2)
+    executable.appendLittleEndianUInt32(loadCommandCount)
+    executable.appendLittleEndianUInt32(loadCommandsSize)
+    executable.appendLittleEndianUInt32(0)
+    executable.appendLittleEndianUInt32(0)
+    return executable
+}
+
+private func createMachOExecutableData(entitlements: [String: Any]) throws -> Data {
+    let plistData = try PropertyListSerialization.data(
+        fromPropertyList: entitlements,
+        format: .xml,
+        options: 0
+    )
+
+    var entitlementsBlob = Data()
+    entitlementsBlob.appendBigEndianUInt32(0xFADE_7171)
+    entitlementsBlob.appendBigEndianUInt32(UInt32(8 + plistData.count))
+    entitlementsBlob.append(plistData)
+
+    var codeSignature = Data()
+    codeSignature.appendBigEndianUInt32(0xFADE_0CC0)
+    codeSignature.appendBigEndianUInt32(UInt32(20 + entitlementsBlob.count))
+    codeSignature.appendBigEndianUInt32(1)
+    codeSignature.appendBigEndianUInt32(5)
+    codeSignature.appendBigEndianUInt32(20)
+    codeSignature.append(entitlementsBlob)
+
+    let codeSignatureOffset: UInt32 = 48
+
+    var executable = createMachOHeader(loadCommandCount: 1, loadCommandsSize: 16)
+    executable.appendLittleEndianUInt32(0x1D)
+    executable.appendLittleEndianUInt32(16)
+    executable.appendLittleEndianUInt32(codeSignatureOffset)
+    executable.appendLittleEndianUInt32(UInt32(codeSignature.count))
+    executable.append(codeSignature)
+
+    return executable
+}
+
+private extension Data {
+    mutating func appendLittleEndianUInt32(_ value: UInt32) {
+        var littleEndianValue = value.littleEndian
+        Swift.withUnsafeBytes(of: &littleEndianValue) { buffer in
+            append(contentsOf: buffer)
+        }
+    }
+
+    mutating func appendBigEndianUInt32(_ value: UInt32) {
+        var bigEndianValue = value.bigEndian
+        Swift.withUnsafeBytes(of: &bigEndianValue) { buffer in
+            append(contentsOf: buffer)
         }
     }
 }
