@@ -42,7 +42,7 @@ final class PreviewModel {
             content = try await Self.loadContent(for: url)
         } catch {
             let fileInfo = await Self.fileInfo(for: url)
-            content = .failed(error, url, fileInfo)
+            content = .failed(error, fileInfo)
         }
     }
 }
@@ -89,7 +89,7 @@ enum PreviewContent {
     case loading
     case profile(ProvisioningInfo, FileInfo)
     case archive(AppInfo, NSImage?, FileInfo)
-    case failed(Error, URL, FileInfo)
+    case failed(Error, FileInfo)
 }
 
 struct PreviewRootView: View {
@@ -104,8 +104,8 @@ struct PreviewRootView: View {
             ProvisioningPreviewView(info: info, fileInfo: fileInfo)
         case .archive(let appInfo, let icon, let fileInfo):
             AppArchivePreviewView(appInfo: appInfo, icon: icon, fileInfo: fileInfo)
-        case .failed(let error, let fileURL, let fileInfo):
-            FailedDocumentView(error: error, fileURL: fileURL, fileInfo: fileInfo)
+        case .failed(let error, let fileInfo):
+            FailedDocumentView(error: error, fileInfo: fileInfo)
         }
     }
 }
