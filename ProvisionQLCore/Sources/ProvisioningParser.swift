@@ -74,8 +74,6 @@ private extension ProvisioningParser {
 
         for signerIndex in 0 ..< signerCount {
             var cmsSignerStatus = CMSSignerStatus.unsigned
-            var trust: SecTrust?
-            var certVerifyResult = errSecSuccess
 
             guard CMSDecoderCopySignerStatus(
                 cmsDecoder,
@@ -83,8 +81,8 @@ private extension ProvisioningParser {
                 policy,
                 true,
                 &cmsSignerStatus,
-                &trust,
-                &certVerifyResult
+                nil,
+                nil
             ) == errSecSuccess else {
                 continue
             }

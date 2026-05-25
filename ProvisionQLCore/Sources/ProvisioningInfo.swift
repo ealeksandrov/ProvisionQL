@@ -246,12 +246,13 @@ private extension ProvisioningInfo.ProfileType {
         }
 
         switch profileType.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() {
-        case "IOS_APP_DEVELOPMENT", "MAC_APP_DEVELOPMENT", "TVOS_APP_DEVELOPMENT",
+        case "IOS_APP_DEVELOPMENT", "MAC_APP_DEVELOPMENT", "TVOS_APP_DEVELOPMENT", "VISIONOS_APP_DEVELOPMENT",
+             "WATCHOS_APP_DEVELOPMENT",
              "MAC_CATALYST_APP_DEVELOPMENT":
             self = .development
-        case "IOS_APP_ADHOC", "TVOS_APP_ADHOC":
+        case "IOS_APP_ADHOC", "TVOS_APP_ADHOC", "VISIONOS_APP_ADHOC":
             self = .adHoc
-        case "IOS_APP_STORE", "MAC_APP_STORE", "TVOS_APP_STORE", "MAC_CATALYST_APP_STORE":
+        case "IOS_APP_STORE", "MAC_APP_STORE", "TVOS_APP_STORE", "VISIONOS_APP_STORE", "MAC_CATALYST_APP_STORE":
             self = .appStore
         case "IOS_APP_INHOUSE", "TVOS_APP_INHOUSE":
             self = .enterprise

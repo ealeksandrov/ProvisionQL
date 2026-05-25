@@ -206,6 +206,10 @@ struct CoreTests {
             (profileType: "MAC_APP_STORE", expected: ProvisioningInfo.ProfileType.appStore),
             (profileType: "MAC_APP_DIRECT", expected: ProvisioningInfo.ProfileType.directDistribution),
             (profileType: "MAC_CATALYST_APP_DIRECT", expected: ProvisioningInfo.ProfileType.directDistribution),
+            (profileType: "VISIONOS_APP_DEVELOPMENT", expected: ProvisioningInfo.ProfileType.development),
+            (profileType: "VISIONOS_APP_ADHOC", expected: ProvisioningInfo.ProfileType.adHoc),
+            (profileType: "VISIONOS_APP_STORE", expected: ProvisioningInfo.ProfileType.appStore),
+            (profileType: "WATCHOS_APP_DEVELOPMENT", expected: ProvisioningInfo.ProfileType.development),
             (profileType: "DEVELOPER_ID", expected: ProvisioningInfo.ProfileType.developerID),
             (profileType: "DIRECT_DISTRIBUTION", expected: ProvisioningInfo.ProfileType.directDistribution)
         ])
