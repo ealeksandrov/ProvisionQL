@@ -15,6 +15,13 @@ struct ProvisionQLApp: App {
         WindowGroup {
             ContentView(model: appDelegate.model)
         }
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About ProvisionQL") {
+                    AboutPanel.show()
+                }
+            }
+        }
     }
 }
 
