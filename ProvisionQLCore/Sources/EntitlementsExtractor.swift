@@ -59,7 +59,11 @@ private extension EntitlementsExtractor {
             return nil
         }
 
-        guard case .dictionary(let entitlements) = PlistValue.from(value: entitlementsData) else {
+        guard let entitlementsValue = PlistValue.from(value: entitlementsData) else {
+            return nil
+        }
+
+        guard case .dictionary(let entitlements) = entitlementsValue else {
             return nil
         }
 
