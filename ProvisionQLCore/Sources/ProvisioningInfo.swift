@@ -24,6 +24,23 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
     public let platform: [Platform]
     public let diagnostics: [ProvisioningDiagnostic]
 
+    private enum CodingKeys: String, CodingKey {
+        case uuid
+        case name
+        case teamName
+        case teamID
+        case appID
+        case expirationDate
+        case creationDate
+        case devices
+        case certificates
+        case entitlements
+        case profileType
+        case signerStatus
+        case platform
+        case diagnostics
+    }
+
     @frozen
     public enum ProfileType: String, Codable, Sendable {
         case development = "Development"
@@ -101,6 +118,25 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
         }
 
         return .valid
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        uuid = try container.decode(String.self, forKey: .uuid)
+        name = try container.decode(String.self, forKey: .name)
+        teamName = try container.decode(String.self, forKey: .teamName)
+        teamID = try container.decode(String.self, forKey: .teamID)
+        appID = try container.decode(String.self, forKey: .appID)
+        expirationDate = try container.decode(Date.self, forKey: .expirationDate)
+        creationDate = try container.decode(Date.self, forKey: .creationDate)
+        devices = try container.decodeIfPresent([String].self, forKey: .devices)
+        certificates = try container.decode([CertificateInfo].self, forKey: .certificates)
+        entitlements = try container.decode([String: PlistValue].self, forKey: .entitlements)
+        profileType = try container.decode(ProfileType.self, forKey: .profileType)
+        signerStatus = try container.decodeIfPresent(SignerStatus.self, forKey: .signerStatus) ?? .unknown
+        platform = try container.decode([Platform].self, forKey: .platform)
+        diagnostics = try container.decode([ProvisioningDiagnostic].self, forKey: .diagnostics)
     }
 }
 

@@ -258,6 +258,38 @@ struct CoreTests {
             #expect(provisioningInfo.signerStatus == .signedByAppleWWDR)
         }
 
+        @Test("Missing signer status decodes as unknown")
+        func missingSignerStatusDecodesAsUnknown() throws {
+            let mockProfile = RawProfile(
+                UUID: "FEDCBA09-8765-4321-FEDC-BA0987654321",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(86400),
+                CreationDate: Date(),
+                DeveloperCertificates: nil,
+                ProvisionedDevices: nil,
+                ProvisionsAllDevices: false,
+                Platform: ["iOS"]
+            )
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile, signerStatus: .signedByAppleWWDR)
+
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
+            let data = try encoder.encode(provisioningInfo)
+            var plist = try #require(
+                PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any]
+            )
+            plist.removeValue(forKey: "signerStatus")
+
+            let legacyData = try PropertyListSerialization.data(fromPropertyList: plist, format: .binary, options: 0)
+            let decoded = try PropertyListDecoder().decode(ProvisioningInfo.self, from: legacyData)
+
+            #expect(decoded.signerStatus == .unknown)
+        }
+
         @Test("Platform detection", arguments: [
             (platformStrings: ["iOS"], expected: [ProvisioningInfo.Platform.iOS]),
             (platformStrings: ["macOS"], expected: [ProvisioningInfo.Platform.macOS]),
