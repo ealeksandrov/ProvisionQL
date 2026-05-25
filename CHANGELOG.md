@@ -6,6 +6,7 @@
 * Improves provisioning profile validation and in-preview error reporting
 * Fixes certificate expiration parsing
 * Preserves unknown provisioning platforms and nested entitlement values
+* Shows explicit provisioning profile type and signature status
 * Fixes parsing for macOS `.xcarchive` and `.appex` bundles
 * Shows archive parsing failures in the preview
 
