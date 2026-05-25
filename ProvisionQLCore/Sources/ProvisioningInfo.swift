@@ -29,6 +29,8 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
         case adHoc = "Distribution (Ad Hoc)"
         case appStore = "Distribution (App Store)"
         case enterprise = "Enterprise"
+        case developerID = "Developer ID"
+        case directDistribution = "Direct Distribution"
     }
 
     @frozen
@@ -136,29 +138,7 @@ extension ProvisioningInfo {
         }
         certificates = certificateInfos
 
-        // Determine profile type
-        let hasDevices = profile.ProvisionedDevices != nil
-        let getTaskAllow: Bool = {
-            if case .bool(let value) = entitlements["get-task-allow"] {
-                return value
-            }
-            return false
-        }()
-        let isEnterprise = profile.ProvisionsAllDevices ?? false
-
-        if hasDevices {
-            if getTaskAllow {
-                profileType = .development
-            } else {
-                profileType = .adHoc
-            }
-        } else {
-            if isEnterprise {
-                profileType = .enterprise
-            } else {
-                profileType = .appStore
-            }
-        }
+        profileType = Self.profileType(for: profile, entitlements: entitlements)
 
         // Determine platform
         let platforms = profile.Platform?.compactMap { platformString in
@@ -222,5 +202,52 @@ extension ProvisioningInfo {
 
     private static func firstNonEmpty(_ values: [String]?) -> String? {
         values?.compactMap(nonEmpty).first
+    }
+
+    private static func profileType(for profile: RawProfile, entitlements: [String: PlistValue]) -> ProfileType {
+        if let explicitType = ProfileType(profile.ProfileType) {
+            return explicitType
+        }
+
+        let hasDevices = profile.ProvisionedDevices != nil
+        let getTaskAllow: Bool = {
+            if case .bool(let value) = entitlements["get-task-allow"] {
+                return value
+            }
+            return false
+        }()
+        let isEnterprise = profile.ProvisionsAllDevices ?? false
+
+        if hasDevices {
+            return getTaskAllow ? .development : .adHoc
+        } else {
+            return isEnterprise ? .enterprise : .appStore
+        }
+    }
+}
+
+private extension ProvisioningInfo.ProfileType {
+    init?(_ profileType: String?) {
+        guard let profileType else {
+            return nil
+        }
+
+        switch profileType.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() {
+        case "IOS_APP_DEVELOPMENT", "MAC_APP_DEVELOPMENT", "TVOS_APP_DEVELOPMENT",
+             "MAC_CATALYST_APP_DEVELOPMENT":
+            self = .development
+        case "IOS_APP_ADHOC", "TVOS_APP_ADHOC":
+            self = .adHoc
+        case "IOS_APP_STORE", "MAC_APP_STORE", "TVOS_APP_STORE", "MAC_CATALYST_APP_STORE":
+            self = .appStore
+        case "IOS_APP_INHOUSE", "TVOS_APP_INHOUSE":
+            self = .enterprise
+        case "DEVELOPER_ID", "MAC_APP_DEVELOPER_ID":
+            self = .developerID
+        case "MAC_APP_DIRECT", "MAC_CATALYST_APP_DIRECT", "DIRECT_DISTRIBUTION", "MAC_APP_DIRECT_DISTRIBUTION":
+            self = .directDistribution
+        default:
+            return nil
+        }
     }
 }

@@ -196,6 +196,42 @@ struct CoreTests {
             #expect(provisioningInfo.profileType == expected)
         }
 
+        @Test("Explicit profile type is preferred over device heuristic", arguments: [
+            (profileType: "IOS_APP_DEVELOPMENT", expected: ProvisioningInfo.ProfileType.development),
+            (profileType: "IOS_APP_ADHOC", expected: ProvisioningInfo.ProfileType.adHoc),
+            (profileType: "IOS_APP_STORE", expected: ProvisioningInfo.ProfileType.appStore),
+            (profileType: "IOS_APP_INHOUSE", expected: ProvisioningInfo.ProfileType.enterprise),
+            (profileType: "MAC_APP_DEVELOPMENT", expected: ProvisioningInfo.ProfileType.development),
+            (profileType: "MAC_APP_STORE", expected: ProvisioningInfo.ProfileType.appStore),
+            (profileType: "MAC_APP_DIRECT", expected: ProvisioningInfo.ProfileType.directDistribution),
+            (profileType: "MAC_CATALYST_APP_DIRECT", expected: ProvisioningInfo.ProfileType.directDistribution),
+            (profileType: "DEVELOPER_ID", expected: ProvisioningInfo.ProfileType.developerID),
+            (profileType: "DIRECT_DISTRIBUTION", expected: ProvisioningInfo.ProfileType.directDistribution)
+        ])
+        func explicitProfileTypeIsPreferredOverDeviceHeuristic(
+            profileType: String,
+            expected: ProvisioningInfo.ProfileType
+        ) throws {
+            let mockProfile = RawProfile(
+                UUID: "FEDCBA09-8765-4321-FEDC-BA0987654321",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(86400),
+                CreationDate: Date(),
+                DeveloperCertificates: nil,
+                ProvisionedDevices: nil,
+                ProvisionsAllDevices: false,
+                Platform: ["macOS"],
+                ProfileType: profileType
+            )
+
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
+            #expect(provisioningInfo.profileType == expected)
+        }
+
         @Test("Platform detection", arguments: [
             (platformStrings: ["iOS"], expected: [ProvisioningInfo.Platform.iOS]),
             (platformStrings: ["macOS"], expected: [ProvisioningInfo.Platform.macOS]),
