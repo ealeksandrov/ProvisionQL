@@ -147,6 +147,7 @@ struct CoreTests {
             #expect(provisioningInfo.creationDate == creationDate)
             #expect(provisioningInfo.devices?.count == 2)
             #expect(provisioningInfo.profileType == .development)
+            #expect(provisioningInfo.signerStatus == .unknown)
             #expect(provisioningInfo.platform == [.iOS])
         }
 
@@ -230,6 +231,27 @@ struct CoreTests {
 
             let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             #expect(provisioningInfo.profileType == expected)
+        }
+
+        @Test("Signer status is stored on provisioning info")
+        func signerStatusIsStoredOnProvisioningInfo() throws {
+            let mockProfile = RawProfile(
+                UUID: "FEDCBA09-8765-4321-FEDC-BA0987654321",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(86400),
+                CreationDate: Date(),
+                DeveloperCertificates: nil,
+                ProvisionedDevices: nil,
+                ProvisionsAllDevices: false,
+                Platform: ["iOS"]
+            )
+
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile, signerStatus: .signedByAppleWWDR)
+            #expect(provisioningInfo.signerStatus == .signedByAppleWWDR)
         }
 
         @Test("Platform detection", arguments: [
@@ -583,7 +605,8 @@ struct CoreTests {
                 DeveloperCertificates: [Data([0x01, 0x02, 0x03])],
                 ProvisionedDevices: ["device"],
                 ProvisionsAllDevices: true,
-                Platform: ["iOS", "macOS"]
+                Platform: ["iOS", "macOS"],
+                ProfileType: "MAC_APP_DIRECT"
             )
 
             let encoder = PropertyListEncoder()
@@ -600,6 +623,7 @@ struct CoreTests {
             #expect(decodedProfile.ProvisionedDevices == originalProfile.ProvisionedDevices)
             #expect(decodedProfile.ProvisionsAllDevices == originalProfile.ProvisionsAllDevices)
             #expect(decodedProfile.Platform == originalProfile.Platform)
+            #expect(decodedProfile.ProfileType == originalProfile.ProfileType)
         }
     }
 }

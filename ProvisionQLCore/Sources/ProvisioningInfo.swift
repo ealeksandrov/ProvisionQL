@@ -20,6 +20,7 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
     public let certificates: [CertificateInfo]
     public let entitlements: [String: PlistValue]
     public let profileType: ProfileType
+    public let signerStatus: SignerStatus
     public let platform: [Platform]
     public let diagnostics: [ProvisioningDiagnostic]
 
@@ -31,6 +32,17 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
         case enterprise = "Enterprise"
         case developerID = "Developer ID"
         case directDistribution = "Direct Distribution"
+    }
+
+    @frozen
+    public enum SignerStatus: String, Codable, Sendable, Hashable {
+        case signedByAppleWWDR = "Signed by Apple WWDR"
+        case signed = "Signed"
+        case unsigned = "Unsigned"
+        case invalidSignature = "Invalid Signature"
+        case invalidCertificate = "Invalid Certificate"
+        case needsDetachedContent = "Needs Detached Content"
+        case unknown = "Signature Unknown"
     }
 
     @frozen
@@ -93,7 +105,7 @@ public struct ProvisioningInfo: Sendable, Codable, Hashable {
 }
 
 extension ProvisioningInfo {
-    init(from profile: RawProfile) throws {
+    init(from profile: RawProfile, signerStatus: SignerStatus = .unknown) throws {
         let missingFields = Self.missingRequiredFields(in: profile)
         guard
             missingFields.isEmpty,
@@ -114,6 +126,7 @@ extension ProvisioningInfo {
         self.teamName = teamName
         self.teamID = teamID
         self.appID = appID
+        self.signerStatus = signerStatus
         self.expirationDate = expirationDate
         self.creationDate = creationDate
         devices = profile.ProvisionedDevices
