@@ -178,7 +178,7 @@ private struct EmptyStateView: View {
                     .font(.title2)
                     .fontWeight(.semibold)
 
-                Text(".ipa, .xcarchive, .appex, .mobileprovision, .provisionprofile")
+                Text(".ipa, .tipa, .xcarchive, .appex, .mobileprovision, .provisionprofile")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

@@ -8,6 +8,7 @@
 * Preserves unknown provisioning platforms and nested entitlement values
 * Shows explicit provisioning profile type and signature status
 * Fixes parsing for macOS `.xcarchive` and `.appex` bundles
+* Adds support for `.tipa` (TrollStore IPA) files
 * Shows archive parsing failures in the preview
 * Adds a host app file inspector for opening and dropping supported files
 

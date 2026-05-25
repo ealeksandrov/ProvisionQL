@@ -16,7 +16,7 @@ public enum IconExtractor {
         let fileExtension = url.pathExtension.lowercased()
 
         switch fileExtension {
-        case "ipa":
+        case "ipa", "tipa":
             let source = try IPAAppBundleSource(url: url)
             return try extractIconSource(from: source)
         case "xcarchive":
