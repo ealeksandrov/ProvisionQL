@@ -10,7 +10,7 @@ import SwiftUI
 
 struct ProvisioningPreviewView: View {
     let info: ProvisioningInfo?
-    let fileURL: URL?
+    let fileInfo: FileInfo?
 
     var body: some View {
         if let info {
@@ -53,9 +53,9 @@ private extension ProvisioningPreviewView {
                     }
                 }
 
-                if let fileURL {
+                if let fileInfo {
                     section(title: "File Info") {
-                        FileInfoSection(fileURL: fileURL)
+                        FileInfoSection(fileInfo: fileInfo)
                     }
                 }
 
@@ -147,6 +147,7 @@ struct DiagnosticsSection: View {
 struct FailedDocumentView: View {
     let error: Error
     let fileURL: URL?
+    let fileInfo: FileInfo?
 
     var body: some View {
         ScrollView {
@@ -168,9 +169,9 @@ struct FailedDocumentView: View {
                     }
                 }
 
-                if let fileURL {
+                if let fileInfo {
                     section(title: "File Info") {
-                        FileInfoSection(fileURL: fileURL)
+                        FileInfoSection(fileInfo: fileInfo)
                     }
                 }
 

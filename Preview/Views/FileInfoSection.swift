@@ -6,36 +6,49 @@
 
 import SwiftUI
 
+struct FileInfo: Hashable {
+    let fileName: String
+    let fileSize: String
+    let modificationDate: String
+
+    init(fileURL: URL) {
+        fileName = fileURL.lastPathComponent
+
+        let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
+        fileSize = Self.formattedFileSize(for: fileURL, attributes: attributes)
+        modificationDate = Self.formattedModificationDate(from: attributes)
+    }
+}
+
 struct FileInfoSection: View {
-    let fileURL: URL
+    let fileInfo: FileInfo
 
-    var fileAttributes: [FileAttributeKey: Any]? {
-        try? FileManager.default.attributesOfItem(atPath: fileURL.path)
+    var body: some View {
+        VStack(alignment: .leading, spacing: UIConstants.Padding.small) {
+            Text(fileInfo.fileName)
+                .codeText()
+
+            Text("\(fileInfo.fileSize), Modified \(fileInfo.modificationDate)")
+                .codeText(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .sectionBackground()
     }
+}
 
-    var fileName: String {
-        fileURL.lastPathComponent
-    }
+private extension FileInfo {
+    static func formattedFileSize(for fileURL: URL, attributes: [FileAttributeKey: Any]?) -> String {
+        let size: Int64
 
-    var fileSize: String {
-        var size: Int64 = 0
-
-        // Check if the URL is a directory
         var isDirectory: ObjCBool = false
         if FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDirectory),
            isDirectory.boolValue
         {
-            // Calculate total size of directory contents
             size = calculateDirectorySize(at: fileURL)
+        } else if let fileSize = attributes?[.size] as? NSNumber {
+            size = fileSize.int64Value
         } else {
-            // For regular files, use the file attributes
-            if let fileAttributes,
-               let fileSize = fileAttributes[.size] as? NSNumber
-            {
-                size = fileSize.int64Value
-            } else {
-                return "Unknown size"
-            }
+            return "Unknown size"
         }
 
         let formatter = ByteCountFormatter()
@@ -43,29 +56,15 @@ struct FileInfoSection: View {
         return formatter.string(fromByteCount: size)
     }
 
-    var modificationDate: String {
-        guard let attributes = fileAttributes,
-              let date = attributes[.modificationDate] as? Date
-        else {
+    static func formattedModificationDate(from attributes: [FileAttributeKey: Any]?) -> String {
+        guard let date = attributes?[.modificationDate] as? Date else {
             return "Unknown date"
         }
 
         return date.formatted(date: .long, time: .standard)
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: UIConstants.Padding.small) {
-            Text(fileName)
-                .codeText()
-
-            Text("\(fileSize), Modified \(modificationDate)")
-                .codeText(.subheadline)
-                .foregroundColor(.secondary)
-        }
-        .sectionBackground()
-    }
-
-    private func calculateDirectorySize(at url: URL) -> Int64 {
+    static func calculateDirectorySize(at url: URL) -> Int64 {
         var totalSize: Int64 = 0
 
         let fileManager = FileManager.default
