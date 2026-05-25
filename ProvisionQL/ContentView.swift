@@ -11,11 +11,12 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     let model: HostAppModel
+    @AppStorage("extensionHintDismissed") private var extensionHintDismissed = false
     @State private var isDropTargeted = false
 
     var body: some View {
         VStack(spacing: 0) {
-            if !model.extensionHintDismissed {
+            if !extensionHintDismissed {
                 ExtensionHintBanner(
                     openSettings: openExtensionSettings,
                     dismiss: dismissExtensionHint
@@ -59,7 +60,7 @@ struct ContentView: View {
     }
 
     private func dismissExtensionHint() {
-        model.extensionHintDismissed = true
+        extensionHintDismissed = true
     }
 
     private func openFile() {
@@ -134,9 +135,9 @@ private struct ExtensionHintBanner: View {
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Enable the Quick Look extension in System Settings")
+                Text("Quick Look previews may need to be enabled")
                     .font(.headline)
-                Text("Finder previews require the bundled ProvisionQL extension.")
+                Text("Open System Settings if Finder previews do not appear.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

@@ -6,7 +6,6 @@ import PreviewUI
 @Observable
 final class HostAppModel {
     let previewModel: PreviewModel
-    var extensionHintDismissed = false
     var openedFileName: String?
 
     var hasOpenedFile: Bool {
