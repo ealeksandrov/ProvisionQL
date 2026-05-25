@@ -42,7 +42,7 @@ final class PreviewModel {
             content = try await Self.loadContent(for: url)
         } catch {
             let fileInfo = await Self.fileInfo(for: url)
-            content = .failed(error, fileInfo)
+            content = .failed(PreviewFailure(error), fileInfo)
         }
     }
 }
@@ -65,7 +65,7 @@ private extension PreviewModel {
             return (result, fileInfo)
         }.value
 
-        return .archive(result.appInfo, result.iconSource?.makeImage(), fileInfo)
+        return .archive(result.appInfo, result.iconSource, fileInfo)
     }
 
     static func loadProvisioningProfileContent(for url: URL) async throws -> PreviewContent {
@@ -88,8 +88,8 @@ private extension PreviewModel {
 enum PreviewContent {
     case loading
     case profile(ProvisioningInfo, FileInfo)
-    case archive(AppInfo, NSImage?, FileInfo)
-    case failed(Error, FileInfo)
+    case archive(AppInfo, IconSource?, FileInfo)
+    case failed(PreviewFailure, FileInfo)
 }
 
 struct PreviewRootView: View {
@@ -102,10 +102,10 @@ struct PreviewRootView: View {
                 .frame(minWidth: UIConstants.Window.minWidth, minHeight: UIConstants.Window.minHeight)
         case .profile(let info, let fileInfo):
             ProvisioningPreviewView(info: info, fileInfo: fileInfo)
-        case .archive(let appInfo, let icon, let fileInfo):
-            AppArchivePreviewView(appInfo: appInfo, icon: icon, fileInfo: fileInfo)
-        case .failed(let error, let fileInfo):
-            FailedDocumentView(error: error, fileInfo: fileInfo)
+        case .archive(let appInfo, let iconSource, let fileInfo):
+            AppArchivePreviewView(appInfo: appInfo, iconSource: iconSource, fileInfo: fileInfo)
+        case .failed(let failure, let fileInfo):
+            FailedDocumentView(failure: failure, fileInfo: fileInfo)
         }
     }
 }

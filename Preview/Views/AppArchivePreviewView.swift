@@ -9,188 +9,63 @@ import SwiftUI
 
 struct AppArchivePreviewView: View {
     let appInfo: AppInfo
-    let icon: NSImage?
+    let iconSource: IconSource?
     let fileInfo: FileInfo
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: UIConstants.Padding.standard) {
-                appHeader()
+        PreviewDocument {
+            AppArchiveHeader(appInfo: appInfo, iconSource: iconSource, fileInfo: fileInfo)
 
-                GroupBox {
-                    VStack(alignment: .leading, spacing: UIConstants.Padding.medium) {
-                        InfoRow(label: "Version", value: appInfo.displayVersion)
-                        InfoRow(label: "Bundle ID", value: appInfo.bundleIdentifier)
-
-                        if let extensionPointIdentifier = appInfo.extensionPointIdentifier {
-                            InfoRow(label: "Extension Point", value: extensionPointIdentifier)
-                        }
-
-                        if !appInfo.deviceFamily.isEmpty {
-                            InfoRow(label: "Device Family", value: appInfo.deviceFamily.joined(separator: ", "))
-                        }
-
-                        if let sdkVersion = appInfo.sdkVersion {
-                            Divider()
-                            InfoRow(label: "SDK Version", value: sdkVersion)
-                        }
-
-                        if let minimumOS = appInfo.minimumOSVersion {
-                            InfoRow(label: "Minimum OS", value: minimumOS)
-                        }
-                    }
-                }
-
-                if !appInfo.diagnostics.isEmpty {
-                    section(title: "Diagnostics") {
-                        AppDiagnosticsSection(diagnostics: appInfo.diagnostics)
-                    }
-                }
-
-                if !appInfo.entitlements.isEmpty {
-                    Divider()
-                    section(title: "App Entitlements") {
-                        EntitlementsSection(entitlements: appInfo.entitlements)
-                    }
-                }
-
-                if appInfo.hasEmbeddedProfile, let profile = appInfo.embeddedProvisioningProfile {
-                    Divider()
-                    embeddedProfileSection(profile: profile)
-                }
-
-                section(title: "File Info") {
-                    FileInfoSection(fileInfo: fileInfo)
-                }
-
-                footer()
-            }
-            .padding()
-        }
-        .frame(minWidth: UIConstants.Window.minWidth, minHeight: UIConstants.Window.minHeight)
-    }
-}
-
-private extension AppArchivePreviewView {
-    func appHeader() -> some View {
-        HStack(alignment: .top, spacing: UIConstants.Padding.large) {
-            if let icon {
-                Image(nsImage: icon)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: UIConstants.Size.iconSize, height: UIConstants.Size.iconSize)
-            } else {
-                RoundedRectangle(cornerRadius: UIConstants.CornerRadius.large)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: UIConstants.Size.iconSize, height: UIConstants.Size.iconSize)
-                    .overlay(
-                        Image(systemName: isAppExtension ? "puzzlepiece.extension" : "app")
-                            .font(.title)
-                            .foregroundColor(.gray)
-                    )
+            GroupBox {
+                appDetails
             }
 
-            VStack(alignment: .leading, spacing: UIConstants.Padding.small) {
-                Text(appInfo.name)
-                    .font(.title)
-                    .fontWeight(.bold)
-
-                Text(appInfo.bundleIdentifier)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+            if !appInfo.diagnostics.isEmpty {
+                PreviewSection(title: "Diagnostics") {
+                    DiagnosticsView(diagnostics: appInfo.diagnostics)
+                }
             }
 
-            Spacer()
+            if !appInfo.entitlements.isEmpty {
+                Divider()
+                PreviewSection(title: "App Entitlements") {
+                    EntitlementsSection(entitlements: appInfo.entitlements)
+                }
+            }
+
+            if appInfo.hasEmbeddedProfile, let profile = appInfo.embeddedProvisioningProfile {
+                Divider()
+                EmbeddedProvisioningProfileSection(profile: profile)
+            }
+
+            PreviewSection(title: "File Info") {
+                FileInfoSection(fileInfo: fileInfo)
+            }
+
+            PreviewFooter()
         }
     }
 
-    func embeddedProfileSection(profile: ProvisioningInfo) -> some View {
-        section(title: "Embedded Provisioning Profile") {
-            VStack(alignment: .leading, spacing: UIConstants.Padding.standard) {
-                // Profile header with smaller title
-                VStack(alignment: .leading, spacing: UIConstants.Padding.medium) {
-                    Text(profile.name)
-                        .font(.headline)
-                        .fontWeight(.semibold)
+    private var appDetails: some View {
+        VStack(alignment: .leading, spacing: UIConstants.Padding.medium) {
+            InfoRow(label: "Version", value: appInfo.displayVersion)
+            InfoRow(label: "Bundle ID", value: appInfo.bundleIdentifier)
 
-                    ProvisioningProfileHeader(profile: profile, showTitle: false)
-                }
-
-                profileContent(for: profile)
-            }
-        }
-    }
-
-    func profileContent(for profile: ProvisioningInfo) -> some View {
-        VStack(alignment: .leading, spacing: UIConstants.Padding.standard) {
-            OverviewSection(info: profile)
-
-            if !profile.diagnostics.isEmpty {
-                section(title: "Diagnostics") {
-                    DiagnosticsSection(diagnostics: profile.diagnostics)
-                }
+            if let extensionPointIdentifier = appInfo.extensionPointIdentifier {
+                InfoRow(label: "Extension Point", value: extensionPointIdentifier)
             }
 
-            if !profile.certificates.isEmpty {
-                section(title: "Certificates (\(profile.certificates.count))") {
-                    CertificatesSection(certificates: profile.certificates)
-                }
+            if !appInfo.deviceFamily.isEmpty {
+                InfoRow(label: "Device Family", value: appInfo.deviceFamily.joined(separator: ", "))
             }
 
-            if let devices = profile.devices, !devices.isEmpty {
-                section(title: "Devices (\(devices.count))") {
-                    DevicesSection(devices: devices)
-                }
+            if let sdkVersion = appInfo.sdkVersion {
+                Divider()
+                InfoRow(label: "SDK Version", value: sdkVersion)
             }
-        }
-    }
 
-    func section(title: String, @ViewBuilder content: () -> some View) -> some View {
-        VStack(alignment: .leading) {
-            Text(title)
-                .fontWeight(.semibold)
-                .font(.title2)
-
-            content()
-        }
-    }
-
-    func footer() -> some View {
-        HStack {
-            Text("ProvisionQL \(AppVersion.versionString)")
-
-            #if DEBUG
-                Text("(debug)")
-            #endif
-
-            Spacer()
-        }
-        .foregroundColor(.secondary)
-        .font(.subheadline)
-        .frame(maxWidth: .infinity)
-    }
-
-    var isAppExtension: Bool {
-        appInfo.extensionPointIdentifier != nil || fileInfo.fileName.lowercased().hasSuffix(".appex")
-    }
-}
-
-struct AppDiagnosticsSection: View {
-    let diagnostics: [AppDiagnostic]
-
-    var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: UIConstants.Padding.medium) {
-                ForEach(diagnostics, id: \.self) { diagnostic in
-                    HStack(alignment: .top, spacing: UIConstants.Padding.medium) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
-
-                        Text(diagnostic.message)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
+            if let minimumOS = appInfo.minimumOSVersion {
+                InfoRow(label: "Minimum OS", value: minimumOS)
             }
         }
     }
