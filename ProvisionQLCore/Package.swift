@@ -11,6 +11,10 @@ let package = Package(
             name: "ProvisionQLCore",
             targets: ["ProvisionQLCore"]
         ),
+        .library(
+            name: "PreviewUI",
+            targets: ["PreviewUI"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.20"),
@@ -20,6 +24,11 @@ let package = Package(
             name: "ProvisionQLCore",
             dependencies: ["ZIPFoundation"],
             path: "Sources"
+        ),
+        .target(
+            name: "PreviewUI",
+            dependencies: ["ProvisionQLCore"],
+            path: "PreviewUI"
         ),
         .testTarget(
             name: "ProvisionQLCoreTests",

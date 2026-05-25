@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		17BD43CB3FB44CC1B2DDB0CB /* PreviewUI in Frameworks */ = {isa = PBXBuildFile; productRef = B9B0A43209104350B4BEC618 /* PreviewUI */; };
 		55465FD02E0401D70008C983 /* ProvisionQLCore in Frameworks */ = {isa = PBXBuildFile; productRef = 55465FCF2E0401D70008C983 /* ProvisionQLCore */; };
 		55465FD22E0402510008C983 /* ProvisionQLCore in Frameworks */ = {isa = PBXBuildFile; productRef = 55465FD12E0402510008C983 /* ProvisionQLCore */; };
 		55BC97352DFF0870008F9F5D /* QuickLookThumbnailing.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55BC97342DFF0870008F9F5D /* QuickLookThumbnailing.framework */; };
@@ -119,6 +120,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				17BD43CB3FB44CC1B2DDB0CB /* PreviewUI in Frameworks */,
 				55465FD22E0402510008C983 /* ProvisionQLCore in Frameworks */,
 				55C1053B2E0032FE00037993 /* Quartz.framework in Frameworks */,
 			);
@@ -229,6 +231,7 @@
 			name = Preview;
 			packageProductDependencies = (
 				55465FD12E0402510008C983 /* ProvisionQLCore */,
+				B9B0A43209104350B4BEC618 /* PreviewUI */,
 			);
 			productName = Preview;
 			productReference = 55C1053A2E0032FE00037993 /* Preview.appex */;
@@ -730,6 +733,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 55465FC52E0401670008C983 /* XCLocalSwiftPackageReference "ProvisionQLCore" */;
 			productName = ProvisionQLCore;
+		};
+		B9B0A43209104350B4BEC618 /* PreviewUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 55465FC52E0401670008C983 /* XCLocalSwiftPackageReference "ProvisionQLCore" */;
+			productName = PreviewUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
