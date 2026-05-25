@@ -14,11 +14,12 @@ public struct AppInfo {
     public let buildNumber: String
     public let icon: NSImage?
     public let embeddedProvisioningProfile: ProvisioningInfo?
-    public let entitlements: [String: EntitlementValue]
+    public let entitlements: [String: PlistValue]
     public let deviceFamily: [String]
     public let minimumOSVersion: String?
     public let sdkVersion: String?
     public let extensionPointIdentifier: String?
+    public let diagnostics: [AppDiagnostic]
 
     public init(
         name: String,
@@ -27,11 +28,12 @@ public struct AppInfo {
         buildNumber: String,
         icon: NSImage? = nil,
         embeddedProvisioningProfile: ProvisioningInfo? = nil,
-        entitlements: [String: EntitlementValue] = [:],
+        entitlements: [String: PlistValue] = [:],
         deviceFamily: [String] = [],
         minimumOSVersion: String? = nil,
         sdkVersion: String? = nil,
-        extensionPointIdentifier: String? = nil
+        extensionPointIdentifier: String? = nil,
+        diagnostics: [AppDiagnostic] = []
     ) {
         self.name = name
         self.bundleIdentifier = bundleIdentifier
@@ -44,6 +46,7 @@ public struct AppInfo {
         self.minimumOSVersion = minimumOSVersion
         self.sdkVersion = sdkVersion
         self.extensionPointIdentifier = extensionPointIdentifier
+        self.diagnostics = diagnostics
     }
 }
 

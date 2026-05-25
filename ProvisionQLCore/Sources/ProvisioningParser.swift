@@ -33,7 +33,7 @@ public enum ProvisioningParser {
 
         let profile = try PropertyListDecoder().decode(RawProfile.self, from: plistData)
 
-        return ProvisioningInfo(from: profile)
+        return try ProvisioningInfo(from: profile)
     }
 
     public static func fetchBadgeInfo(from url: URL) throws -> BadgeInfo {

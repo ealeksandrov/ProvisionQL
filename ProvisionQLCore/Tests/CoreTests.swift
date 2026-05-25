@@ -12,6 +12,7 @@ import Testing
 
 extension Tag {
     @Tag static var badgeInfo: Self
+    @Tag static var certificateInfo: Self
     @Tag static var provisioningInfo: Self
     @Tag static var parser: Self
     @Tag static var models: Self
@@ -54,7 +55,7 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             let badgeInfo = BadgeInfo(from: provisioningInfo)
 
             #expect(badgeInfo.deviceCount == 3)
@@ -79,11 +80,35 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             let badgeInfo = BadgeInfo(from: provisioningInfo)
 
             #expect(badgeInfo.deviceCount == 0)
             #expect(badgeInfo.profileType == .appStore)
+        }
+    }
+
+    @Suite("CertificateInfo Tests", .tags(.certificateInfo, .models))
+    struct CertificateInfoTests {
+        @Test("Certificate expiration date is read from X.509 validity")
+        func certificateExpirationDate() throws {
+            let fixtureURL = try #require(Bundle.module.url(
+                forResource: "DeveloperCertificate",
+                withExtension: "cer"
+            ))
+            let certificateData = try Data(contentsOf: fixtureURL)
+            let certificateInfo = try #require(CertificateInfo.from(data: certificateData))
+
+            var expectedExpirationDateComponents = DateComponents()
+            expectedExpirationDateComponents.calendar = Calendar(identifier: .gregorian)
+            expectedExpirationDateComponents.timeZone = TimeZone(secondsFromGMT: 0)
+            expectedExpirationDateComponents.year = 2126
+            expectedExpirationDateComponents.month = 5
+            expectedExpirationDateComponents.day = 24
+            let expectedExpirationDate = try #require(expectedExpirationDateComponents.date)
+
+            #expect(certificateInfo.subject == "ProvisionQL Fixture Developer Certificate")
+            #expect(certificateInfo.expirationDate == expectedExpirationDate)
         }
     }
 
@@ -112,7 +137,7 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
 
             #expect(provisioningInfo.name == "Test Development Profile")
             #expect(provisioningInfo.teamName == "Test Team LLC")
@@ -151,7 +176,7 @@ struct CoreTests {
             getTaskAllow: Bool,
             isEnterprise: Bool,
             expected: ProvisioningInfo.ProfileType
-        ) {
+        ) throws {
             let mockProfile = RawProfile(
                 UUID: "FEDCBA09-8765-4321-FEDC-BA0987654321",
                 Name: "Test Profile",
@@ -167,14 +192,14 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             #expect(provisioningInfo.profileType == expected)
         }
 
         @Test("Platform detection", arguments: [
             (platformStrings: ["iOS"], expected: [ProvisioningInfo.Platform.iOS]),
             (platformStrings: ["macOS"], expected: [ProvisioningInfo.Platform.macOS]),
-            (platformStrings: ["OSX"], expected: [ProvisioningInfo.Platform.iOS]),
+            (platformStrings: ["OSX"], expected: [ProvisioningInfo.Platform.macOS]),
             (platformStrings: ["tvOS"], expected: [ProvisioningInfo.Platform.tvOS]),
             (platformStrings: ["watchOS"], expected: [ProvisioningInfo.Platform.watchOS]),
             (platformStrings: ["visionOS"], expected: [ProvisioningInfo.Platform.visionOS]),
@@ -182,10 +207,10 @@ struct CoreTests {
                 platformStrings: ["iOS", "macOS"],
                 expected: [ProvisioningInfo.Platform.iOS, ProvisioningInfo.Platform.macOS]
             ),
-            (platformStrings: ["unknown"], expected: [ProvisioningInfo.Platform.iOS]),
+            (platformStrings: ["unknown"], expected: [ProvisioningInfo.Platform.unknown("unknown")]),
             (platformStrings: nil, expected: [ProvisioningInfo.Platform.iOS])
         ])
-        func platformDetection(platformStrings: [String]?, expected: [ProvisioningInfo.Platform]) {
+        func platformDetection(platformStrings: [String]?, expected: [ProvisioningInfo.Platform]) throws {
             let mockProfile = RawProfile(
                 UUID: "11111111-2222-3333-4444-555555555555",
                 Name: "Test Profile",
@@ -201,8 +226,22 @@ struct CoreTests {
                 Platform: platformStrings
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             #expect(provisioningInfo.platform == expected)
+        }
+
+        @Test("Platform Codable preserves raw values", arguments: [
+            (platform: ProvisioningInfo.Platform.iOS, encodedString: "\"iOS\""),
+            (platform: ProvisioningInfo.Platform.macOS, encodedString: "\"macOS\""),
+            (platform: ProvisioningInfo.Platform.unknown("XROS"), encodedString: "\"XROS\"")
+        ])
+        func platformCodable(platform: ProvisioningInfo.Platform, encodedString: String) throws {
+            let data = try JSONEncoder().encode(platform)
+            let jsonString = String(decoding: data, as: UTF8.self)
+            #expect(jsonString == encodedString)
+
+            let decodedPlatform = try JSONDecoder().decode(ProvisioningInfo.Platform.self, from: data)
+            #expect(decodedPlatform == platform)
         }
 
         @Test("Expiration status calculation", arguments: [
@@ -210,7 +249,7 @@ struct CoreTests {
             (daysFromNow: 15, expected: ExpirationStatus.expiring), // 15 days from now
             (daysFromNow: 60, expected: ExpirationStatus.valid) // 60 days from now
         ])
-        func expirationStatusCalculation(daysFromNow: Int, expected: ExpirationStatus) {
+        func expirationStatusCalculation(daysFromNow: Int, expected: ExpirationStatus) throws {
             let expirationDate = Date().addingTimeInterval(TimeInterval(daysFromNow * 86400))
 
             let mockProfile = RawProfile(
@@ -228,12 +267,39 @@ struct CoreTests {
                 Platform: ["iOS"]
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
             #expect(provisioningInfo.expirationStatus == expected)
         }
 
-        @Test("Default values for missing fields")
-        func defaultValues() {
+        @Test("Expiration status uses fixed duration threshold", arguments: [
+            (secondsFromNow: TimeInterval(30 * 86400 - 60), expected: ExpirationStatus.expiring),
+            (secondsFromNow: TimeInterval(30 * 86400 + 60), expected: ExpirationStatus.valid)
+        ])
+        func expirationStatusUsesFixedDurationThreshold(
+            secondsFromNow: TimeInterval,
+            expected: ExpirationStatus
+        ) throws {
+            let mockProfile = RawProfile(
+                UUID: "99999999-8888-7777-6666-555555555555",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(secondsFromNow),
+                CreationDate: Date(),
+                DeveloperCertificates: nil,
+                ProvisionedDevices: ["device1"],
+                ProvisionsAllDevices: false,
+                Platform: ["iOS"]
+            )
+
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
+            #expect(provisioningInfo.expirationStatus == expected)
+        }
+
+        @Test("Missing required fields throws validation error")
+        func missingRequiredFieldsThrowsValidationError() {
             let mockProfile = RawProfile(
                 UUID: nil,
                 Name: nil,
@@ -249,70 +315,172 @@ struct CoreTests {
                 Platform: nil
             )
 
-            let provisioningInfo = ProvisioningInfo(from: mockProfile)
+            do {
+                _ = try ProvisioningInfo(from: mockProfile)
+                Issue.record("Expected malformed provisioning profile to throw")
+            } catch let error as ProvisioningProfileValidationError {
+                #expect(error.missingFields == [
+                    "UUID",
+                    "Name",
+                    "TeamName",
+                    "TeamIdentifier",
+                    "AppIDName",
+                    "Entitlements",
+                    "ExpirationDate",
+                    "CreationDate"
+                ])
+            } catch {
+                Issue.record("Unexpected error: \(error)")
+            }
+        }
 
-            #expect(provisioningInfo.name == "Unknown")
-            #expect(provisioningInfo.teamName == "Unknown Team")
-            #expect(provisioningInfo.teamID == "Unknown")
-            #expect(provisioningInfo.appID == "Unknown App")
-            #expect(provisioningInfo.expirationDate == Date.distantFuture)
-            #expect(provisioningInfo.creationDate == Date.distantPast)
-            #expect(provisioningInfo.devices == nil)
-            #expect(provisioningInfo.certificates.isEmpty)
-            #expect(provisioningInfo.entitlements.isEmpty)
+        @Test("Missing platform is reported as a diagnostic")
+        func missingPlatformIsReportedAsDiagnostic() throws {
+            let mockProfile = RawProfile(
+                UUID: "11111111-2222-3333-4444-555555555555",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(86400),
+                CreationDate: Date(),
+                DeveloperCertificates: nil,
+                ProvisionedDevices: ["device1"],
+                ProvisionsAllDevices: false,
+                Platform: nil
+            )
+
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
+
             #expect(provisioningInfo.platform == [.iOS])
+            #expect(provisioningInfo.diagnostics == [
+                ProvisioningDiagnostic(
+                    severity: .warning,
+                    code: .missingPlatform,
+                    message: "Platform is missing; defaulting to iOS."
+                )
+            ])
+        }
+
+        @Test("Invalid developer certificate is reported as a diagnostic")
+        func invalidDeveloperCertificateIsReportedAsDiagnostic() throws {
+            let mockProfile = RawProfile(
+                UUID: "11111111-2222-3333-4444-555555555555",
+                Name: "Test Profile",
+                TeamName: "Test Team",
+                TeamIdentifier: ["ABC123"],
+                AppIDName: "Test App",
+                Entitlements: [:],
+                ExpirationDate: Date().addingTimeInterval(86400),
+                CreationDate: Date(),
+                DeveloperCertificates: [Data([0x00, 0x01, 0x02])],
+                ProvisionedDevices: ["device1"],
+                ProvisionsAllDevices: false,
+                Platform: ["iOS"]
+            )
+
+            let provisioningInfo = try ProvisioningInfo(from: mockProfile)
+
+            #expect(provisioningInfo.certificates.isEmpty)
+            #expect(provisioningInfo.diagnostics == [
+                ProvisioningDiagnostic(
+                    severity: .warning,
+                    code: .invalidDeveloperCertificate,
+                    message: "A developer certificate could not be decoded and was skipped."
+                )
+            ])
         }
     }
 
-    @Suite("EntitlementValue Tests", .tags(.models))
-    struct EntitlementValueTests {
-        @Test("EntitlementValue creation from different types")
-        func entitlementValueCreation() {
-            // Test direct creation
-            let stringValue = EntitlementValue.string("test")
-            let boolValue = EntitlementValue.bool(true)
-            let arrayValue = EntitlementValue.array(["one", "two"])
-            let dictValue = EntitlementValue.dictionary(["key": "value"])
+    @Suite("PlistValue Tests", .tags(.models))
+    struct PlistValueTests {
+        @Test("PlistValue creation from different types")
+        func plistValueCreation() {
+            let stringValue = PlistValue.string("test")
+            let boolValue = PlistValue.bool(true)
+            let integerValue = PlistValue.integer(42)
+            let doubleValue = PlistValue.double(3.14)
+            let arrayValue = PlistValue.array([.string("one"), .integer(2)])
+            let dictValue = PlistValue.dictionary(["key": .string("value")])
 
             #expect(stringValue == .string("test"))
             #expect(boolValue == .bool(true))
-            #expect(arrayValue == .array(["one", "two"]))
-            #expect(dictValue == .dictionary(["key": "value"]))
+            #expect(integerValue == .integer(42))
+            #expect(doubleValue == .double(3.14))
+            #expect(arrayValue == .array([.string("one"), .integer(2)]))
+            #expect(dictValue == .dictionary(["key": .string("value")]))
         }
 
-        @Test("EntitlementValue from Any conversion")
-        func entitlementValueFromAny() {
-            let testCases: [(Any, EntitlementValue?)] = [
+        @Test("PlistValue from Any conversion")
+        func plistValueFromAny() {
+            let testCases: [(Any, PlistValue?)] = [
                 ("test string", .string("test string")),
                 (true, .bool(true)),
-                (42, .string("42")),
-                (3.14, .string("3.14")),
-                (["one", "two"], .array(["one", "two"])),
-                (["key": "value"], .dictionary(["key": "value"])),
-                ([1, 2, 3], .array(["1", "2", "3"])),
-                (["key": 42], .dictionary(["key": "42"]))
+                (42, .integer(42)),
+                (3.14, .double(3.14)),
+                (["one", "two"], .array([.string("one"), .string("two")])),
+                (["key": "value"], .dictionary(["key": .string("value")])),
+                ([1, 2, 3], .array([.integer(1), .integer(2), .integer(3)])),
+                (["key": 42], .dictionary(["key": .integer(42)])),
+                (
+                    ["parent": ["enabled": true, "items": [1, "two"]] as [String: Any]],
+                    .dictionary([
+                        "parent": .dictionary([
+                            "enabled": .bool(true),
+                            "items": .array([.integer(1), .string("two")])
+                        ])
+                    ])
+                )
             ]
 
             for (value, expected) in testCases {
-                let result = EntitlementValue.from(value: value)
+                let result = PlistValue.from(value: value)
                 #expect(result == expected)
             }
         }
 
-        @Test("EntitlementValue Codable conformance")
-        func entitlementValueCodable() throws {
-            let testCases: [EntitlementValue] = [
+        @Test("PlistValue property list Codable conformance")
+        func plistValueCodable() throws {
+            let testCases: [PlistValue] = [
                 .string("test"),
                 .bool(true),
-                .array(["one", "two"]),
-                .dictionary(["key": "value"])
+                .integer(42),
+                .double(3.14),
+                .data(Data([0x01, 0x02, 0x03])),
+                .date(Date(timeIntervalSinceReferenceDate: 123)),
+                .array([.string("one"), .integer(2)]),
+                .dictionary(["key": .array([.bool(true), .string("value")])])
             ]
 
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
+
             for original in testCases {
-                let data = try JSONEncoder().encode(original)
-                let decoded = try JSONDecoder().decode(EntitlementValue.self, from: data)
-                #expect(decoded == original)
+                let data = try encoder.encode(["value": original])
+                let decoded = try PropertyListDecoder().decode([String: PlistValue].self, from: data)
+                #expect(decoded["value"] == original)
             }
+        }
+
+        @Test("PlistValue preserves recursive property list values")
+        func plistValuePropertyListCodable() throws {
+            let original = PlistValue.dictionary([
+                "application-identifier": .string("ABCDE12345.com.example.app"),
+                "config": .dictionary([
+                    "enabled": .bool(true),
+                    "numbers": .array([.integer(1), .double(2.5)]),
+                    "payload": .data(Data([0x01, 0x02, 0x03])),
+                    "timestamp": .date(Date(timeIntervalSinceReferenceDate: 123))
+                ])
+            ])
+
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
+            let data = try encoder.encode(original)
+            let decoded = try PropertyListDecoder().decode(PlistValue.self, from: data)
+
+            #expect(decoded == original)
         }
     }
 
@@ -326,7 +494,14 @@ struct CoreTests {
                 TeamName: "Team",
                 TeamIdentifier: ["ID"],
                 AppIDName: "App",
-                Entitlements: ["bool": .bool(true), "string": .string("value")],
+                Entitlements: [
+                    "bool": .bool(true),
+                    "nested": .dictionary([
+                        "number": .integer(42),
+                        "strings": .array([.string("one"), .string("two")])
+                    ]),
+                    "string": .string("value")
+                ],
                 ExpirationDate: Date(),
                 CreationDate: Date(),
                 DeveloperCertificates: [Data([0x01, 0x02, 0x03])],
@@ -335,13 +510,11 @@ struct CoreTests {
                 Platform: ["iOS", "macOS"]
             )
 
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
             let data = try encoder.encode(originalProfile)
 
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            let decodedProfile = try decoder.decode(RawProfile.self, from: data)
+            let decodedProfile = try PropertyListDecoder().decode(RawProfile.self, from: data)
 
             #expect(decodedProfile.UUID == originalProfile.UUID)
             #expect(decodedProfile.Name == originalProfile.Name)

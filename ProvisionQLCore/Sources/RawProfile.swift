@@ -12,7 +12,7 @@ struct RawProfile: Codable {
     let TeamName: String?
     let TeamIdentifier: [String]?
     let AppIDName: String?
-    let Entitlements: [String: EntitlementValue]?
+    let Entitlements: [String: PlistValue]?
     let ExpirationDate: Date?
     let CreationDate: Date?
     let DeveloperCertificates: [Data]?

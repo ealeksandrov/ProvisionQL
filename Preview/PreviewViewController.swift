@@ -26,33 +26,54 @@ class PreviewViewController: NSViewController, QLPreviewingController {
     }
 
     func preparePreviewOfFile(at url: URL) async throws {
-        let fileType = try url.resourceValues(forKeys: [.contentTypeKey]).contentType
+        let fileType: UTType?
+        do {
+            fileType = try url.resourceValues(forKeys: [.contentTypeKey]).contentType
+        } catch {
+            showFailure(error, fileURL: url)
+            return
+        }
 
         if let contentType = fileType {
             // Check for IPA files (which conform to data) or xcarchive files (which conform to package)
             if contentType.identifier == "com.apple.itunes.ipa" ||
                 contentType.identifier == "com.apple.xcode.archive"
             {
-                // Handle ipa/xcarchive files
-                let appInfo = try AppArchiveParser.parse(url)
-                let previewView = AppArchivePreviewView(appInfo: appInfo, fileURL: url)
-                hostingController?.rootView = AnyView(previewView)
+                showAppArchivePreview(for: url)
             } else if contentType.identifier == "com.apple.application-and-system-extension" {
-                // Handle .appex files
-                let appInfo = try AppArchiveParser.parse(url)
-                let previewView = AppArchivePreviewView(appInfo: appInfo, fileURL: url)
-                hostingController?.rootView = AnyView(previewView)
+                showAppArchivePreview(for: url)
             } else {
                 // Handle provisioning profile files
-                let info = try ProvisioningParser.parse(url)
-                let previewView = ProvisioningPreviewView(info: info, fileURL: url)
-                hostingController?.rootView = AnyView(previewView)
+                showProvisioningProfilePreview(for: url)
             }
         } else {
             // Fallback to provisioning profile parsing
+            showProvisioningProfilePreview(for: url)
+        }
+    }
+
+    private func showAppArchivePreview(for url: URL) {
+        do {
+            let appInfo = try AppArchiveParser.parse(url)
+            let previewView = AppArchivePreviewView(appInfo: appInfo, fileURL: url)
+            hostingController?.rootView = AnyView(previewView)
+        } catch {
+            showFailure(error, fileURL: url)
+        }
+    }
+
+    private func showProvisioningProfilePreview(for url: URL) {
+        do {
             let info = try ProvisioningParser.parse(url)
             let previewView = ProvisioningPreviewView(info: info, fileURL: url)
             hostingController?.rootView = AnyView(previewView)
+        } catch {
+            showFailure(error, fileURL: url)
         }
+    }
+
+    private func showFailure(_ error: Error, fileURL: URL) {
+        let previewView = FailedDocumentView(error: error, fileURL: fileURL)
+        hostingController?.rootView = AnyView(previewView)
     }
 }

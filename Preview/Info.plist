@@ -25,5 +25,26 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).PreviewViewController</string>
 	</dict>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>com.apple.mobileprovision</string>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>iOS Provisioning Profile (Legacy)</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.apple.iphone.mobileprovision</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>mobileprovision</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

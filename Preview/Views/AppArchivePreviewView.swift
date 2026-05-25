@@ -40,6 +40,12 @@ struct AppArchivePreviewView: View {
                     }
                 }
 
+                if !appInfo.diagnostics.isEmpty {
+                    section(title: "Diagnostics") {
+                        AppDiagnosticsSection(diagnostics: appInfo.diagnostics)
+                    }
+                }
+
                 if !appInfo.entitlements.isEmpty {
                     Divider()
                     section(title: "App Entitlements") {
@@ -120,6 +126,12 @@ private extension AppArchivePreviewView {
         VStack(alignment: .leading, spacing: UIConstants.Padding.standard) {
             OverviewSection(info: profile)
 
+            if !profile.diagnostics.isEmpty {
+                section(title: "Diagnostics") {
+                    DiagnosticsSection(diagnostics: profile.diagnostics)
+                }
+            }
+
             if !profile.certificates.isEmpty {
                 section(title: "Certificates (\(profile.certificates.count))") {
                     CertificatesSection(certificates: profile.certificates)
@@ -162,5 +174,26 @@ private extension AppArchivePreviewView {
     var isAppExtension: Bool {
         guard let fileURL else { return false }
         return fileURL.pathExtension.lowercased() == "appex"
+    }
+}
+
+struct AppDiagnosticsSection: View {
+    let diagnostics: [AppDiagnostic]
+
+    var body: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: UIConstants.Padding.medium) {
+                ForEach(diagnostics, id: \.self) { diagnostic in
+                    HStack(alignment: .top, spacing: UIConstants.Padding.medium) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+
+                        Text(diagnostic.message)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
+        }
     }
 }

@@ -29,6 +29,12 @@ private extension ProvisioningPreviewView {
 
                 OverviewSection(info: info)
 
+                if !info.diagnostics.isEmpty {
+                    section(title: "Diagnostics") {
+                        DiagnosticsSection(diagnostics: info.diagnostics)
+                    }
+                }
+
                 if !info.entitlements.isEmpty {
                     section(title: "Entitlements") {
                         EntitlementsSection(entitlements: info.entitlements)
@@ -114,5 +120,97 @@ struct StatusBadge: View {
             .background(color.opacity(0.2))
             .foregroundColor(color)
             .cornerRadius(UIConstants.CornerRadius.small)
+    }
+}
+
+struct DiagnosticsSection: View {
+    let diagnostics: [ProvisioningDiagnostic]
+
+    var body: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: UIConstants.Padding.medium) {
+                ForEach(diagnostics, id: \.self) { diagnostic in
+                    HStack(alignment: .top, spacing: UIConstants.Padding.medium) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+
+                        Text(diagnostic.message)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct FailedDocumentView: View {
+    let error: Error
+    let fileURL: URL?
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: UIConstants.Padding.standard) {
+                Text("\(fileURL?.lastPathComponent ?? "Profile") could not be parsed")
+                    .font(.title)
+                    .fontWeight(.bold)
+
+                GroupBox {
+                    VStack(alignment: .leading, spacing: UIConstants.Padding.medium) {
+                        Text(error.localizedDescription)
+                            .textSelection(.enabled)
+
+                        if !missingFields.isEmpty {
+                            Divider()
+
+                            InfoRow(label: "Missing", value: missingFields.joined(separator: ", "))
+                        }
+                    }
+                }
+
+                if let fileURL {
+                    section(title: "File Info") {
+                        FileInfoSection(fileURL: fileURL)
+                    }
+                }
+
+                footer()
+            }
+            .padding()
+        }
+        .frame(minWidth: UIConstants.Window.minWidth, minHeight: UIConstants.Window.minHeight)
+    }
+
+    func section(title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading) {
+            Text(title)
+                .fontWeight(.semibold)
+                .font(.title2)
+
+            content()
+        }
+    }
+
+    func footer() -> some View {
+        HStack {
+            Text("ProvisionQL \(AppVersion.versionString)")
+
+            #if DEBUG
+                Text("(debug)")
+            #endif
+
+            Spacer()
+        }
+        .foregroundColor(.secondary)
+        .font(.subheadline)
+        .frame(maxWidth: .infinity)
+    }
+
+    var missingFields: [String] {
+        guard let error = error as? ProvisioningProfileValidationError else {
+            return []
+        }
+
+        return error.missingFields
     }
 }

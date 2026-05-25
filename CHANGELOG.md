@@ -2,7 +2,12 @@
 
 ## Version 2.0.0
 
-* WIP: macOS 15 compatibility
+* Rewrites previews for macOS 15 compatibility
+* Improves provisioning profile validation and in-preview error reporting
+* Fixes certificate expiration parsing
+* Preserves unknown provisioning platforms and nested entitlement values
+* Fixes parsing for macOS `.xcarchive` and `.appex` bundles
+* Shows archive parsing failures in the preview
 
 ## Version 1.6.4
 
