@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AppArchivePreviewView: View {
     let appInfo: AppInfo
+    let icon: NSImage?
     let fileURL: URL?
 
     var body: some View {
@@ -75,7 +76,7 @@ struct AppArchivePreviewView: View {
 private extension AppArchivePreviewView {
     func appHeader() -> some View {
         HStack(alignment: .top, spacing: UIConstants.Padding.large) {
-            if let icon = appInfo.icon {
+            if let icon {
                 Image(nsImage: icon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)

@@ -54,8 +54,12 @@ class PreviewViewController: NSViewController, QLPreviewingController {
 
     private func showAppArchivePreview(for url: URL) {
         do {
-            let appInfo = try AppArchiveParser.parse(url)
-            let previewView = AppArchivePreviewView(appInfo: appInfo, fileURL: url)
+            let result = try AppArchiveParser.parseWithResources(url)
+            let previewView = AppArchivePreviewView(
+                appInfo: result.appInfo,
+                icon: result.iconSource?.makeImage(),
+                fileURL: url
+            )
             hostingController?.rootView = AnyView(previewView)
         } catch {
             showFailure(error, fileURL: url)

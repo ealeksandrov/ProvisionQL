@@ -47,6 +47,29 @@ enum ArchiveUtilities {
         return nil
     }
 
+    /// Extracts a specific file to disk with case-insensitive search.
+    /// - Parameters:
+    ///   - archive: The ZIP archive
+    ///   - path: The path to the file within the archive
+    ///   - destinationURL: The destination file URL
+    /// - Returns: `true` if the file was found and extracted, otherwise `false`
+    /// - Throws: Error if extraction fails
+    static func extractFileOptional(from archive: Archive, path: String, to destinationURL: URL) throws -> Bool {
+        if let entry = archive[path] {
+            try extract(entry, from: archive, to: destinationURL)
+            return true
+        }
+
+        for entry in archive {
+            if entry.path.lowercased() == path.lowercased() {
+                try extract(entry, from: archive, to: destinationURL)
+                return true
+            }
+        }
+
+        return false
+    }
+
     /// Extracts data from an archive entry
     /// - Parameters:
     ///   - entry: The archive entry
@@ -59,6 +82,14 @@ enum ArchiveUtilities {
             data.append(chunk)
         }
         return data
+    }
+
+    private static func extract(_ entry: Entry, from archive: Archive, to destinationURL: URL) throws {
+        try FileManager.default.createDirectory(
+            at: destinationURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        _ = try archive.extract(entry, to: destinationURL)
     }
 
     // MARK: - App Bundle Path Finding

@@ -12,27 +12,8 @@ public enum EntitlementsExtractor {
         extractEntitlementsUsingSecCode(from: appBundleURL) ?? [:]
     }
 
-    static func extractEntitlementsFromArchive(
-        executableData: Data,
-        temporaryDirectory: URL
-    ) -> [String: PlistValue] {
-        // Write executable to temporary file
-        let tempExecutableURL = temporaryDirectory.appendingPathComponent(UUID().uuidString)
-
-        do {
-            try executableData.write(to: tempExecutableURL)
-            defer { try? FileManager.default.removeItem(at: tempExecutableURL) }
-
-            // Make it executable
-            try FileManager.default.setAttributes(
-                [.posixPermissions: 0o755],
-                ofItemAtPath: tempExecutableURL.path
-            )
-
-            return extractEntitlementsUsingSecCode(from: tempExecutableURL) ?? [:]
-        } catch {
-            return [:]
-        }
+    static func extractEntitlements(fromCodeAt codeURL: URL) -> [String: PlistValue] {
+        extractEntitlementsUsingSecCode(from: codeURL) ?? [:]
     }
 }
 

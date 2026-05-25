@@ -5,10 +5,13 @@
 //  Created by Evgeny Aleksandrov
 
 import Foundation
-import ZIPFoundation
 
 public enum AppArchiveParser {
     public static func parse(_ url: URL) throws -> AppInfo {
+        try parseWithResources(url).appInfo
+    }
+
+    public static func parseWithResources(_ url: URL) throws -> AppArchiveParseResult {
         let fileExtension = url.pathExtension.lowercased()
 
         switch fileExtension {
@@ -25,45 +28,12 @@ public enum AppArchiveParser {
 }
 
 private extension AppArchiveParser {
-    static func parseIPA(_ url: URL) throws -> AppInfo {
-        let archive = try Archive(url: url, accessMode: .read)
-
-        // Find the app bundle path within the archive
-        let appBundlePath = try ArchiveUtilities.findAppBundlePath(in: archive, archiveType: .ipa)
-
-        // Extract Info.plist
-        let infoPlistPath = appBundlePath + "Info.plist"
-        let infoPlistData = try ArchiveUtilities.extractFile(from: archive, path: infoPlistPath)
-        let plist = try PlistParser.parse(data: infoPlistData)
-
-        // Parse app information
-        let appInfo = PlistParser.extractAppInfo(from: plist)
-
-        // Extract app icon using the dedicated IconExtractor
-        let icon = try? IconExtractor.extractIcon(from: url)
-
-        // Extract embedded provisioning profile
-        let embeddedProfile = ProvisioningProfileExtractor.extractFromArchive(archive, appBundlePath: appBundlePath)
-
-        // Extract app entitlements
-        let entitlements = extractAppEntitlements(from: archive, appBundlePath: appBundlePath)
-
-        return AppInfo(
-            name: appInfo.name,
-            bundleIdentifier: appInfo.bundleIdentifier,
-            version: appInfo.version,
-            buildNumber: appInfo.buildNumber,
-            icon: icon,
-            embeddedProvisioningProfile: embeddedProfile.profile,
-            entitlements: entitlements,
-            deviceFamily: appInfo.deviceFamily,
-            minimumOSVersion: appInfo.minimumOSVersion,
-            sdkVersion: appInfo.sdkVersion,
-            diagnostics: embeddedProfile.diagnostics
-        )
+    static func parseIPA(_ url: URL) throws -> AppArchiveParseResult {
+        let source = try IPAAppBundleSource(url: url)
+        return try parseApp(from: source)
     }
 
-    static func parseXCArchive(_ url: URL) throws -> AppInfo {
+    static func parseXCArchive(_ url: URL) throws -> AppArchiveParseResult {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
               isDirectory.boolValue
@@ -71,35 +41,12 @@ private extension AppArchiveParser {
             throw ParsingError.invalidArchiveFormat
         }
 
-        let appBundleURL = try findAppBundleInXCArchive(at: url)
-        let infoPlistURL = try infoPlistURL(for: appBundleURL)
-        let plist = try PlistParser.parse(url: infoPlistURL)
-
-        let appInfo = PlistParser.extractAppInfo(from: plist)
-
-        let icon = try? IconExtractor.extractIcon(from: url)
-
-        let embeddedProfile = ProvisioningProfileExtractor.extractFromDirectory(appBundleURL)
-
-        // Extract app entitlements
-        let entitlements = EntitlementsExtractor.extractEntitlements(from: appBundleURL)
-
-        return AppInfo(
-            name: appInfo.name,
-            bundleIdentifier: appInfo.bundleIdentifier,
-            version: appInfo.version,
-            buildNumber: appInfo.buildNumber,
-            icon: icon,
-            embeddedProvisioningProfile: embeddedProfile.profile,
-            entitlements: entitlements,
-            deviceFamily: appInfo.deviceFamily,
-            minimumOSVersion: appInfo.minimumOSVersion,
-            sdkVersion: appInfo.sdkVersion,
-            diagnostics: embeddedProfile.diagnostics
-        )
+        let appBundleURL = try DirectoryAppBundleSource.findAppBundleInXCArchive(at: url)
+        let source = try DirectoryAppBundleSource(bundleURL: appBundleURL)
+        return try parseApp(from: source)
     }
 
-    static func parseAppExtension(_ url: URL) throws -> AppInfo {
+    static func parseAppExtension(_ url: URL) throws -> AppArchiveParseResult {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
               isDirectory.boolValue
@@ -107,49 +54,51 @@ private extension AppArchiveParser {
             throw ParsingError.invalidArchiveFormat
         }
 
-        let infoPlistURL = try infoPlistURL(for: url)
-        let plist = try PlistParser.parse(url: infoPlistURL)
+        let source = try DirectoryAppBundleSource(bundleURL: url)
+        return try parseApp(from: source, isAppExtension: true)
+    }
 
-        let appInfo = PlistParser.extractAppInfo(from: plist)
+    static func parseApp(from source: AppBundleSource, isAppExtension: Bool = false) throws -> AppArchiveParseResult {
+        let plist = try source.infoPlist()
 
-        let icon = try? IconExtractor.extractIcon(from: url)
+        let parsedAppInfo = PlistParser.extractAppInfo(from: plist)
 
-        let embeddedProfile = ProvisioningProfileExtractor.extractFromDirectory(url)
+        let iconSource = try? IconExtractor.extractIconSource(from: source)
+        let embeddedProfile = source.embeddedProvisioningProfile()
 
-        // Extract extension type from NSExtension dictionary
         var extensionType: String?
         var extensionPointIdentifier: String?
-        if let nsExtension = plist["NSExtension"] as? [String: Any],
+        if isAppExtension,
+           let nsExtension = plist["NSExtension"] as? [String: Any],
            let identifier = nsExtension["NSExtensionPointIdentifier"] as? String
         {
             extensionPointIdentifier = identifier
             extensionType = parseExtensionType(from: identifier)
         }
 
-        // For app extensions, append the extension type to the name
-        let displayName = if let extensionType {
-            "\(appInfo.name) (\(extensionType))"
+        let displayName = if isAppExtension, let extensionType {
+            "\(parsedAppInfo.name) (\(extensionType))"
         } else {
-            appInfo.name
+            parsedAppInfo.name
         }
 
-        // Extract app entitlements
-        let entitlements = EntitlementsExtractor.extractEntitlements(from: url)
+        let entitlements = source.extractEntitlements(infoPlist: plist)
 
-        return AppInfo(
+        let appInfo = AppInfo(
             name: displayName,
-            bundleIdentifier: appInfo.bundleIdentifier,
-            version: appInfo.version,
-            buildNumber: appInfo.buildNumber,
-            icon: icon,
+            bundleIdentifier: parsedAppInfo.bundleIdentifier,
+            version: parsedAppInfo.version,
+            buildNumber: parsedAppInfo.buildNumber,
             embeddedProvisioningProfile: embeddedProfile.profile,
             entitlements: entitlements,
-            deviceFamily: appInfo.deviceFamily,
-            minimumOSVersion: appInfo.minimumOSVersion,
-            sdkVersion: appInfo.sdkVersion,
+            deviceFamily: parsedAppInfo.deviceFamily,
+            minimumOSVersion: parsedAppInfo.minimumOSVersion,
+            sdkVersion: parsedAppInfo.sdkVersion,
             extensionPointIdentifier: extensionPointIdentifier,
             diagnostics: embeddedProfile.diagnostics
         )
+
+        return AppArchiveParseResult(appInfo: appInfo, iconSource: iconSource)
     }
 
     static func parseExtensionType(from identifier: String) -> String {
@@ -196,105 +145,6 @@ private extension AppArchiveParser {
             "Safari Extension"
         default:
             "App Extension"
-        }
-    }
-
-    static func findAppBundleInXCArchive(at archiveURL: URL) throws -> URL {
-        let productsPath = archiveURL.appendingPathComponent("Products", isDirectory: true)
-
-        if let applicationPath = applicationPathInXCArchive(at: archiveURL) {
-            let normalizedPath = applicationPath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            let candidates = [
-                productsPath.appendingPathComponent(normalizedPath, isDirectory: true),
-                archiveURL.appendingPathComponent(normalizedPath, isDirectory: true)
-            ]
-
-            for candidate in candidates where isAppBundle(candidate) {
-                return candidate
-            }
-        }
-
-        let applicationsPath = productsPath.appendingPathComponent("Applications", isDirectory: true)
-        let appBundles = try FileManager.default.contentsOfDirectory(
-            at: applicationsPath,
-            includingPropertiesForKeys: nil
-        )
-        .filter(isAppBundle)
-        .sorted { lhs, rhs in
-            lhs.lastPathComponent.localizedStandardCompare(rhs.lastPathComponent) == .orderedAscending
-        }
-
-        guard let appBundleURL = appBundles.first else {
-            throw ParsingError.invalidAppBundle
-        }
-
-        return appBundleURL
-    }
-
-    static func applicationPathInXCArchive(at archiveURL: URL) -> String? {
-        let infoPlistURL = archiveURL.appendingPathComponent("Info.plist")
-        guard
-            let plist = try? PlistParser.parse(url: infoPlistURL),
-            let applicationProperties = plist["ApplicationProperties"] as? [String: Any],
-            let applicationPath = applicationProperties["ApplicationPath"] as? String,
-            !applicationPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        else {
-            return nil
-        }
-
-        return applicationPath
-    }
-
-    static func infoPlistURL(for bundleURL: URL) throws -> URL {
-        let candidates = [
-            bundleURL.appendingPathComponent("Contents/Info.plist"),
-            bundleURL.appendingPathComponent("Info.plist")
-        ]
-
-        for candidate in candidates where FileManager.default.fileExists(atPath: candidate.path) {
-            return candidate
-        }
-
-        throw ParsingError.missingInfoPlist
-    }
-
-    static func isAppBundle(_ url: URL) -> Bool {
-        var isDirectory: ObjCBool = false
-        return url.pathExtension == "app"
-            && FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
-            && isDirectory.boolValue
-    }
-
-    static func extractAppEntitlements(from archive: Archive, appBundlePath: String) -> [String: PlistValue] {
-        // First, try to find the executable name from Info.plist
-        let infoPlistPath = appBundlePath + "Info.plist"
-        guard let infoPlistData = try? ArchiveUtilities.extractFile(from: archive, path: infoPlistPath),
-              let plist = try? PlistParser.parse(data: infoPlistData),
-              let executableName = PlistParser.extractExecutableName(from: plist)
-        else {
-            return [:]
-        }
-
-        // Extract the executable
-        let executablePath = appBundlePath + executableName
-        guard let executableData = try? ArchiveUtilities.extractFile(from: archive, path: executablePath) else {
-            return [:]
-        }
-
-        // Use the EntitlementsExtractor with temporary directory
-        let tempDirectory = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-
-        do {
-            try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
-            defer { try? FileManager.default.removeItem(at: tempDirectory) }
-
-            return EntitlementsExtractor.extractEntitlementsFromArchive(
-                executableData: executableData,
-                temporaryDirectory: tempDirectory
-            )
-        } catch {
-            return [:]
         }
     }
 }

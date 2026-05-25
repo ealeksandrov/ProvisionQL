@@ -4,7 +4,6 @@
 //
 //  Created by Evgeny Aleksandrov
 
-import AppKit
 import Foundation
 @testable import ProvisionQLCore
 import Testing
@@ -25,7 +24,6 @@ struct AppArchiveTests {
     struct AppInfoTests {
         @Test("AppInfo initialization with all parameters")
         func appInfoInitialization() throws {
-            let mockIcon = NSImage(size: NSSize(width: 64, height: 64))
             let mockProfile = try createMockProvisioningInfo()
 
             let appInfo = AppInfo(
@@ -33,7 +31,6 @@ struct AppArchiveTests {
                 bundleIdentifier: "com.test.app",
                 version: "1.0.0",
                 buildNumber: "100",
-                icon: mockIcon,
                 embeddedProvisioningProfile: mockProfile,
                 deviceFamily: ["iPhone", "iPad"],
                 minimumOSVersion: "15.0",
@@ -44,7 +41,6 @@ struct AppArchiveTests {
             #expect(appInfo.bundleIdentifier == "com.test.app")
             #expect(appInfo.version == "1.0.0")
             #expect(appInfo.buildNumber == "100")
-            #expect(appInfo.icon != nil)
             #expect(appInfo.embeddedProvisioningProfile?.name == mockProfile.name)
             #expect(appInfo.deviceFamily == ["iPhone", "iPad"])
             #expect(appInfo.minimumOSVersion == "15.0")

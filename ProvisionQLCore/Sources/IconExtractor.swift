@@ -6,124 +6,59 @@
 
 import AppKit
 import Foundation
-import UniformTypeIdentifiers
-import ZIPFoundation
 
 public enum IconExtractor {
     public static func extractIcon(from url: URL) throws -> NSImage? {
+        try extractIconSource(from: url)?.makeImage()
+    }
+
+    public static func extractIconSource(from url: URL) throws -> IconSource? {
         let fileExtension = url.pathExtension.lowercased()
 
         switch fileExtension {
         case "ipa":
-            return try extractFromIPA(url)
+            let source = try IPAAppBundleSource(url: url)
+            return try extractIconSource(from: source)
         case "xcarchive":
-            return try extractFromXCArchive(url)
+            let appBundleURL = try DirectoryAppBundleSource.findAppBundleInXCArchive(at: url)
+            let source = try DirectoryAppBundleSource(bundleURL: appBundleURL)
+            return try extractIconSource(from: source)
         case "appex":
-            return try extractFromAppBundle(url)
+            let source = try DirectoryAppBundleSource(bundleURL: url)
+            return try extractIconSource(from: source)
         default:
             return nil
         }
     }
 }
 
-private extension IconExtractor {
-    static func extractFromIPA(_ url: URL) throws -> NSImage? {
-        let archive = try Archive(url: url, accessMode: .read)
-
+extension IconExtractor {
+    static func extractIconSource(from source: AppBundleSource) throws -> IconSource? {
         let artworkNames = ["iTunesArtwork@3x", "iTunesArtwork@2x", "iTunesArtwork"]
-        for artworkName in artworkNames {
-            if let imageData = try ArchiveUtilities.extractFileOptional(from: archive, path: artworkName),
-               let image = NSImage(data: imageData)
-            {
-                return applyRoundedCorners(to: image)
+        if source.containerKind == .ipa {
+            for artworkName in artworkNames {
+                if let imageData = try source.data(
+                    at: artworkName,
+                    relativeToBundle: false,
+                    caseInsensitive: true
+                ) {
+                    return IconSource(data: imageData)
+                }
             }
         }
 
-        guard let appBundlePath = ArchiveUtilities.findAppBundlePathFlexible(in: archive) else {
-            throw IconExtractionError.appBundleNotFound
-        }
-
-        let infoPlistPath = "\(appBundlePath)/Info.plist"
-        guard let infoPlistData = try ArchiveUtilities.extractFileOptional(from: archive, path: infoPlistPath) else {
-            throw IconExtractionError.infoPlistNotFound
-        }
-
-        let plist = try PlistParser.parse(data: infoPlistData)
+        let plist = try source.infoPlist()
 
         if let iconName = findMainIconName(in: plist),
-           let image = try findIconInArchive(archive: archive, appBundlePath: appBundlePath, iconName: iconName)
+           let iconSource = try findIconSource(iconName: iconName, in: source)
         {
-            return applyRoundedCorners(to: image)
+            return iconSource
         }
 
-        // Try with common prefixes for iOS icons
         let commonPrefixes = ["AppIcon", "Icon"]
         for prefix in commonPrefixes {
-            if let image = try findIconInArchive(archive: archive, appBundlePath: appBundlePath, iconName: prefix) {
-                return applyRoundedCorners(to: image)
-            }
-        }
-
-        return nil
-    }
-
-    static func extractFromXCArchive(_ url: URL) throws -> NSImage? {
-        var isDirectory: ObjCBool = false
-        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
-              isDirectory.boolValue
-        else {
-            throw IconExtractionError.appBundleNotFound
-        }
-
-        let appsDir = url.appendingPathComponent("Products/Applications")
-
-        // Find the app bundle in Products/Applications/
-        let appBundles = try FileManager.default.contentsOfDirectory(at: appsDir, includingPropertiesForKeys: nil)
-            .filter { $0.pathExtension == "app" }
-
-        guard let appURL = appBundles.first else {
-            throw IconExtractionError.appBundleNotFound
-        }
-
-        return try extractFromAppBundle(appURL)
-    }
-
-    static func extractFromAppBundle(_ url: URL) throws -> NSImage? {
-        let infoPlistURL = url.appendingPathComponent("Contents/Info.plist")
-        if FileManager.default.fileExists(atPath: infoPlistURL.path) {
-            return try extractIconFromBundle(at: url.appendingPathComponent("Contents"), infoPlistURL: infoPlistURL)
-        }
-
-        let iOSInfoPlistURL = url.appendingPathComponent("Info.plist")
-        if FileManager.default.fileExists(atPath: iOSInfoPlistURL.path) {
-            return try extractIconFromBundle(at: url, infoPlistURL: iOSInfoPlistURL)
-        }
-
-        return nil
-    }
-
-    static func extractIconFromBundle(at bundleURL: URL, infoPlistURL: URL) throws -> NSImage? {
-        let plist = try PlistParser.parse(url: infoPlistURL)
-
-        let bundleAction: (String) -> NSImage? = { iconPath in
-            let iconURL = bundleURL.appendingPathComponent(iconPath)
-            if FileManager.default.fileExists(atPath: iconURL.path) {
-                return NSImage(contentsOf: iconURL)
-            }
-            return nil
-        }
-
-        if let iconName = findMainIconName(in: plist),
-           let image = findIcon(iconName: iconName, using: bundleAction)
-        {
-            return applyRoundedCorners(to: image)
-        }
-
-        // Try common prefixes as fallback
-        let commonPrefixes = ["AppIcon", "Icon"]
-        for prefix in commonPrefixes {
-            if let image = findIcon(iconName: prefix, using: bundleAction) {
-                return applyRoundedCorners(to: image)
+            if let iconSource = try findIconSource(iconName: prefix, in: source) {
+                return iconSource
             }
         }
 
@@ -132,7 +67,34 @@ private extension IconExtractor {
 
     // MARK: - Icon Search
 
-    static func findIcon(iconName: String, using action: (String) -> NSImage?) -> NSImage? {
+    static func findIconSource(iconName: String, in source: AppBundleSource) throws -> IconSource? {
+        try findIconData(iconName: iconName) { iconPath in
+            let candidatePaths = if source.bundleStyle == .macOS {
+                [
+                    "Contents/Resources/\(iconPath)",
+                    "Contents/\(iconPath)",
+                    iconPath
+                ]
+            } else {
+                [iconPath]
+            }
+
+            for candidatePath in candidatePaths {
+                if let data = try source.data(
+                    at: candidatePath,
+                    relativeToBundle: true,
+                    caseInsensitive: true
+                ) {
+                    return data
+                }
+            }
+
+            return nil
+        }
+        .map(IconSource.init(data:))
+    }
+
+    static func findIconData(iconName: String, using action: (String) throws -> Data?) rethrows -> Data? {
         let deviceSuffixes = ["~tv", "~ipad", ""]
         let sizeExtensions = ["@3x", "@2x", ""]
         let fileExtensions = [".png", ""]
@@ -141,8 +103,8 @@ private extension IconExtractor {
             for sizeExt in sizeExtensions {
                 for fileExt in fileExtensions {
                     let iconPath = "\(iconName)\(sizeExt)\(deviceSuffix)\(fileExt)"
-                    if let image = action(iconPath) {
-                        return image
+                    if let data = try action(iconPath) {
+                        return data
                     }
                 }
             }
@@ -240,22 +202,6 @@ private extension IconExtractor {
 
         newImage.unlockFocus()
         return newImage
-    }
-
-    // MARK: - Archive Helper Methods
-
-    static func findIconInArchive(archive: Archive, appBundlePath: String, iconName: String) throws -> NSImage? {
-        let unarchiveAction: (String) -> NSImage? = { iconPath in
-            let fullPath = "\(appBundlePath)/\(iconPath)"
-            if let imageData = try? ArchiveUtilities.extractFileOptional(from: archive, path: fullPath),
-               let image = NSImage(data: imageData)
-            {
-                return image
-            }
-            return nil
-        }
-
-        return findIcon(iconName: iconName, using: unarchiveAction)
     }
 }
 
