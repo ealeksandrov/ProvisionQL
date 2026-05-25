@@ -19,10 +19,7 @@ let package = Package(
         .target(
             name: "ProvisionQLCore",
             dependencies: ["ZIPFoundation"],
-            path: "Sources",
-            swiftSettings: [
-                .enableExperimentalFeature("StrictConcurrency")
-            ]
+            path: "Sources"
         ),
         .testTarget(
             name: "ProvisionQLCoreTests",
@@ -32,5 +29,6 @@ let package = Package(
                 .process("Fixtures")
             ]
         ),
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )
