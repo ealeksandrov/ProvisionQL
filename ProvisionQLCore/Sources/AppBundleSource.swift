@@ -75,11 +75,11 @@ struct IPAAppBundleSource: AppBundleSource {
     ) throws -> Data? {
         let archivePath = archivePath(for: path, relativeToBundle: relativeToBundle)
 
-        if caseInsensitive {
-            return try ArchiveUtilities.extractFileOptional(from: archive, path: archivePath)
-        }
-
-        return try? ArchiveUtilities.extractFile(from: archive, path: archivePath)
+        return try ArchiveUtilities.extractFileIfPresent(
+            from: archive,
+            path: archivePath,
+            caseInsensitive: caseInsensitive
+        )
     }
 
     func writeFile(
@@ -87,10 +87,11 @@ struct IPAAppBundleSource: AppBundleSource {
         relativeToBundle: Bool,
         to destinationURL: URL
     ) throws -> Bool {
-        try ArchiveUtilities.extractFileOptional(
+        try ArchiveUtilities.extractFileIfPresent(
             from: archive,
             path: archivePath(for: path, relativeToBundle: relativeToBundle),
-            to: destinationURL
+            to: destinationURL,
+            caseInsensitive: false
         )
     }
 
@@ -172,10 +173,13 @@ struct DirectoryAppBundleSource: AppBundleSource {
     func data(
         at path: String,
         relativeToBundle: Bool,
-        caseInsensitive _: Bool
+        caseInsensitive: Bool
     ) throws -> Data? {
-        let fileURL = url(for: path, relativeToBundle: relativeToBundle)
-        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+        guard let fileURL = existingURL(
+            for: path,
+            relativeToBundle: relativeToBundle,
+            caseInsensitive: caseInsensitive
+        ) else {
             return nil
         }
 
@@ -264,6 +268,48 @@ struct DirectoryAppBundleSource: AppBundleSource {
         }
 
         return bundleURL.appendingPathComponent(normalizedPath)
+    }
+
+    private func existingURL(
+        for path: String,
+        relativeToBundle: Bool,
+        caseInsensitive: Bool
+    ) -> URL? {
+        let fileURL = url(for: path, relativeToBundle: relativeToBundle)
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            return fileURL
+        }
+
+        guard caseInsensitive, relativeToBundle else {
+            return nil
+        }
+
+        return caseInsensitiveURL(for: path)
+    }
+
+    private func caseInsensitiveURL(for path: String) -> URL? {
+        let components = path
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            .split(separator: "/")
+            .map(String.init)
+
+        var currentURL = bundleURL
+        for component in components {
+            guard let childURLs = try? FileManager.default.contentsOfDirectory(
+                at: currentURL,
+                includingPropertiesForKeys: nil
+            ),
+                let matchingURL = childURLs.first(where: {
+                    $0.lastPathComponent.caseInsensitiveCompare(component) == .orderedSame
+                })
+            else {
+                return nil
+            }
+
+            currentURL = matchingURL
+        }
+
+        return currentURL
     }
 
     private static func applicationPathInXCArchive(at archiveURL: URL) -> String? {

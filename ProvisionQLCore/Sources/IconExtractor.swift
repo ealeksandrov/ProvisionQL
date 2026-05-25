@@ -97,7 +97,7 @@ extension IconExtractor {
     static func findIconData(iconName: String, using action: (String) throws -> Data?) rethrows -> Data? {
         let deviceSuffixes = ["~tv", "~ipad", ""]
         let sizeExtensions = ["@3x", "@2x", ""]
-        let fileExtensions = [".png", ""]
+        let fileExtensions = [".png", ".icns", ""]
 
         for deviceSuffix in deviceSuffixes {
             for sizeExt in sizeExtensions {
@@ -203,11 +203,4 @@ extension IconExtractor {
         newImage.unlockFocus()
         return newImage
     }
-}
-
-// MARK: - Error Types
-
-public enum IconExtractionError: Error {
-    case appBundleNotFound
-    case infoPlistNotFound
 }

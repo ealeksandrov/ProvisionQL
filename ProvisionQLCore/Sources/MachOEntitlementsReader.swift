@@ -35,11 +35,11 @@ private extension MachOEntitlementsReader {
     static let machMagic64: UInt32 = 0xFEED_FACF
     static let machCigam: UInt32 = 0xCEFA_EDFE
     static let machCigam64: UInt32 = 0xCFFA_EDFE
-    static let lcCodeSignature: UInt32 = 0x1D
+    static let lcCodeSignature: UInt32 = 0x1D // LC_CODE_SIGNATURE
 
-    static let csMagicEmbeddedSignature: UInt32 = 0xFADE_0CC0
-    static let csMagicEmbeddedEntitlements: UInt32 = 0xFADE_7171
-    static let csSlotEntitlements: UInt32 = 5
+    static let csMagicEmbeddedSignature: UInt32 = 0xFADE_0CC0 // CSMAGIC_EMBEDDED_SIGNATURE
+    static let csMagicEmbeddedEntitlements: UInt32 = 0xFADE_7171 // CSMAGIC_EMBEDDED_ENTITLEMENTS
+    static let csSlotEntitlements: UInt32 = 5 // CSSLOT_ENTITLEMENTS
 
     enum Endianness {
         case little
