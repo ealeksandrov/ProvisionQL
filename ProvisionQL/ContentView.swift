@@ -117,7 +117,11 @@ struct ContentView: View {
         }
 
         if let string = item as? String {
-            return URL(string: string)
+            if let url = URL(string: string), url.scheme != nil {
+                return url
+            }
+
+            return URL(fileURLWithPath: NSString(string: string).expandingTildeInPath)
         }
 
         return nil
