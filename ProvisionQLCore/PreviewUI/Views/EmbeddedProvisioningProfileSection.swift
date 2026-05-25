@@ -31,13 +31,13 @@ struct EmbeddedProvisioningProfileSection: View {
             }
 
             if !profile.certificates.isEmpty {
-                PreviewSection(title: "Certificates (\(profile.certificates.count))") {
+                CollapsiblePreviewSection(title: "Certificates (\(profile.certificates.count))") {
                     CertificatesSection(certificates: profile.certificates)
                 }
             }
 
             if let devices = profile.devices, !devices.isEmpty {
-                PreviewSection(title: "Devices (\(devices.count))") {
+                CollapsiblePreviewSection(title: "Devices (\(devices.count))", isExpanded: devices.count <= 20) {
                     DevicesSection(devices: devices)
                 }
             }
