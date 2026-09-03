@@ -30,12 +30,28 @@ Open or drop a supported file into the app for the full inspector, or use Finder
 
 ## Installation
 
-1. Download the latest `ProvisionQL.dmg` from [Releases](https://github.com/ealeksandrov/ProvisionQL/releases/latest).
-2. Open the DMG and drag `ProvisionQL.app` to `/Applications`.
-3. Launch `ProvisionQL.app` once.
-4. If Finder previews do not appear, enable the Quick Look extensions in System Settings > Login Items & Extensions.
+### Via Homebrew
 
-From the toolbar, click Extensions to open System Settings > Login Items & Extensions.
+```bash
+brew install --cask provisionql
+```
+
+---
+
+### Manual Installation
+
+1. Download the latest `ProvisionQL.dmg` from [Releases](https://github.com/ealeksandrov/ProvisionQL/releases/latest).
+2. Open the DMG and drag `ProvisionQL.app` to your `/Applications` folder.
+
+---
+
+### Post-Installation Setup (Required)
+
+1. Launch `ProvisionQL.app` at least once to register the app-bundled extensions.
+2. If Finder previews do not appear immediately, you need to enable them manually:
+   - Click button "Open Settings" in `ProvisionQL.app` toolbar or go to **System Settings > Login Items & Extensions**.
+   - Scroll down to the **Extensions** section.
+   - Click **Quick Look** (or **Finder**) and ensure **ProvisionQL** is turned on.
 
 ## Development
 
