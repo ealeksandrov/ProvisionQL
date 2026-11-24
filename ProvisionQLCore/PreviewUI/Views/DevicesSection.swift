@@ -7,6 +7,12 @@
 import ProvisionQLCore
 import SwiftUI
 
+extension String: FilteredElement {
+    func matching(_ filter: String) -> Bool {
+        self.contains(filter)
+    }
+}
+
 struct DevicesSection: View {
     let devices: [String]
 
@@ -15,7 +21,7 @@ struct DevicesSection: View {
     }
 
     var body: some View {
-        TableSection(data: sortedDevices) {
+        TableSection(data: sortedDevices, filterEnabled: true) {
             HStack {
                 Text("Device UDID")
                     .fontWeight(.semibold)
