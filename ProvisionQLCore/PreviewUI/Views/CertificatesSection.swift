@@ -7,6 +7,12 @@
 import ProvisionQLCore
 import SwiftUI
 
+extension CertificateInfo: FilteredElement {
+    func matching(_ filter: String) -> Bool {
+        self.subject.contains(filter)
+    }
+}
+
 struct CertificatesSection: View {
     let certificates: [CertificateInfo]
 
